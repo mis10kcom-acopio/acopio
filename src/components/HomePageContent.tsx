@@ -8,7 +8,12 @@ import {
   Stethoscope,
   Warehouse,
 } from "lucide-react";
-import { captureElementAsPngBlob, shareImage } from "@/lib/capture-card";
+import {
+  captureElementAsPngBlob,
+  shareMascotaCardImageOrText,
+  shareNativeText,
+} from "@/lib/capture-card";
+import { SITE_URL } from "@/lib/site-config";
 import { buildTelUrl, buildWhatsAppUrl } from "@/lib/whatsapp";
 import type {
   AcopioMascota,
@@ -134,26 +139,36 @@ function MascotaCardActions({
   cardCaptureRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const [shareLabel, setShareLabel] = useState("Compartir");
-  const [isSharing, setIsSharing] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   async function handleShare() {
-    if (!cardCaptureRef.current || isSharing) return;
+    if (!cardCaptureRef.current || isGenerating) return;
 
-    setIsSharing(true);
+    setIsGenerating(true);
     setShareLabel("Generando…");
 
+    let shared = false;
+
     try {
-      const blob = await captureElementAsPngBlob(cardCaptureRef.current);
-      const filename = `mascota-${mascota.id.slice(0, 8)}.png`;
-      const shared = await shareImage(blob, filename);
+      try {
+        const blob = await captureElementAsPngBlob(cardCaptureRef.current);
+        const filename = `mascota-${mascota.id.slice(0, 8)}.png`;
+        shared = await shareMascotaCardImageOrText(blob, filename, SITE_URL);
+      } catch {
+        try {
+          await shareNativeText(SITE_URL);
+          shared = true;
+        } catch {
+          // Menú cerrado o Web Share no disponible
+        }
+      }
+
       if (shared) {
         setShareLabel("¡Compartido!");
         setTimeout(() => setShareLabel("Compartir"), 2500);
       }
-    } catch {
-      // Cierre del menú nativo u otros errores: sin mensaje al usuario
     } finally {
-      setIsSharing(false);
+      setIsGenerating(false);
       setShareLabel((prev) => (prev === "Generando…" ? "Compartir" : prev));
     }
   }
@@ -174,7 +189,7 @@ function MascotaCardActions({
         <button
           type="button"
           onClick={handleShare}
-          disabled={isSharing}
+          disabled={isGenerating}
           className={`inline-flex min-h-[2.75rem] items-center justify-center rounded-xl bg-sky-600 px-3 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60 sm:text-base ${
             mascota.contacto_whatsapp ? "" : "col-span-2"
           }`}
