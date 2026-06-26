@@ -1,13 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   HeartHandshake,
   PawPrint,
   Stethoscope,
   Warehouse,
 } from "lucide-react";
+import { captureElementAsPngBlob, shareOrDownloadImage } from "@/lib/capture-card";
 import { buildTelUrl, buildWhatsAppUrl } from "@/lib/whatsapp";
 import type {
   AcopioMascota,
@@ -125,44 +126,39 @@ function ContactActions({
   );
 }
 
-function MascotaCardActions({ mascota }: { mascota: MascotaReportada }) {
+function MascotaCardActions({
+  mascota,
+  cardCaptureRef,
+}: {
+  mascota: MascotaReportada;
+  cardCaptureRef: React.RefObject<HTMLDivElement | null>;
+}) {
   const [shareLabel, setShareLabel] = useState("Compartir");
+  const [isSharing, setIsSharing] = useState(false);
 
   async function handleShare() {
-    const tipo =
-      mascota.tipo_reporte === "PERDIDO" ? "Perdida" : "Encontrada";
-    const nombre = mascota.nombre_mascota
-      ? ` (${mascota.nombre_mascota})`
-      : "";
-    const text = `Mascota ${tipo}${nombre}: ${mascota.caracteristicas}. Zona: ${mascota.ubicacion_zona}. — Huellas a Salvo`;
+    if (!cardCaptureRef.current || isSharing) return;
+
+    setIsSharing(true);
+    setShareLabel("Generando…");
 
     try {
-      if (navigator.share) {
-        await navigator.share({
-          title: "Huellas a Salvo",
-          text,
-        });
-      } else {
-        await navigator.clipboard.writeText(text);
-        setShareLabel("¡Copiado!");
-        setTimeout(() => setShareLabel("Compartir"), 2000);
-      }
+      const blob = await captureElementAsPngBlob(cardCaptureRef.current);
+      const filename = `mascota-${mascota.id.slice(0, 8)}.png`;
+      const result = await shareOrDownloadImage(blob, filename);
+
+      setShareLabel(result === "shared" ? "¡Compartido!" : "¡Descargada!");
+      setTimeout(() => setShareLabel("Compartir"), 2500);
     } catch {
-      /* usuario canceló o falló el share */
+      setShareLabel("Error");
+      setTimeout(() => setShareLabel("Compartir"), 2500);
+    } finally {
+      setIsSharing(false);
     }
   }
 
   return (
     <div className="space-y-3 border-t-2 border-zinc-100 pt-4">
-      <div>
-        <p className="text-xs font-bold uppercase tracking-wide text-zinc-500">
-          Zona
-        </p>
-        <p className="text-lg font-semibold text-zinc-900">
-          {mascota.ubicacion_zona}
-        </p>
-      </div>
-
       <div className="grid grid-cols-2 gap-2">
         {mascota.contacto_whatsapp ? (
           <a
@@ -177,7 +173,8 @@ function MascotaCardActions({ mascota }: { mascota: MascotaReportada }) {
         <button
           type="button"
           onClick={handleShare}
-          className={`inline-flex min-h-[2.75rem] items-center justify-center rounded-xl bg-sky-600 px-3 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-sky-700 sm:text-base ${
+          disabled={isSharing}
+          className={`inline-flex min-h-[2.75rem] items-center justify-center rounded-xl bg-sky-600 px-3 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60 sm:text-base ${
             mascota.contacto_whatsapp ? "" : "col-span-2"
           }`}
         >
@@ -196,42 +193,63 @@ function MascotaCardActions({ mascota }: { mascota: MascotaReportada }) {
 }
 
 function MascotaCard({ mascota }: { mascota: MascotaReportada }) {
+  const cardCaptureRef = useRef<HTMLDivElement>(null);
   const esPerdido = mascota.tipo_reporte === "PERDIDO";
 
   return (
     <article className="overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white shadow-md">
-      <div className="relative">
-        {mascota.foto_url ? (
-          <Image
-            src={mascota.foto_url}
-            alt={mascota.nombre_mascota ?? `Mascota ${mascota.especie}`}
-            width={600}
-            height={600}
-            className="w-full aspect-square object-cover rounded-t-2xl"
-            loading="lazy"
-            sizes="(max-width: 768px) 100vw, 400px"
-          />
-        ) : (
-          <div className="aspect-square w-full rounded-t-2xl bg-zinc-100" />
-        )}
-        <span
-          className={`absolute top-3 left-3 z-10 rounded-full px-3 py-1.5 text-base font-bold shadow-lg ${
-            esPerdido ? "bg-red-600 text-white" : "bg-emerald-600 text-white"
-          }`}
-        >
-          {esPerdido ? "Perdido" : "Encontrado"}
-        </span>
+      <div
+        ref={cardCaptureRef}
+        id={`mascota-card-${mascota.id}`}
+        className="bg-white"
+      >
+        <div className="relative">
+          {mascota.foto_url ? (
+            <Image
+              src={mascota.foto_url}
+              alt={mascota.nombre_mascota ?? `Mascota ${mascota.especie}`}
+              width={600}
+              height={600}
+              crossOrigin="anonymous"
+              className="w-full aspect-square object-cover rounded-t-2xl"
+              loading="lazy"
+              sizes="(max-width: 768px) 100vw, 400px"
+            />
+          ) : (
+            <div className="aspect-square w-full rounded-t-2xl bg-zinc-100" />
+          )}
+          <span
+            className={`absolute top-3 left-3 z-10 rounded-full px-3 py-1.5 text-base font-bold shadow-lg ${
+              esPerdido ? "bg-red-600 text-white" : "bg-emerald-600 text-white"
+            }`}
+          >
+            {esPerdido ? "Perdido" : "Encontrado"}
+          </span>
+        </div>
+        <div className="space-y-4 p-5">
+          {mascota.nombre_mascota && (
+            <h3 className="text-xl font-bold text-zinc-900">
+              {mascota.nombre_mascota}
+            </h3>
+          )}
+          <p className="text-base leading-relaxed text-zinc-700">
+            {mascota.caracteristicas}
+          </p>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wide text-zinc-500">
+              Zona
+            </p>
+            <p className="text-lg font-semibold text-zinc-900">
+              {mascota.ubicacion_zona}
+            </p>
+          </div>
+        </div>
       </div>
-      <div className="space-y-4 p-5">
-        {mascota.nombre_mascota && (
-          <h3 className="text-xl font-bold text-zinc-900">
-            {mascota.nombre_mascota}
-          </h3>
-        )}
-        <p className="text-base leading-relaxed text-zinc-700">
-          {mascota.caracteristicas}
-        </p>
-        <MascotaCardActions mascota={mascota} />
+      <div className="px-5 pb-5">
+        <MascotaCardActions
+          mascota={mascota}
+          cardCaptureRef={cardCaptureRef}
+        />
       </div>
     </article>
   );
