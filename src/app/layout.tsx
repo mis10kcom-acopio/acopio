@@ -75,6 +75,9 @@ export const metadata: Metadata = {
       "Reporta mascotas, encuentra veterinarios, hogares temporales y centros de acopio en Venezuela.",
     images: [DEFAULT_OG_IMAGE],
   },
+  verification: {
+    google: "SNRJMQDBNEcpD8SFLr4au6O5up6YXVXUoqXyiLjciL8",
+  },
 };
 
 export default function RootLayout({
