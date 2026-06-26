@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import {
   HeartHandshake,
   PawPrint,
+  Search,
   Stethoscope,
   Warehouse,
 } from "lucide-react";
@@ -350,6 +351,7 @@ function EmptyState({ message }: { message: string }) {
 
 export function HomePageContent({ data }: { data: HomePageData }) {
   const [activeSection, setActiveSection] = useState<SectionId>("mascotas");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const redAyuda = useMemo(
     () =>
@@ -363,6 +365,15 @@ export function HomePageContent({ data }: { data: HomePageData }) {
     () => data.voluntarios.filter((v) => v.tipo_ayuda === "VETERINARIO"),
     [data.voluntarios],
   );
+
+  const filteredMascotas = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return data.mascotas;
+
+    return data.mascotas.filter((mascota) =>
+      mascota.ubicacion_zona.toLowerCase().includes(query),
+    );
+  }, [data.mascotas, searchQuery]);
 
   const counts: Record<SectionId, number> = {
     mascotas: data.mascotas.length,
@@ -423,11 +434,29 @@ export function HomePageContent({ data }: { data: HomePageData }) {
             <h2 className="mb-5 text-2xl font-bold text-zinc-900">
               Mascotas Perdidas y Encontradas
             </h2>
+            {data.mascotas.length > 0 && (
+              <div className="relative mb-5">
+                <Search
+                  className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400"
+                  aria-hidden
+                />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="🔍 Buscar por zona, ciudad o municipio (ej. La Guaira)"
+                  aria-label="Buscar mascotas por zona, ciudad o municipio"
+                  className="w-full rounded-xl border-2 border-zinc-200 bg-white py-3.5 pl-12 pr-4 text-base text-zinc-900 shadow-sm placeholder:text-zinc-500 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                />
+              </div>
+            )}
             {data.mascotas.length === 0 ? (
               <EmptyState message="No hay reportes activos en este momento." />
+            ) : filteredMascotas.length === 0 ? (
+              <EmptyState message="No hay mascotas reportadas en esta zona actualmente." />
             ) : (
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {data.mascotas.map((mascota) => (
+                {filteredMascotas.map((mascota) => (
                   <MascotaCard key={mascota.id} mascota={mascota} />
                 ))}
               </div>
