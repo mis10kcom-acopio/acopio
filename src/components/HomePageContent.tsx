@@ -8,7 +8,7 @@ import {
   Stethoscope,
   Warehouse,
 } from "lucide-react";
-import { captureElementAsPngBlob, shareOrDownloadImage } from "@/lib/capture-card";
+import { captureElementAsPngBlob, shareImage } from "@/lib/capture-card";
 import { buildTelUrl, buildWhatsAppUrl } from "@/lib/whatsapp";
 import type {
   AcopioMascota,
@@ -145,15 +145,16 @@ function MascotaCardActions({
     try {
       const blob = await captureElementAsPngBlob(cardCaptureRef.current);
       const filename = `mascota-${mascota.id.slice(0, 8)}.png`;
-      const result = await shareOrDownloadImage(blob, filename);
-
-      setShareLabel(result === "shared" ? "¡Compartido!" : "¡Descargada!");
-      setTimeout(() => setShareLabel("Compartir"), 2500);
+      const shared = await shareImage(blob, filename);
+      if (shared) {
+        setShareLabel("¡Compartido!");
+        setTimeout(() => setShareLabel("Compartir"), 2500);
+      }
     } catch {
-      setShareLabel("Error");
-      setTimeout(() => setShareLabel("Compartir"), 2500);
+      // Cierre del menú nativo u otros errores: sin mensaje al usuario
     } finally {
       setIsSharing(false);
+      setShareLabel((prev) => (prev === "Generando…" ? "Compartir" : prev));
     }
   }
 

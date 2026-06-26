@@ -21,31 +21,21 @@ export async function captureElementAsPngBlob(
   return blob;
 }
 
-export function downloadBlob(blob: Blob, filename: string): void {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
-export async function shareOrDownloadImage(
+export async function shareImage(
   blob: Blob,
   filename: string,
-): Promise<"shared" | "downloaded"> {
+): Promise<boolean> {
   const file = new File([blob], filename, { type: "image/png" });
-  const shareData = {
+  const shareData: ShareData = {
     files: [file],
-    title: "Mascota en Huellas a Salvo",
-    text: "Ayúdanos a difundir. Más información en: https://huellasasalvo.org",
+    title: "Huellas a Salvo",
+    text: "Mira este reporte en Huellas a Salvo...",
   };
 
-  if (navigator.canShare?.(shareData)) {
-    await navigator.share(shareData);
-    return "shared";
+  if (!navigator.canShare?.(shareData)) {
+    return false;
   }
 
-  downloadBlob(blob, filename);
-  return "downloaded";
+  await navigator.share(shareData);
+  return true;
 }
