@@ -57,8 +57,8 @@ export default async function EditarPage({
             Enlace no válido
           </h1>
           <p className="mt-2 text-sm text-zinc-600">
-            Este enlace de edición no existe o fue eliminado. Revisa que hayas
-            copiado la URL completa que recibiste al registrarte.
+            Este enlace de edición no existe o fue eliminado. Usa el enlace
+            completo que recibiste al registrarte (o el ID/token de tu reporte).
           </p>
           <Link
             href="/"
@@ -74,14 +74,14 @@ export default async function EditarPage({
   const successMessage = ok ? decodeURIComponent(ok) : null;
 
   const titles = {
-    mascota: "Actualizar reporte de mascota",
+    mascota: "Gestionar reporte de mascota",
     voluntario: "Gestionar disponibilidad",
     acopio: "Actualizar stock del acopio",
   };
 
   const descriptions = {
     mascota:
-      "Cuando la mascota sea encontrada o reunida con su familia, márcala como resuelta.",
+      "Confirma los datos de tu reporte y actualiza el estado cuando corresponda.",
     voluntario:
       "Si ya no puedes recibir más animales o casos, actualiza tu disponibilidad.",
     acopio: "Indica el nivel actual de insumos con un solo toque.",
@@ -94,7 +94,7 @@ export default async function EditarPage({
     >
       {registro.tipo === "mascota" && (
         <EditarMascotaPanel
-          token={token}
+          identificador={token}
           registro={registro.registro}
           successMessage={successMessage}
         />

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import {
   actualizarStockAcopio,
+  cambiarMascotaAEncontrada,
   marcarMascotaResuelta,
   marcarVoluntarioDisponible,
   marcarVoluntarioNoDisponible,
@@ -46,22 +47,33 @@ function ActionButton({
 }
 
 export function EditarMascotaPanel({
-  token,
+  identificador,
   registro,
   successMessage,
 }: {
-  token: string;
+  identificador: string;
   registro: MascotaReportada;
   successMessage: string | null;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const yaResuelto = registro.estado === "RESUELTO";
+  const esPerdido = registro.tipo_reporte === "PERDIDO";
 
-  function handleResolver() {
+  function handleCambiarAEncontrado() {
     setError(null);
     startTransition(async () => {
-      const result = await marcarMascotaResuelta(token);
+      const result = await cambiarMascotaAEncontrada(identificador);
+      if (result?.error) {
+        setError(result.error);
+      }
+    });
+  }
+
+  function handleQuitarDelListado() {
+    setError(null);
+    startTransition(async () => {
+      const result = await marcarMascotaResuelta(identificador);
       if (result?.error) {
         setError(result.error);
       }
@@ -75,30 +87,53 @@ export function EditarMascotaPanel({
 
       <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700">
         <p>
-          <span className="font-medium">Reporte:</span>{" "}
-          {registro.tipo_reporte === "PERDIDO" ? "Perdido" : "Encontrado"} —{" "}
-          {registro.especie}
-          {registro.nombre_mascota ? ` (${registro.nombre_mascota})` : ""}
+          <span className="font-medium">Tipo:</span>{" "}
+          {registro.tipo_reporte === "PERDIDO" ? "Perdido" : "Encontrado"}
+        </p>
+        <p className="mt-1">
+          <span className="font-medium">Especie:</span> {registro.especie}
+          {registro.nombre_mascota ? ` — ${registro.nombre_mascota}` : ""}
+        </p>
+        <p className="mt-1">
+          <span className="font-medium">Características:</span>{" "}
+          {registro.caracteristicas}
         </p>
         <p className="mt-1">
           <span className="font-medium">Zona:</span> {registro.ubicacion_zona}
         </p>
         <p className="mt-1">
-          <span className="font-medium">Estado actual:</span>{" "}
-          {yaResuelto ? "Resuelto" : "Activo"}
+          <span className="font-medium">Teléfono:</span> {registro.contacto_telefono}
+        </p>
+        <p className="mt-1">
+          <span className="font-medium">Estado en listado:</span>{" "}
+          {yaResuelto ? "Resuelto (oculto)" : "Activo (visible)"}
         </p>
       </div>
 
       {!yaResuelto ? (
-        <ActionButton
-          label={pending ? "Actualizando…" : "Marcar como resuelto (encontrado/reunido)"}
-          onClick={handleResolver}
-          variant="success"
-          disabled={pending}
-        />
+        <div className="grid gap-3">
+          {esPerdido && (
+            <ActionButton
+              label={pending ? "Actualizando…" : "Marcar como ENCONTRADO"}
+              onClick={handleCambiarAEncontrado}
+              variant="success"
+              disabled={pending}
+            />
+          )}
+          <ActionButton
+            label={
+              pending
+                ? "Actualizando…"
+                : "Quitar del listado público (ya no es necesario)"
+            }
+            onClick={handleQuitarDelListado}
+            variant="warning"
+            disabled={pending}
+          />
+        </div>
       ) : (
         <p className="text-center text-sm text-emerald-700">
-          Este caso ya está marcado como resuelto.
+          Este reporte ya fue retirado del listado público.
         </p>
       )}
     </div>

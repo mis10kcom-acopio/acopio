@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
+import { buscarRegistroPorIdentificador } from "@/lib/editar-identificador";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import type { ActionState } from "@/types/actions";
 import type {
@@ -18,36 +19,36 @@ export type RegistroPorToken =
   | { tipo: "acopio"; registro: AcopioMascota };
 
 export async function buscarPorToken(
-  token: string,
+  identificador: string,
 ): Promise<RegistroPorToken | null> {
   const supabase = getSupabaseAdmin();
 
   const [mascota, voluntario, acopio] = await Promise.all([
-    supabase
-      .from("mascotas_reportadas")
-      .select("*")
-      .eq("token_edicion", token)
-      .maybeSingle(),
-    supabase
-      .from("red_voluntarios")
-      .select("*")
-      .eq("token_edicion", token)
-      .maybeSingle(),
-    supabase
-      .from("acopio_mascotas")
-      .select("*")
-      .eq("token_edicion", token)
-      .maybeSingle(),
+    buscarRegistroPorIdentificador<MascotaReportada>(
+      supabase,
+      "mascotas_reportadas",
+      identificador,
+    ),
+    buscarRegistroPorIdentificador<RedVoluntario>(
+      supabase,
+      "red_voluntarios",
+      identificador,
+    ),
+    buscarRegistroPorIdentificador<AcopioMascota>(
+      supabase,
+      "acopio_mascotas",
+      identificador,
+    ),
   ]);
 
-  if (mascota.data) {
-    return { tipo: "mascota", registro: mascota.data };
+  if (mascota) {
+    return { tipo: "mascota", registro: mascota };
   }
-  if (voluntario.data) {
-    return { tipo: "voluntario", registro: voluntario.data };
+  if (voluntario) {
+    return { tipo: "voluntario", registro: voluntario };
   }
-  if (acopio.data) {
-    return { tipo: "acopio", registro: acopio.data };
+  if (acopio) {
+    return { tipo: "acopio", registro: acopio };
   }
 
   return null;
@@ -62,35 +63,114 @@ function handleActionError(error: unknown): ActionState {
 }
 
 async function revalidateAndRedirect(
-  token: string,
+  tokenEdicion: string,
   successMessage: string,
 ): Promise<never> {
   revalidatePath("/");
-  redirect(`/editar/${token}?ok=${encodeURIComponent(successMessage)}`);
+  redirect(`/editar/${tokenEdicion}?ok=${encodeURIComponent(successMessage)}`);
 }
 
-export async function marcarMascotaResuelta(
-  token: string,
+async function buscarMascotaPorIdentificador(
+  identificador: string,
+): Promise<MascotaReportada | null> {
+  const supabase = getSupabaseAdmin();
+  return buscarRegistroPorIdentificador<MascotaReportada>(
+    supabase,
+    "mascotas_reportadas",
+    identificador,
+  );
+}
+
+async function buscarVoluntarioPorIdentificador(
+  identificador: string,
+): Promise<RedVoluntario | null> {
+  const supabase = getSupabaseAdmin();
+  return buscarRegistroPorIdentificador<RedVoluntario>(
+    supabase,
+    "red_voluntarios",
+    identificador,
+  );
+}
+
+async function buscarAcopioPorIdentificador(
+  identificador: string,
+): Promise<AcopioMascota | null> {
+  const supabase = getSupabaseAdmin();
+  return buscarRegistroPorIdentificador<AcopioMascota>(
+    supabase,
+    "acopio_mascotas",
+    identificador,
+  );
+}
+
+export async function cambiarMascotaAEncontrada(
+  identificador: string,
 ): Promise<ActionState> {
   try {
     const supabase = getSupabaseAdmin();
+    const registro = await buscarMascotaPorIdentificador(identificador);
+
+    if (!registro) {
+      return { error: "Enlace no válido o registro no encontrado.", success: null };
+    }
+    if (registro.tipo_reporte === "ENCONTRADO") {
+      return {
+        error: "Este reporte ya está marcado como encontrado.",
+        success: null,
+      };
+    }
 
     const { data, error } = await supabase
       .from("mascotas_reportadas")
-      .update({ estado: "RESUELTO" })
-      .eq("token_edicion", token)
-      .select("id")
+      .update({ tipo_reporte: "ENCONTRADO" })
+      .eq("id", registro.id)
+      .select("token_edicion")
       .maybeSingle();
 
     if (error) {
       return { error: error.message, success: null };
     }
     if (!data) {
-      return { error: "Enlace no válido o registro no encontrado.", success: null };
+      return { error: "No se pudo actualizar el reporte.", success: null };
     }
 
     return await revalidateAndRedirect(
-      token,
+      data.token_edicion,
+      "Reporte actualizado a ENCONTRADO.",
+    );
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    return handleActionError(error);
+  }
+}
+
+export async function marcarMascotaResuelta(
+  identificador: string,
+): Promise<ActionState> {
+  try {
+    const supabase = getSupabaseAdmin();
+    const registro = await buscarMascotaPorIdentificador(identificador);
+
+    if (!registro) {
+      return { error: "Enlace no válido o registro no encontrado.", success: null };
+    }
+
+    const { data, error } = await supabase
+      .from("mascotas_reportadas")
+      .update({ estado: "RESUELTO" })
+      .eq("id", registro.id)
+      .select("token_edicion")
+      .maybeSingle();
+
+    if (error) {
+      return { error: error.message, success: null };
+    }
+    if (!data) {
+      return { error: "No se pudo actualizar el reporte.", success: null };
+    }
+
+    return await revalidateAndRedirect(
+      data.token_edicion,
       "¡Marcado como resuelto! El caso ya no aparecerá en el listado público.",
     );
   } catch (error) {
@@ -100,27 +180,32 @@ export async function marcarMascotaResuelta(
 }
 
 export async function marcarVoluntarioNoDisponible(
-  token: string,
+  identificador: string,
 ): Promise<ActionState> {
   try {
     const supabase = getSupabaseAdmin();
+    const registro = await buscarVoluntarioPorIdentificador(identificador);
+
+    if (!registro) {
+      return { error: "Enlace no válido o registro no encontrado.", success: null };
+    }
 
     const { data, error } = await supabase
       .from("red_voluntarios")
       .update({ disponibilidad: "LLENO/NO_DISPONIBLE" })
-      .eq("token_edicion", token)
-      .select("id")
+      .eq("id", registro.id)
+      .select("token_edicion")
       .maybeSingle();
 
     if (error) {
       return { error: error.message, success: null };
     }
     if (!data) {
-      return { error: "Enlace no válido o registro no encontrado.", success: null };
+      return { error: "No se pudo actualizar el registro.", success: null };
     }
 
     return await revalidateAndRedirect(
-      token,
+      data.token_edicion,
       "Disponibilidad actualizada. Ya no aparecerás como disponible en el listado.",
     );
   } catch (error) {
@@ -130,27 +215,32 @@ export async function marcarVoluntarioNoDisponible(
 }
 
 export async function marcarVoluntarioDisponible(
-  token: string,
+  identificador: string,
 ): Promise<ActionState> {
   try {
     const supabase = getSupabaseAdmin();
+    const registro = await buscarVoluntarioPorIdentificador(identificador);
+
+    if (!registro) {
+      return { error: "Enlace no válido o registro no encontrado.", success: null };
+    }
 
     const { data, error } = await supabase
       .from("red_voluntarios")
       .update({ disponibilidad: "DISPONIBLE" })
-      .eq("token_edicion", token)
-      .select("id")
+      .eq("id", registro.id)
+      .select("token_edicion")
       .maybeSingle();
 
     if (error) {
       return { error: error.message, success: null };
     }
     if (!data) {
-      return { error: "Enlace no válido o registro no encontrado.", success: null };
+      return { error: "No se pudo actualizar el registro.", success: null };
     }
 
     return await revalidateAndRedirect(
-      token,
+      data.token_edicion,
       "¡Disponibilidad restaurada! Vuelves a aparecer en el listado público.",
     );
   } catch (error) {
@@ -160,24 +250,29 @@ export async function marcarVoluntarioDisponible(
 }
 
 export async function actualizarStockAcopio(
-  token: string,
+  identificador: string,
   estadoStock: EstadoStock,
 ): Promise<ActionState> {
   try {
     const supabase = getSupabaseAdmin();
+    const registro = await buscarAcopioPorIdentificador(identificador);
+
+    if (!registro) {
+      return { error: "Enlace no válido o registro no encontrado.", success: null };
+    }
 
     const { data, error } = await supabase
       .from("acopio_mascotas")
       .update({ estado_stock: estadoStock })
-      .eq("token_edicion", token)
-      .select("id")
+      .eq("id", registro.id)
+      .select("token_edicion")
       .maybeSingle();
 
     if (error) {
       return { error: error.message, success: null };
     }
     if (!data) {
-      return { error: "Enlace no válido o registro no encontrado.", success: null };
+      return { error: "No se pudo actualizar el registro.", success: null };
     }
 
     const labels: Record<EstadoStock, string> = {
@@ -187,7 +282,7 @@ export async function actualizarStockAcopio(
     };
 
     return await revalidateAndRedirect(
-      token,
+      data.token_edicion,
       `Stock actualizado a: ${labels[estadoStock].toUpperCase()}`,
     );
   } catch (error) {
