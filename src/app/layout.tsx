@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SupportFooter } from "@/components/SupportFooter";
 import {
@@ -93,6 +94,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <div className="flex-1">{children}</div>
         <SupportFooter />
+        <GoogleAnalytics gaId="G-ZT47MKQTXM" />
       </body>
     </html>
   );
