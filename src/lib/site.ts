@@ -14,7 +14,7 @@ export async function getSiteBaseUrl(): Promise<string> {
     return `${protocol}://${host}`;
   }
 
-  return "https://tudominio.com";
+  return "https://huellasasalvo.org";
 }
 
 export function buildEditUrl(baseUrl: string, token: string): string {
