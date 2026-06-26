@@ -1,18 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   HeartHandshake,
   PawPrint,
   Stethoscope,
   Warehouse,
 } from "lucide-react";
-import {
-  captureElementAsPngBlob,
-  shareMascotaCardImageOrText,
-  shareNativeText,
-} from "@/lib/capture-card";
+import { shareMascotaPhotoWithFallbacks } from "@/lib/capture-card";
 import { SITE_URL } from "@/lib/site-config";
 import { buildTelUrl, buildWhatsAppUrl } from "@/lib/whatsapp";
 import type {
@@ -131,42 +127,31 @@ function ContactActions({
   );
 }
 
-function MascotaCardActions({
-  mascota,
-  cardCaptureRef,
-}: {
-  mascota: MascotaReportada;
-  cardCaptureRef: React.RefObject<HTMLDivElement | null>;
-}) {
+function MascotaCardActions({ mascota }: { mascota: MascotaReportada }) {
   const [shareLabel, setShareLabel] = useState("Compartir");
   const [isGenerating, setIsGenerating] = useState(false);
 
   async function handleShare() {
-    if (!cardCaptureRef.current || isGenerating) return;
+    if (isGenerating) return;
 
     setIsGenerating(true);
     setShareLabel("Generando…");
 
-    let shared = false;
-
     try {
-      try {
-        const blob = await captureElementAsPngBlob(cardCaptureRef.current);
-        const filename = `mascota-${mascota.id.slice(0, 8)}.png`;
-        shared = await shareMascotaCardImageOrText(blob, filename, SITE_URL);
-      } catch {
-        try {
-          await shareNativeText(SITE_URL);
-          shared = true;
-        } catch {
-          // Menú cerrado o Web Share no disponible
-        }
-      }
+      const result = await shareMascotaPhotoWithFallbacks(
+        mascota.foto_url,
+        mascota.tipo_reporte,
+        SITE_URL,
+      );
 
-      if (shared) {
-        setShareLabel("¡Compartido!");
+      if (result !== "cancelled") {
+        setShareLabel(
+          result === "downloaded" ? "¡Descargada!" : "¡Compartido!",
+        );
         setTimeout(() => setShareLabel("Compartir"), 2500);
       }
+    } catch {
+      // Errores inesperados: sin mensaje al usuario
     } finally {
       setIsGenerating(false);
       setShareLabel((prev) => (prev === "Generando…" ? "Compartir" : prev));
@@ -209,16 +194,11 @@ function MascotaCardActions({
 }
 
 function MascotaCard({ mascota }: { mascota: MascotaReportada }) {
-  const cardCaptureRef = useRef<HTMLDivElement>(null);
   const esPerdido = mascota.tipo_reporte === "PERDIDO";
 
   return (
     <article className="overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white shadow-md">
-      <div
-        ref={cardCaptureRef}
-        id={`mascota-card-${mascota.id}`}
-        className="bg-white"
-      >
+      <div className="bg-white">
         <div className="relative">
           {mascota.foto_url ? (
             <Image
@@ -262,10 +242,7 @@ function MascotaCard({ mascota }: { mascota: MascotaReportada }) {
         </div>
       </div>
       <div className="px-5 pb-5">
-        <MascotaCardActions
-          mascota={mascota}
-          cardCaptureRef={cardCaptureRef}
-        />
+        <MascotaCardActions mascota={mascota} />
       </div>
     </article>
   );
