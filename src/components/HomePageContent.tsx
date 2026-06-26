@@ -129,16 +129,15 @@ function MascotaCard({ mascota }: { mascota: MascotaReportada }) {
   return (
     <article className="overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white shadow-md">
       {mascota.foto_url && (
-        <div className="relative aspect-video w-full bg-zinc-100">
-          <Image
-            src={mascota.foto_url}
-            alt={mascota.nombre_mascota ?? `Mascota ${mascota.especie}`}
-            fill
-            className="object-cover"
-            loading="lazy"
-            sizes="(max-width: 768px) 100vw, 400px"
-          />
-        </div>
+        <Image
+          src={mascota.foto_url}
+          alt={mascota.nombre_mascota ?? `Mascota ${mascota.especie}`}
+          width={600}
+          height={600}
+          className="w-full aspect-square object-cover rounded-t-2xl"
+          loading="lazy"
+          sizes="(max-width: 768px) 100vw, 400px"
+        />
       )}
       <div className="space-y-4 p-5">
         <div className="flex flex-wrap items-center gap-2">
