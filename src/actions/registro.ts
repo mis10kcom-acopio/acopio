@@ -129,6 +129,7 @@ export async function registrarMascota(
       caracteristicas: getRequired(formData, "caracteristicas"),
       ubicacion_zona: getRequired(formData, "ubicacion_zona"),
       contacto_telefono: getRequired(formData, "contacto_telefono"),
+      contacto_whatsapp: getOptional(formData, "contacto_whatsapp"),
       foto_url: fotoUrl,
       estado: "ACTIVO",
       token_edicion: token,
@@ -158,6 +159,7 @@ export async function registrarVoluntario(
       nombre_o_clinica: getRequired(formData, "nombre_o_clinica"),
       ubicacion_zona: getRequired(formData, "ubicacion_zona"),
       contacto_telefono: getRequired(formData, "contacto_telefono"),
+      contacto_whatsapp: getOptional(formData, "contacto_whatsapp"),
       disponibilidad: "DISPONIBLE",
       token_edicion: token,
     });
@@ -186,6 +188,7 @@ export async function registrarAcopio(
       ubicacion_zona: getRequired(formData, "ubicacion_zona"),
       direccion_exacta: getRequired(formData, "direccion_exacta"),
       contacto_telefono: getRequired(formData, "contacto_telefono"),
+      contacto_whatsapp: getOptional(formData, "contacto_whatsapp"),
       necesidades_urgentes: getRequired(formData, "necesidades_urgentes"),
       estado_stock: "MODERADO",
       token_edicion: token,

@@ -17,6 +17,7 @@ export function FormField({
   as = "input",
   rows = 4,
   children,
+  onSelectChange,
 }: {
   label: string;
   name: string;
@@ -27,6 +28,7 @@ export function FormField({
   as?: "input" | "textarea" | "select";
   rows?: number;
   children?: React.ReactNode;
+  onSelectChange?: (value: string) => void;
 }) {
   return (
     <div>
@@ -50,6 +52,7 @@ export function FormField({
           required={required}
           className={inputClassName}
           defaultValue=""
+          onChange={(event) => onSelectChange?.(event.target.value)}
         >
           {children}
         </select>

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import {
   actualizarStockAcopio,
   marcarMascotaResuelta,
+  marcarVoluntarioDisponible,
   marcarVoluntarioNoDisponible,
 } from "@/actions/editar";
 import { FormError, FormSuccess } from "@/components/forms/FormFields";
@@ -127,6 +128,16 @@ export function EditarVoluntarioPanel({
     });
   }
 
+  function handleDisponible() {
+    setError(null);
+    startTransition(async () => {
+      const result = await marcarVoluntarioDisponible(token);
+      if (result?.error) {
+        setError(result.error);
+      }
+    });
+  }
+
   return (
     <div className="space-y-5">
       <FormSuccess message={successMessage} />
@@ -157,9 +168,14 @@ export function EditarVoluntarioPanel({
           disabled={pending}
         />
       ) : (
-        <p className="text-center text-sm text-amber-700">
-          Ya estás marcado como no disponible en el listado público.
-        </p>
+        <ActionButton
+          label={
+            pending ? "Actualizando…" : "Volver a marcar como Disponible"
+          }
+          onClick={handleDisponible}
+          variant="success"
+          disabled={pending}
+        />
       )}
     </div>
   );

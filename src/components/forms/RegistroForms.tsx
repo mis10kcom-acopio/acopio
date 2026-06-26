@@ -4,7 +4,6 @@ import { useActionState } from "react";
 import {
   registrarAcopio,
   registrarMascota,
-  registrarVoluntario,
 } from "@/actions/registro";
 import {
   ActionForm,
@@ -64,7 +63,15 @@ export function MascotaRegistroForm() {
         type="tel"
         required
         placeholder="04141234567"
-        hint="Incluye código de área. Usaremos este número solo para contacto directo."
+        hint="Para llamadas y SMS. Obligatorio."
+      />
+
+      <FormField
+        label="Número de WhatsApp (Opcional)"
+        name="contacto_whatsapp"
+        type="tel"
+        placeholder="04141234567"
+        hint="Si es distinto al teléfono de llamadas. El botón de WhatsApp solo aparece si lo indicas."
       />
 
       <FormFileField
@@ -78,53 +85,6 @@ export function MascotaRegistroForm() {
       <SubmitButton pendingLabel="Subiendo foto y publicando…">
         Publicar reporte
       </SubmitButton>
-    </ActionForm>
-  );
-}
-
-export function VoluntarioRegistroForm() {
-  const [state, formAction] = useActionState(
-    registrarVoluntario,
-    initialActionState,
-  );
-
-  return (
-    <ActionForm action={formAction}>
-      <FormError message={state.error} />
-
-      <FormField label="Tipo de ayuda" name="tipo_ayuda" as="select" required>
-        <option value="" disabled>
-          Selecciona…
-        </option>
-        <option value="VETERINARIO">Veterinario / Clínica</option>
-        <option value="HOGAR_TEMPORAL">Hogar temporal</option>
-        <option value="RESCATISTA">Rescatista</option>
-        <option value="TRANSPORTE">Transporte</option>
-      </FormField>
-
-      <FormField
-        label="Nombre o clínica"
-        name="nombre_o_clinica"
-        required
-        placeholder="Tu nombre o nombre del centro"
-      />
-
-      <FormField
-        label="Zona / Municipio"
-        name="ubicacion_zona"
-        required
-        placeholder="Ej: Barquisimeto, Petare…"
-      />
-
-      <FormField
-        label="Teléfono de contacto"
-        name="contacto_telefono"
-        type="tel"
-        required
-        placeholder="04141234567"
-      />
-
-      <SubmitButton>Registrarme como voluntario</SubmitButton>
     </ActionForm>
   );
 }
@@ -163,6 +123,15 @@ export function AcopioRegistroForm() {
         type="tel"
         required
         placeholder="04141234567"
+        hint="Para llamadas y SMS. Obligatorio."
+      />
+
+      <FormField
+        label="Número de WhatsApp (Opcional)"
+        name="contacto_whatsapp"
+        type="tel"
+        placeholder="04141234567"
+        hint="Si es distinto al teléfono de llamadas."
       />
 
       <FormField

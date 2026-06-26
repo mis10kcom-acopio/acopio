@@ -1,3 +1,7 @@
+export function buildTelUrl(telefono: string): string {
+  return `tel:${telefono.replace(/\s/g, "")}`;
+}
+
 export function buildWhatsAppUrl(telefono: string): string {
   const digits = telefono.replace(/\D/g, "");
   const withCountry =

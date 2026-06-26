@@ -12,6 +12,7 @@ export interface MascotaReportada {
   caracteristicas: string;
   ubicacion_zona: string;
   contacto_telefono: string;
+  contacto_whatsapp: string | null;
   foto_url: string | null;
   estado: EstadoMascota;
   token_edicion: string;
@@ -24,6 +25,7 @@ export interface RedVoluntario {
   nombre_o_clinica: string;
   ubicacion_zona: string;
   contacto_telefono: string;
+  contacto_whatsapp: string | null;
   disponibilidad: DisponibilidadVoluntario;
   token_edicion: string;
   creado_el: string;
@@ -35,6 +37,7 @@ export interface AcopioMascota {
   ubicacion_zona: string;
   direccion_exacta: string;
   contacto_telefono: string;
+  contacto_whatsapp: string | null;
   necesidades_urgentes: string;
   estado_stock: EstadoStock;
   token_edicion: string;

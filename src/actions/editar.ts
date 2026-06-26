@@ -129,6 +129,36 @@ export async function marcarVoluntarioNoDisponible(
   }
 }
 
+export async function marcarVoluntarioDisponible(
+  token: string,
+): Promise<ActionState> {
+  try {
+    const supabase = getSupabaseAdmin();
+
+    const { data, error } = await supabase
+      .from("red_voluntarios")
+      .update({ disponibilidad: "DISPONIBLE" })
+      .eq("token_edicion", token)
+      .select("id")
+      .maybeSingle();
+
+    if (error) {
+      return { error: error.message, success: null };
+    }
+    if (!data) {
+      return { error: "Enlace no válido o registro no encontrado.", success: null };
+    }
+
+    return await revalidateAndRedirect(
+      token,
+      "¡Disponibilidad restaurada! Vuelves a aparecer en el listado público.",
+    );
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    return handleActionError(error);
+  }
+}
+
 export async function actualizarStockAcopio(
   token: string,
   estadoStock: EstadoStock,

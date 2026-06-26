@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { buildWhatsAppUrl } from "@/lib/whatsapp";
+import { buildTelUrl, buildWhatsAppUrl } from "@/lib/whatsapp";
 import type {
   AcopioMascota,
   HomePageData,
@@ -39,6 +39,31 @@ function Badge({
     >
       {children}
     </span>
+  );
+}
+
+function ContactActions({
+  telefono,
+  whatsapp,
+}: {
+  telefono: string;
+  whatsapp: string | null;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <div>
+        <p className="text-xs font-medium uppercase tracking-wide text-zinc-400">
+          Teléfono
+        </p>
+        <a
+          href={buildTelUrl(telefono)}
+          className="text-base font-semibold text-amber-800 underline decoration-amber-300 underline-offset-2 hover:text-amber-900"
+        >
+          {telefono}
+        </a>
+      </div>
+      {whatsapp && <WhatsAppButton telefono={whatsapp} />}
+    </div>
   );
 }
 
@@ -86,14 +111,17 @@ function MascotaCard({ mascota }: { mascota: MascotaReportada }) {
           </h3>
         )}
         <p className="text-sm text-zinc-600">{mascota.caracteristicas}</p>
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-zinc-100 pt-3">
+        <div className="space-y-3 border-t border-zinc-100 pt-3">
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-zinc-400">
               Zona
             </p>
             <p className="font-medium text-zinc-800">{mascota.ubicacion_zona}</p>
           </div>
-          <WhatsAppButton telefono={mascota.contacto_telefono} />
+          <ContactActions
+            telefono={mascota.contacto_telefono}
+            whatsapp={mascota.contacto_whatsapp}
+          />
         </div>
       </div>
     </article>
@@ -130,14 +158,17 @@ function VoluntarioCard({ voluntario }: { voluntario: RedVoluntario }) {
         <h3 className="text-lg font-semibold text-zinc-900">
           {voluntario.nombre_o_clinica}
         </h3>
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-zinc-100 pt-3">
+        <div className="space-y-3 border-t border-zinc-100 pt-3">
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-zinc-400">
               Zona
             </p>
             <p className="font-medium text-zinc-800">{voluntario.ubicacion_zona}</p>
           </div>
-          <WhatsAppButton telefono={voluntario.contacto_telefono} />
+          <ContactActions
+            telefono={voluntario.contacto_telefono}
+            whatsapp={voluntario.contacto_whatsapp}
+          />
         </div>
       </div>
     </article>
@@ -174,14 +205,17 @@ function AcopioCard({ acopio }: { acopio: AcopioMascota }) {
           <span className="font-medium">Necesidades: </span>
           {acopio.necesidades_urgentes}
         </p>
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-zinc-100 pt-3">
+        <div className="space-y-3 border-t border-zinc-100 pt-3">
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-zinc-400">
               Zona
             </p>
             <p className="font-medium text-zinc-800">{acopio.ubicacion_zona}</p>
           </div>
-          <WhatsAppButton telefono={acopio.contacto_telefono} />
+          <ContactActions
+            telefono={acopio.contacto_telefono}
+            whatsapp={acopio.contacto_whatsapp}
+          />
         </div>
       </div>
     </article>
