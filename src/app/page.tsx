@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { HomePageContent } from "@/components/HomePageContent";
 import { getSupabase } from "@/lib/supabase";
 import type { HomePageData } from "@/types/database";
@@ -81,6 +82,27 @@ export default async function HomePage() {
             y hogares temporales, o localiza centros de acopio de insumos.
             Actualizado cada 30 segundos.
           </p>
+
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <Link
+              href="/reportar-mascota"
+              className="inline-flex items-center justify-center rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/40"
+            >
+              📢 Reportar Mascota
+            </Link>
+            <Link
+              href="/registro-voluntario"
+              className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+            >
+              🤝 Ofrecer Ayuda/Hogar
+            </Link>
+            <Link
+              href="/registro-acopio"
+              className="inline-flex items-center justify-center rounded-xl bg-sky-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+            >
+              🏥 Registrar Acopio
+            </Link>
+          </div>
         </div>
       </header>
 
