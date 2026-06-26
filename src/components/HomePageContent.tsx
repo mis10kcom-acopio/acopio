@@ -125,27 +125,104 @@ function ContactActions({
   );
 }
 
+function MascotaCardActions({ mascota }: { mascota: MascotaReportada }) {
+  const [shareLabel, setShareLabel] = useState("Compartir");
+
+  async function handleShare() {
+    const tipo =
+      mascota.tipo_reporte === "PERDIDO" ? "Perdida" : "Encontrada";
+    const nombre = mascota.nombre_mascota
+      ? ` (${mascota.nombre_mascota})`
+      : "";
+    const text = `Mascota ${tipo}${nombre}: ${mascota.caracteristicas}. Zona: ${mascota.ubicacion_zona}. — Huellas a Salvo`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Huellas a Salvo",
+          text,
+        });
+      } else {
+        await navigator.clipboard.writeText(text);
+        setShareLabel("¡Copiado!");
+        setTimeout(() => setShareLabel("Compartir"), 2000);
+      }
+    } catch {
+      /* usuario canceló o falló el share */
+    }
+  }
+
+  return (
+    <div className="space-y-3 border-t-2 border-zinc-100 pt-4">
+      <div>
+        <p className="text-xs font-bold uppercase tracking-wide text-zinc-500">
+          Zona
+        </p>
+        <p className="text-lg font-semibold text-zinc-900">
+          {mascota.ubicacion_zona}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        {mascota.contacto_whatsapp ? (
+          <a
+            href={buildWhatsAppUrl(mascota.contacto_whatsapp)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-[2.75rem] items-center justify-center rounded-xl bg-[#25D366] px-3 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#1da851] sm:text-base"
+          >
+            WhatsApp
+          </a>
+        ) : null}
+        <button
+          type="button"
+          onClick={handleShare}
+          className={`inline-flex min-h-[2.75rem] items-center justify-center rounded-xl bg-sky-600 px-3 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-sky-700 sm:text-base ${
+            mascota.contacto_whatsapp ? "" : "col-span-2"
+          }`}
+        >
+          {shareLabel}
+        </button>
+      </div>
+
+      <a
+        href={buildTelUrl(mascota.contacto_telefono)}
+        className="inline-flex min-h-[2.75rem] w-full items-center justify-center rounded-xl border-2 border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm font-bold text-zinc-800 transition hover:bg-zinc-100 sm:text-base"
+      >
+        📞 Llamar — {mascota.contacto_telefono}
+      </a>
+    </div>
+  );
+}
+
 function MascotaCard({ mascota }: { mascota: MascotaReportada }) {
+  const esPerdido = mascota.tipo_reporte === "PERDIDO";
+
   return (
     <article className="overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white shadow-md">
-      {mascota.foto_url && (
-        <Image
-          src={mascota.foto_url}
-          alt={mascota.nombre_mascota ?? `Mascota ${mascota.especie}`}
-          width={600}
-          height={600}
-          className="w-full aspect-square object-cover rounded-t-2xl"
-          loading="lazy"
-          sizes="(max-width: 768px) 100vw, 400px"
-        />
-      )}
+      <div className="relative">
+        {mascota.foto_url ? (
+          <Image
+            src={mascota.foto_url}
+            alt={mascota.nombre_mascota ?? `Mascota ${mascota.especie}`}
+            width={600}
+            height={600}
+            className="w-full aspect-square object-cover rounded-t-2xl"
+            loading="lazy"
+            sizes="(max-width: 768px) 100vw, 400px"
+          />
+        ) : (
+          <div className="aspect-square w-full rounded-t-2xl bg-zinc-100" />
+        )}
+        <span
+          className={`absolute top-3 left-3 z-10 rounded-full px-3 py-1.5 text-base font-bold shadow-lg ${
+            esPerdido ? "bg-red-600 text-white" : "bg-emerald-600 text-white"
+          }`}
+        >
+          {esPerdido ? "Perdido" : "Encontrado"}
+        </span>
+      </div>
       <div className="space-y-4 p-5">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={mascota.tipo_reporte === "PERDIDO" ? "danger" : "success"}>
-            {mascota.tipo_reporte === "PERDIDO" ? "Perdido" : "Encontrado"}
-          </Badge>
-          <Badge variant="info">{mascota.especie}</Badge>
-        </div>
         {mascota.nombre_mascota && (
           <h3 className="text-xl font-bold text-zinc-900">
             {mascota.nombre_mascota}
@@ -154,20 +231,7 @@ function MascotaCard({ mascota }: { mascota: MascotaReportada }) {
         <p className="text-base leading-relaxed text-zinc-700">
           {mascota.caracteristicas}
         </p>
-        <div className="space-y-4 border-t-2 border-zinc-100 pt-4">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-zinc-500">
-              Zona
-            </p>
-            <p className="text-lg font-semibold text-zinc-900">
-              {mascota.ubicacion_zona}
-            </p>
-          </div>
-          <ContactActions
-            telefono={mascota.contacto_telefono}
-            whatsapp={mascota.contacto_whatsapp}
-          />
-        </div>
+        <MascotaCardActions mascota={mascota} />
       </div>
     </article>
   );
