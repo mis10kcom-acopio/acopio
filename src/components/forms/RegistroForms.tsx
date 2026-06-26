@@ -10,6 +10,7 @@ import {
   ActionForm,
   FormError,
   FormField,
+  FormFileField,
   SubmitButton,
 } from "@/components/forms/FormFields";
 import { initialActionState } from "@/types/actions";
@@ -18,7 +19,7 @@ export function MascotaRegistroForm() {
   const [state, formAction] = useActionState(registrarMascota, initialActionState);
 
   return (
-    <ActionForm action={formAction}>
+    <ActionForm action={formAction} encType="multipart/form-data">
       <FormError message={state.error} />
 
       <FormField label="Tipo de reporte" name="tipo_reporte" as="select" required>
@@ -66,15 +67,17 @@ export function MascotaRegistroForm() {
         hint="Incluye código de área. Usaremos este número solo para contacto directo."
       />
 
-      <FormField
-        label="URL de foto"
-        name="foto_url"
-        type="url"
-        placeholder="https://… (opcional)"
-        hint="Enlace directo a una imagen. Si no tienes, déjalo vacío."
+      <FormFileField
+        label="Foto de la mascota"
+        name="foto"
+        accept="image/*"
+        capture="environment"
+        hint="Opcional. Toma una foto con la cámara o elige una de tu galería."
       />
 
-      <SubmitButton>Publicar reporte</SubmitButton>
+      <SubmitButton pendingLabel="Subiendo foto y publicando…">
+        Publicar reporte
+      </SubmitButton>
     </ActionForm>
   );
 }

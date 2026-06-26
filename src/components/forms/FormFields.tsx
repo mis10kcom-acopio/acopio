@@ -69,6 +69,41 @@ export function FormField({
   );
 }
 
+export function FormFileField({
+  label,
+  name,
+  accept = "image/*",
+  capture,
+  hint,
+  required = false,
+}: {
+  label: string;
+  name: string;
+  accept?: string;
+  capture?: "user" | "environment";
+  hint?: string;
+  required?: boolean;
+}) {
+  return (
+    <div>
+      <label htmlFor={name} className={labelClassName}>
+        {label}
+        {required && <span className="text-red-500"> *</span>}
+      </label>
+      <input
+        id={name}
+        name={name}
+        type="file"
+        accept={accept}
+        capture={capture}
+        required={required}
+        className={`${inputClassName} file:mr-3 file:rounded-md file:border-0 file:bg-amber-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-amber-900`}
+      />
+      {hint && <p className="mt-1 text-xs text-zinc-500">{hint}</p>}
+    </div>
+  );
+}
+
 export function FormError({ message }: { message: string | null }) {
   if (!message) return null;
 
@@ -97,9 +132,11 @@ export function FormSuccess({ message }: { message: string | null }) {
 
 export function SubmitButton({
   children,
+  pendingLabel = "Enviando…",
   variant = "primary",
 }: {
   children: React.ReactNode;
+  pendingLabel?: string;
   variant?: "primary" | "danger" | "warning" | "success";
 }) {
   const { pending } = useFormStatus();
@@ -117,7 +154,7 @@ export function SubmitButton({
       disabled={pending}
       className={`w-full rounded-xl px-4 py-3.5 text-base font-semibold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-60 ${variants[variant]}`}
     >
-      {pending ? "Enviando…" : children}
+      {pending ? pendingLabel : children}
     </button>
   );
 }
@@ -126,13 +163,15 @@ export function ActionForm({
   action,
   children,
   className = "space-y-5",
+  encType,
 }: {
   action: (formData: FormData) => void | Promise<void>;
   children: React.ReactNode;
   className?: string;
+  encType?: "multipart/form-data";
 }) {
   return (
-    <form action={action} className={className}>
+    <form action={action} className={className} encType={encType}>
       {children}
     </form>
   );
