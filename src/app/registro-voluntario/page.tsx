@@ -92,7 +92,7 @@ export default function RegistroVoluntarioPage() {
           label="Número de WhatsApp (Opcional)"
           name="contacto_whatsapp"
           type="tel"
-          placeholder="04141234567"
+          placeholder="Ej: +584141234567"
           hint="Si es distinto al teléfono de llamadas."
         />
 

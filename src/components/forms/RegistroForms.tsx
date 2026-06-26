@@ -70,7 +70,7 @@ export function MascotaRegistroForm() {
         label="Número de WhatsApp (Opcional)"
         name="contacto_whatsapp"
         type="tel"
-        placeholder="04141234567"
+        placeholder="Ej: +584141234567"
         hint="Si es distinto al teléfono de llamadas. El botón de WhatsApp solo aparece si lo indicas."
       />
 
@@ -78,7 +78,6 @@ export function MascotaRegistroForm() {
         label="Foto de la mascota"
         name="foto"
         accept="image/*"
-        capture="environment"
         hint="Opcional. Toma una foto con la cámara o elige una de tu galería."
       />
 
@@ -130,7 +129,7 @@ export function AcopioRegistroForm() {
         label="Número de WhatsApp (Opcional)"
         name="contacto_whatsapp"
         type="tel"
-        placeholder="04141234567"
+        placeholder="Ej: +584141234567"
         hint="Si es distinto al teléfono de llamadas."
       />
 

@@ -11,14 +11,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 const MAX_FOTO_SIZE_BYTES = 5 * 1024 * 1024;
 const MASCOTAS_BUCKET = "mascotas";
 
-function getOptionalFile(formData: FormData, key: string): File | null {
-  const value = formData.get(key);
-  if (!(value instanceof File) || value.size === 0) {
-    return null;
-  }
-  return value;
-}
-
 function sanitizeFileName(name: string): string {
   return name
     .normalize("NFD")
@@ -115,11 +107,15 @@ export async function registrarMascota(
     const supabase = getSupabaseAdmin();
     const token = randomUUID();
 
-    const foto = getOptionalFile(formData, "foto");
+    const file = formData.get("foto");
     let fotoUrl: string | null = null;
 
-    if (foto) {
-      fotoUrl = await uploadFotoMascota(supabase, foto);
+    if (file instanceof File && file.size > 0) {
+      try {
+        fotoUrl = await uploadFotoMascota(supabase, file);
+      } catch {
+        fotoUrl = null;
+      }
     }
 
     const { error } = await supabase.from("mascotas_reportadas").insert({

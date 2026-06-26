@@ -2,9 +2,15 @@ export function buildTelUrl(telefono: string): string {
   return `tel:${telefono.replace(/\s/g, "")}`;
 }
 
+export function formatWhatsAppNumber(contactoWhatsapp: string): string {
+  let cleanNumber = contactoWhatsapp.replace(/[^\d+]/g, "");
+  if (!cleanNumber.startsWith("+")) {
+    cleanNumber = `+${cleanNumber}`;
+  }
+  return cleanNumber;
+}
+
 export function buildWhatsAppUrl(telefono: string): string {
-  const digits = telefono.replace(/\D/g, "");
-  const withCountry =
-    digits.startsWith("58") || digits.length > 10 ? digits : `58${digits}`;
-  return `https://wa.me/${withCountry}`;
+  const cleanNumber = formatWhatsAppNumber(telefono);
+  return `https://wa.me/${cleanNumber}`;
 }
