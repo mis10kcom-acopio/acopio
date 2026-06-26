@@ -263,18 +263,36 @@ function VoluntarioCard({ voluntario }: { voluntario: RedVoluntario }) {
     TRANSPORTE: "default",
   };
 
+  const esVeterinario = voluntario.tipo_ayuda === "VETERINARIO";
+
   return (
     <article className="rounded-2xl border-2 border-zinc-200 bg-white p-5 shadow-md">
       <div className="space-y-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={tipoVariants[voluntario.tipo_ayuda]}>
-            {tipoLabels[voluntario.tipo_ayuda]}
-          </Badge>
-          <Badge variant="success">Disponible</Badge>
+        <div className="flex items-start gap-4">
+          {voluntario.foto_url ? (
+            <Image
+              src={voluntario.foto_url}
+              alt={`Logo de ${voluntario.nombre_o_clinica}`}
+              width={72}
+              height={72}
+              crossOrigin="anonymous"
+              className={`h-16 w-16 shrink-0 border-2 border-zinc-100 object-cover shadow-sm ${
+                esVeterinario ? "rounded-full" : "rounded-xl"
+              }`}
+            />
+          ) : null}
+          <div className="min-w-0 flex-1 space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant={tipoVariants[voluntario.tipo_ayuda]}>
+                {tipoLabels[voluntario.tipo_ayuda]}
+              </Badge>
+              <Badge variant="success">Disponible</Badge>
+            </div>
+            <h3 className="text-xl font-bold text-zinc-900">
+              {voluntario.nombre_o_clinica}
+            </h3>
+          </div>
         </div>
-        <h3 className="text-xl font-bold text-zinc-900">
-          {voluntario.nombre_o_clinica}
-        </h3>
         <div className="space-y-4 border-t-2 border-zinc-100 pt-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-wide text-zinc-500">
@@ -288,6 +306,16 @@ function VoluntarioCard({ voluntario }: { voluntario: RedVoluntario }) {
             telefono={voluntario.contacto_telefono}
             whatsapp={voluntario.contacto_whatsapp}
           />
+          {voluntario.informacion_adicional ? (
+            <div className="rounded-xl bg-amber-50/80 px-4 py-3">
+              <p className="text-xs font-bold uppercase tracking-wide text-amber-800/80">
+                Información adicional
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-zinc-700">
+                {voluntario.informacion_adicional}
+              </p>
+            </div>
+          ) : null}
         </div>
       </div>
     </article>

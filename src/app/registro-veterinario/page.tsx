@@ -7,6 +7,7 @@ import {
   ActionForm,
   FormError,
   FormField,
+  FormFileField,
   SubmitButton,
 } from "@/components/forms/FormFields";
 import { initialActionState } from "@/types/actions";
@@ -22,7 +23,7 @@ export default function RegistroVeterinarioPage() {
       title="Registrar clínica o veterinario"
       description="Únete a la red de atención veterinaria de emergencia. Recibirás un enlace para gestionar tu disponibilidad."
     >
-      <ActionForm action={formAction}>
+      <ActionForm action={formAction} encType="multipart/form-data">
         <FormError message={state.error} />
 
         <FormField
@@ -56,7 +57,25 @@ export default function RegistroVeterinarioPage() {
           hint="Si es distinto al teléfono de llamadas."
         />
 
-        <SubmitButton>Registrar clínica / veterinario</SubmitButton>
+        <FormField
+          label="Información Adicional (Servicios, horarios, detalles...)"
+          name="informacion_adicional"
+          as="textarea"
+          rows={4}
+          placeholder="Ej: Consultas de emergencia, cirugías, horario lun–sáb 8am–6pm…"
+          hint="Opcional. Horarios, servicios u otros detalles útiles."
+        />
+
+        <FormFileField
+          label="Logo o banner (Opcional)"
+          name="foto"
+          accept="image/*"
+          hint="Opcional. Sube el logo de tu clínica o una foto representativa."
+        />
+
+        <SubmitButton pendingLabel="Subiendo imagen y registrando…">
+          Registrar clínica / veterinario
+        </SubmitButton>
       </ActionForm>
     </FormShell>
   );

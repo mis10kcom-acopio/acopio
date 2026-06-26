@@ -7,6 +7,7 @@ import {
   ActionForm,
   FormError,
   FormField,
+  FormFileField,
   SubmitButton,
 } from "@/components/forms/FormFields";
 import { initialActionState } from "@/types/actions";
@@ -22,7 +23,7 @@ export default function RegistroVoluntarioPage() {
       title="Registro de voluntario"
       description="Ofrece ayuda como hogar temporal, rescatista o transporte. Recibirás un enlace para gestionar tu disponibilidad."
     >
-      <ActionForm action={formAction}>
+      <ActionForm action={formAction} encType="multipart/form-data">
         <FormError message={state.error} />
 
         <FormField label="Tipo de ayuda" name="tipo_ayuda" as="select" required>
@@ -65,7 +66,25 @@ export default function RegistroVoluntarioPage() {
           hint="Si es distinto al teléfono de llamadas."
         />
 
-        <SubmitButton>Registrarme como voluntario</SubmitButton>
+        <FormField
+          label="Información Adicional (Servicios, horarios, detalles...)"
+          name="informacion_adicional"
+          as="textarea"
+          rows={4}
+          placeholder="Ej: Atención 24h, servicio de emergencias, capacidad para 3 mascotas…"
+          hint="Opcional. Horarios, servicios u otros detalles útiles."
+        />
+
+        <FormFileField
+          label="Logo o banner (Opcional)"
+          name="foto"
+          accept="image/*"
+          hint="Opcional. Sube el logo de tu clínica o una foto representativa."
+        />
+
+        <SubmitButton pendingLabel="Subiendo imagen y registrando…">
+          Registrarme como voluntario
+        </SubmitButton>
       </ActionForm>
     </FormShell>
   );

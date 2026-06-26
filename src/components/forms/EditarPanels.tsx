@@ -15,6 +15,7 @@ import {
   ActionForm,
   FormError,
   FormField,
+  FormFileField,
   FormSuccess,
   SubmitButton,
 } from "@/components/forms/FormFields";
@@ -257,7 +258,7 @@ export function EditarVoluntarioPanel({
           </span>
         </p>
 
-        <ActionForm action={formAction}>
+        <ActionForm action={formAction} encType="multipart/form-data">
           <FormField
             label={
               esVeterinario
@@ -292,7 +293,30 @@ export function EditarVoluntarioPanel({
             placeholder="Ej: +584141234567"
           />
 
-          <SubmitButton>Guardar cambios</SubmitButton>
+          <FormField
+            label="Información Adicional (Servicios, horarios, detalles...)"
+            name="informacion_adicional"
+            as="textarea"
+            rows={4}
+            defaultValue={registro.informacion_adicional ?? ""}
+            placeholder="Horarios, servicios u otros detalles útiles."
+            hint="Opcional."
+          />
+
+          {registro.foto_url ? (
+            <p className="text-sm text-zinc-600">
+              Logo actual cargado. Sube una nueva imagen solo si deseas reemplazarlo.
+            </p>
+          ) : null}
+
+          <FormFileField
+            label="Logo o banner (Opcional)"
+            name="foto"
+            accept="image/*"
+            hint="Opcional. Reemplaza el logo o banner actual."
+          />
+
+          <SubmitButton pendingLabel="Guardando…">Guardar cambios</SubmitButton>
         </ActionForm>
       </section>
 

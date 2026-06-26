@@ -26,6 +26,8 @@ export interface RedVoluntario {
   ubicacion_zona: string;
   contacto_telefono: string;
   contacto_whatsapp: string | null;
+  informacion_adicional: string | null;
+  foto_url: string | null;
   disponibilidad: DisponibilidadVoluntario;
   token_edicion: string;
   creado_el: string;

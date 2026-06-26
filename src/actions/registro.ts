@@ -4,56 +4,15 @@ import { randomUUID } from "crypto";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import {
+  resolveOptionalFotoUrl,
+  uploadImagenStorage,
+} from "@/lib/storage-upload";
 import type { ActionState } from "@/types/actions";
 import type { TipoAyuda, TipoReporte } from "@/types/database";
-import type { SupabaseClient } from "@supabase/supabase-js";
 
-const MAX_FOTO_SIZE_BYTES = 5 * 1024 * 1024;
-const MASCOTAS_BUCKET = "mascotas";
-
-function sanitizeFileName(name: string): string {
-  return name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z0-9.-]/g, "-")
-    .replace(/-+/g, "-")
-    .toLowerCase();
-}
-
-function buildStorageFileName(originalName: string): string {
-  const parts = originalName.split(".");
-  const extension =
-    parts.length > 1 ? parts.pop()?.toLowerCase() ?? "jpg" : "jpg";
-  const baseName = parts.join(".") || "foto";
-  const cleanBase = sanitizeFileName(baseName) || "foto";
-  return `${Date.now()}-${cleanBase}.${extension}`;
-}
-
-async function uploadFotoMascota(
-  supabase: SupabaseClient,
-  file: File,
-): Promise<string> {
-  if (!file.type.startsWith("image/")) {
-    throw new Error("El archivo debe ser una imagen (JPG, PNG, WebP, etc.).");
-  }
-
-  if (file.size > MAX_FOTO_SIZE_BYTES) {
-    throw new Error("La foto no puede superar 5 MB. Intenta con una imagen más liviana.");
-  }
-
-  const fileName = buildStorageFileName(file.name);
-
-  const { error } = await supabase.storage
-    .from(MASCOTAS_BUCKET)
-    .upload(fileName, file, { upsert: false, contentType: file.type });
-
-  if (error) {
-    throw new Error(`Error al subir la foto: ${error.message}`);
-  }
-
-  const { data } = supabase.storage.from(MASCOTAS_BUCKET).getPublicUrl(fileName);
-  return data.publicUrl;
-}
+const MASCOTAS_FOLDER = "mascotas";
+const VOLUNTARIOS_FOLDER = "voluntarios";
 
 function getRequired(formData: FormData, key: string): string {
   const value = formData.get(key);
@@ -120,7 +79,7 @@ export async function registrarMascota(
 
     if (file instanceof File && file.size > 0) {
       try {
-        fotoUrl = await uploadFotoMascota(supabase, file);
+        fotoUrl = await uploadImagenStorage(supabase, file, MASCOTAS_FOLDER);
       } catch {
         fotoUrl = null;
       }
@@ -157,6 +116,11 @@ export async function registrarVoluntario(
   try {
     const supabase = getSupabaseAdmin();
     const token = randomUUID();
+    const fotoUrl = await resolveOptionalFotoUrl(
+      supabase,
+      formData,
+      VOLUNTARIOS_FOLDER,
+    );
 
     const { error } = await supabase.from("red_voluntarios").insert({
       tipo_ayuda: parseTipoAyudaVoluntario(getRequired(formData, "tipo_ayuda")),
@@ -164,6 +128,8 @@ export async function registrarVoluntario(
       ubicacion_zona: getRequired(formData, "ubicacion_zona"),
       contacto_telefono: getRequired(formData, "contacto_telefono"),
       contacto_whatsapp: getOptional(formData, "contacto_whatsapp"),
+      informacion_adicional: getOptional(formData, "informacion_adicional"),
+      foto_url: fotoUrl,
       disponibilidad: "DISPONIBLE",
       token_edicion: token,
     });
@@ -186,6 +152,11 @@ export async function registrarVeterinario(
   try {
     const supabase = getSupabaseAdmin();
     const token = randomUUID();
+    const fotoUrl = await resolveOptionalFotoUrl(
+      supabase,
+      formData,
+      VOLUNTARIOS_FOLDER,
+    );
 
     const { error } = await supabase.from("red_voluntarios").insert({
       tipo_ayuda: "VETERINARIO",
@@ -193,6 +164,8 @@ export async function registrarVeterinario(
       ubicacion_zona: getRequired(formData, "ubicacion_zona"),
       contacto_telefono: getRequired(formData, "contacto_telefono"),
       contacto_whatsapp: getOptional(formData, "contacto_whatsapp"),
+      informacion_adicional: getOptional(formData, "informacion_adicional"),
+      foto_url: fotoUrl,
       disponibilidad: "DISPONIBLE",
       token_edicion: token,
     });

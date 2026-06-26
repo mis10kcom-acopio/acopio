@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
 import { buscarRegistroPorIdentificador } from "@/lib/editar-identificador";
+import { resolveOptionalFotoUrl } from "@/lib/storage-upload";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import type { ActionState } from "@/types/actions";
 import type {
@@ -373,6 +374,12 @@ export async function actualizarVoluntario(
       return { error: "Enlace no válido o registro no encontrado.", success: null };
     }
 
+    const nuevaFotoUrl = await resolveOptionalFotoUrl(
+      supabase,
+      formData,
+      "voluntarios",
+    );
+
     const { data, error } = await supabase
       .from("red_voluntarios")
       .update({
@@ -380,6 +387,8 @@ export async function actualizarVoluntario(
         ubicacion_zona: getRequired(formData, "ubicacion_zona"),
         contacto_telefono: getRequired(formData, "contacto_telefono"),
         contacto_whatsapp: getOptional(formData, "contacto_whatsapp"),
+        informacion_adicional: getOptional(formData, "informacion_adicional"),
+        foto_url: nuevaFotoUrl ?? registro.foto_url,
       })
       .eq("id", registro.id)
       .select("token_edicion")

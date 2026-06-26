@@ -38,6 +38,9 @@ CREATE TABLE IF NOT EXISTS red_voluntarios (
   nombre_o_clinica TEXT NOT NULL,
   ubicacion_zona TEXT NOT NULL,
   contacto_telefono TEXT NOT NULL,
+  contacto_whatsapp TEXT,
+  informacion_adicional TEXT,
+  foto_url TEXT,
   disponibilidad TEXT NOT NULL DEFAULT 'DISPONIBLE' CHECK (disponibilidad IN ('DISPONIBLE', 'LLENO/NO_DISPONIBLE')),
   token_edicion TEXT NOT NULL UNIQUE,
   creado_el TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -94,3 +97,8 @@ CREATE POLICY "Lectura pública voluntarios"
 CREATE POLICY "Lectura pública acopio"
   ON acopio_mascotas FOR SELECT
   USING (true);
+
+-- Migración para bases existentes:
+-- ALTER TABLE red_voluntarios ADD COLUMN IF NOT EXISTS contacto_whatsapp TEXT;
+-- ALTER TABLE red_voluntarios ADD COLUMN IF NOT EXISTS informacion_adicional TEXT;
+-- ALTER TABLE red_voluntarios ADD COLUMN IF NOT EXISTS foto_url TEXT;
