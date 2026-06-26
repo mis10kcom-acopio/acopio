@@ -81,10 +81,10 @@ export default async function EditarPage({
 
   const descriptions = {
     mascota:
-      "Confirma los datos de tu reporte y actualiza el estado cuando corresponda.",
+      "Corrige los datos de tu reporte y actualiza el estado cuando corresponda.",
     voluntario:
-      "Si ya no puedes recibir más animales o casos, actualiza tu disponibilidad.",
-    acopio: "Indica el nivel actual de insumos con un solo toque.",
+      "Edita tu información de contacto y gestiona tu disponibilidad.",
+    acopio: "Actualiza los datos del centro y el nivel de stock de insumos.",
   };
 
   return (
@@ -101,14 +101,14 @@ export default async function EditarPage({
       )}
       {registro.tipo === "voluntario" && (
         <EditarVoluntarioPanel
-          token={token}
+          identificador={token}
           registro={registro.registro}
           successMessage={successMessage}
         />
       )}
       {registro.tipo === "acopio" && (
         <EditarAcopioPanel
-          token={token}
+          identificador={token}
           registro={registro.registro}
           successMessage={successMessage}
         />

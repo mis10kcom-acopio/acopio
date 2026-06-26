@@ -98,6 +98,15 @@ function handleActionError(error: unknown): ActionState {
   return { error: message, success: null };
 }
 
+function redirectExito(token: string, formData: FormData): never {
+  const telefono =
+    getOptional(formData, "contacto_whatsapp") ??
+    getRequired(formData, "contacto_telefono");
+  redirect(
+    `/exito?token=${token}&telefono=${encodeURIComponent(telefono)}`,
+  );
+}
+
 export async function registrarMascota(
   _prevState: ActionState,
   formData: FormData,
@@ -134,7 +143,7 @@ export async function registrarMascota(
       return { error: error.message, success: null };
     }
 
-    redirect(`/exito?token=${token}`);
+    redirectExito(token, formData);
   } catch (error) {
     if (isRedirectError(error)) throw error;
     return handleActionError(error);
@@ -163,7 +172,7 @@ export async function registrarVoluntario(
       return { error: error.message, success: null };
     }
 
-    redirect(`/exito?token=${token}`);
+    redirectExito(token, formData);
   } catch (error) {
     if (isRedirectError(error)) throw error;
     return handleActionError(error);
@@ -192,7 +201,7 @@ export async function registrarVeterinario(
       return { error: error.message, success: null };
     }
 
-    redirect(`/exito?token=${token}`);
+    redirectExito(token, formData);
   } catch (error) {
     if (isRedirectError(error)) throw error;
     return handleActionError(error);
@@ -222,7 +231,7 @@ export async function registrarAcopio(
       return { error: error.message, success: null };
     }
 
-    redirect(`/exito?token=${token}`);
+    redirectExito(token, formData);
   } catch (error) {
     if (isRedirectError(error)) throw error;
     return handleActionError(error);

@@ -11,7 +11,31 @@ import type {
   EstadoStock,
   MascotaReportada,
   RedVoluntario,
+  TipoReporte,
 } from "@/types/database";
+
+function getRequired(formData: FormData, key: string): string {
+  const value = formData.get(key);
+  if (typeof value !== "string" || !value.trim()) {
+    throw new Error(`El campo "${key}" es obligatorio.`);
+  }
+  return value.trim();
+}
+
+function getOptional(formData: FormData, key: string): string | null {
+  const value = formData.get(key);
+  if (typeof value !== "string" || !value.trim()) {
+    return null;
+  }
+  return value.trim();
+}
+
+function parseTipoReporte(value: string): TipoReporte {
+  if (value === "PERDIDO" || value === "ENCONTRADO") {
+    return value;
+  }
+  throw new Error("Selecciona un tipo de reporte válido.");
+}
 
 export type RegistroPorToken =
   | { tipo: "mascota"; registro: MascotaReportada }
@@ -284,6 +308,137 @@ export async function actualizarStockAcopio(
     return await revalidateAndRedirect(
       data.token_edicion,
       `Stock actualizado a: ${labels[estadoStock].toUpperCase()}`,
+    );
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    return handleActionError(error);
+  }
+}
+
+export async function actualizarMascota(
+  identificador: string,
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  try {
+    const supabase = getSupabaseAdmin();
+    const registro = await buscarMascotaPorIdentificador(identificador);
+
+    if (!registro) {
+      return { error: "Enlace no válido o registro no encontrado.", success: null };
+    }
+
+    const { data, error } = await supabase
+      .from("mascotas_reportadas")
+      .update({
+        tipo_reporte: parseTipoReporte(getRequired(formData, "tipo_reporte")),
+        especie: getRequired(formData, "especie"),
+        nombre_mascota: getOptional(formData, "nombre_mascota"),
+        caracteristicas: getRequired(formData, "caracteristicas"),
+        ubicacion_zona: getRequired(formData, "ubicacion_zona"),
+        contacto_telefono: getRequired(formData, "contacto_telefono"),
+        contacto_whatsapp: getOptional(formData, "contacto_whatsapp"),
+      })
+      .eq("id", registro.id)
+      .select("token_edicion")
+      .maybeSingle();
+
+    if (error) {
+      return { error: error.message, success: null };
+    }
+    if (!data) {
+      return { error: "No se pudo actualizar el reporte.", success: null };
+    }
+
+    return await revalidateAndRedirect(
+      data.token_edicion,
+      "Datos del reporte actualizados correctamente.",
+    );
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    return handleActionError(error);
+  }
+}
+
+export async function actualizarVoluntario(
+  identificador: string,
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  try {
+    const supabase = getSupabaseAdmin();
+    const registro = await buscarVoluntarioPorIdentificador(identificador);
+
+    if (!registro) {
+      return { error: "Enlace no válido o registro no encontrado.", success: null };
+    }
+
+    const { data, error } = await supabase
+      .from("red_voluntarios")
+      .update({
+        nombre_o_clinica: getRequired(formData, "nombre_o_clinica"),
+        ubicacion_zona: getRequired(formData, "ubicacion_zona"),
+        contacto_telefono: getRequired(formData, "contacto_telefono"),
+        contacto_whatsapp: getOptional(formData, "contacto_whatsapp"),
+      })
+      .eq("id", registro.id)
+      .select("token_edicion")
+      .maybeSingle();
+
+    if (error) {
+      return { error: error.message, success: null };
+    }
+    if (!data) {
+      return { error: "No se pudo actualizar el registro.", success: null };
+    }
+
+    return await revalidateAndRedirect(
+      data.token_edicion,
+      "Datos actualizados correctamente.",
+    );
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    return handleActionError(error);
+  }
+}
+
+export async function actualizarAcopio(
+  identificador: string,
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  try {
+    const supabase = getSupabaseAdmin();
+    const registro = await buscarAcopioPorIdentificador(identificador);
+
+    if (!registro) {
+      return { error: "Enlace no válido o registro no encontrado.", success: null };
+    }
+
+    const { data, error } = await supabase
+      .from("acopio_mascotas")
+      .update({
+        nombre_centro: getRequired(formData, "nombre_centro"),
+        ubicacion_zona: getRequired(formData, "ubicacion_zona"),
+        direccion_exacta: getRequired(formData, "direccion_exacta"),
+        contacto_telefono: getRequired(formData, "contacto_telefono"),
+        contacto_whatsapp: getOptional(formData, "contacto_whatsapp"),
+        necesidades_urgentes: getRequired(formData, "necesidades_urgentes"),
+      })
+      .eq("id", registro.id)
+      .select("token_edicion")
+      .maybeSingle();
+
+    if (error) {
+      return { error: error.message, success: null };
+    }
+    if (!data) {
+      return { error: "No se pudo actualizar el registro.", success: null };
+    }
+
+    return await revalidateAndRedirect(
+      data.token_edicion,
+      "Datos del centro actualizados correctamente.",
     );
   } catch (error) {
     if (isRedirectError(error)) throw error;

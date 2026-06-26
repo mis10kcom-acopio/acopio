@@ -18,6 +18,7 @@ export function FormField({
   rows = 4,
   children,
   onSelectChange,
+  defaultValue,
 }: {
   label: string;
   name: string;
@@ -29,6 +30,7 @@ export function FormField({
   rows?: number;
   children?: React.ReactNode;
   onSelectChange?: (value: string) => void;
+  defaultValue?: string;
 }) {
   return (
     <div>
@@ -44,6 +46,7 @@ export function FormField({
           placeholder={placeholder}
           rows={rows}
           className={inputClassName}
+          defaultValue={defaultValue}
         />
       ) : as === "select" ? (
         <select
@@ -51,7 +54,7 @@ export function FormField({
           name={name}
           required={required}
           className={inputClassName}
-          defaultValue=""
+          defaultValue={defaultValue ?? ""}
           onChange={(event) => onSelectChange?.(event.target.value)}
         >
           {children}
@@ -64,6 +67,7 @@ export function FormField({
           required={required}
           placeholder={placeholder}
           className={inputClassName}
+          defaultValue={defaultValue}
           inputMode={type === "tel" ? "tel" : undefined}
         />
       )}

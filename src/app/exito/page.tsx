@@ -1,13 +1,13 @@
 import Link from "next/link";
-import { CopyLinkButton } from "@/components/CopyLinkButton";
+import { ExitoLinkActions } from "@/components/ExitoLinkActions";
 import { buildEditUrl, getSiteBaseUrl } from "@/lib/site";
 
 interface ExitoPageProps {
-  searchParams: Promise<{ token?: string }>;
+  searchParams: Promise<{ token?: string; telefono?: string }>;
 }
 
 export default async function ExitoPage({ searchParams }: ExitoPageProps) {
-  const { token } = await searchParams;
+  const { token, telefono } = await searchParams;
 
   if (!token) {
     return (
@@ -29,6 +29,7 @@ export default async function ExitoPage({ searchParams }: ExitoPageProps) {
 
   const baseUrl = await getSiteBaseUrl();
   const editUrl = buildEditUrl(baseUrl, token);
+  const telefonoRegistrado = telefono ? decodeURIComponent(telefono) : null;
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-amber-50 px-4 py-12">
@@ -41,34 +42,23 @@ export default async function ExitoPage({ searchParams }: ExitoPageProps) {
             ¡Registro exitoso!
           </h1>
           <p className="mt-4 text-base text-zinc-600">
-            Guarda este enlace, es tu llave secreta para actualizar el estado más
-            adelante. No lo compartas públicamente.
+            Tu publicación ya está en el listado. Guarda el enlace de abajo
+            antes de salir de esta pantalla.
           </p>
         </div>
 
-        <div className="mt-8 rounded-xl border border-amber-200 bg-amber-50 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">
-            Tu enlace de edición
-          </p>
-          <a
-            href={editUrl}
-            className="mt-2 block break-all text-sm font-medium text-amber-900 underline decoration-amber-400 underline-offset-2"
-          >
-            {editUrl}
-          </a>
-          <CopyLinkButton url={editUrl} />
-        </div>
+        <ExitoLinkActions editUrl={editUrl} telefono={telefonoRegistrado} />
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <Link
             href={editUrl}
-            className="flex-1 rounded-xl bg-amber-600 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-amber-700"
+            className="flex-1 rounded-xl bg-amber-600 px-4 py-3.5 text-center text-base font-semibold text-white transition hover:bg-amber-700"
           >
             Ir a mi panel de edición
           </Link>
           <Link
             href="/"
-            className="flex-1 rounded-xl border border-zinc-300 bg-white px-4 py-3 text-center text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
+            className="flex-1 rounded-xl border border-zinc-300 bg-white px-4 py-3.5 text-center text-base font-semibold text-zinc-700 transition hover:bg-zinc-50"
           >
             Ver listado público
           </Link>
