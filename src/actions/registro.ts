@@ -78,9 +78,8 @@ function parseTipoReporte(value: string): TipoReporte {
   throw new Error("Selecciona un tipo de reporte válido.");
 }
 
-function parseTipoAyuda(value: string): TipoAyuda {
+function parseTipoAyudaVoluntario(value: string): TipoAyuda {
   const valid: TipoAyuda[] = [
-    "VETERINARIO",
     "HOGAR_TEMPORAL",
     "RESCATISTA",
     "TRANSPORTE",
@@ -151,7 +150,36 @@ export async function registrarVoluntario(
     const token = randomUUID();
 
     const { error } = await supabase.from("red_voluntarios").insert({
-      tipo_ayuda: parseTipoAyuda(getRequired(formData, "tipo_ayuda")),
+      tipo_ayuda: parseTipoAyudaVoluntario(getRequired(formData, "tipo_ayuda")),
+      nombre_o_clinica: getRequired(formData, "nombre_o_clinica"),
+      ubicacion_zona: getRequired(formData, "ubicacion_zona"),
+      contacto_telefono: getRequired(formData, "contacto_telefono"),
+      contacto_whatsapp: getOptional(formData, "contacto_whatsapp"),
+      disponibilidad: "DISPONIBLE",
+      token_edicion: token,
+    });
+
+    if (error) {
+      return { error: error.message, success: null };
+    }
+
+    redirect(`/exito?token=${token}`);
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    return handleActionError(error);
+  }
+}
+
+export async function registrarVeterinario(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  try {
+    const supabase = getSupabaseAdmin();
+    const token = randomUUID();
+
+    const { error } = await supabase.from("red_voluntarios").insert({
+      tipo_ayuda: "VETERINARIO",
       nombre_o_clinica: getRequired(formData, "nombre_o_clinica"),
       ubicacion_zona: getRequired(formData, "ubicacion_zona"),
       contacto_telefono: getRequired(formData, "contacto_telefono"),

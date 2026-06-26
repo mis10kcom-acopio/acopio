@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { registrarVoluntario } from "@/actions/registro";
+import { registrarVeterinario } from "@/actions/registro";
 import { FormShell } from "@/components/forms/FormShell";
 import {
   ActionForm,
@@ -11,41 +11,32 @@ import {
 } from "@/components/forms/FormFields";
 import { initialActionState } from "@/types/actions";
 
-export default function RegistroVoluntarioPage() {
+export default function RegistroVeterinarioPage() {
   const [state, formAction] = useActionState(
-    registrarVoluntario,
+    registrarVeterinario,
     initialActionState,
   );
 
   return (
     <FormShell
-      title="Registro de voluntario"
-      description="Ofrece ayuda como hogar temporal, rescatista o transporte. Recibirás un enlace para gestionar tu disponibilidad."
+      title="Registrar clínica o veterinario"
+      description="Únete a la red de atención veterinaria de emergencia. Recibirás un enlace para gestionar tu disponibilidad."
     >
       <ActionForm action={formAction}>
         <FormError message={state.error} />
 
-        <FormField label="Tipo de ayuda" name="tipo_ayuda" as="select" required>
-          <option value="" disabled>
-            Selecciona…
-          </option>
-          <option value="HOGAR_TEMPORAL">Hogar temporal</option>
-          <option value="RESCATISTA">Rescatista</option>
-          <option value="TRANSPORTE">Transporte</option>
-        </FormField>
-
         <FormField
-          label="Nombre y Apellido"
+          label="Nombre de la Clínica o Veterinario"
           name="nombre_o_clinica"
           required
-          placeholder="Tu nombre y apellido"
+          placeholder="Ej: Clínica Veterinaria San Francisco, Dr. García…"
         />
 
         <FormField
           label="Zona / Municipio"
           name="ubicacion_zona"
           required
-          placeholder="Ej: Barquisimeto, Petare…"
+          placeholder="Ej: Caracas, Valencia, Maracaibo…"
         />
 
         <FormField
@@ -65,7 +56,7 @@ export default function RegistroVoluntarioPage() {
           hint="Si es distinto al teléfono de llamadas."
         />
 
-        <SubmitButton>Registrarme como voluntario</SubmitButton>
+        <SubmitButton>Registrar clínica / veterinario</SubmitButton>
       </ActionForm>
     </FormShell>
   );
