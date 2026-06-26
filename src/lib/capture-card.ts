@@ -1,8 +1,21 @@
-import type { TipoReporte } from "@/types/database";
+import type { MascotaReportada, TipoReporte } from "@/types/database";
 
 const SHARE_TITLE = "Huellas a Salvo";
 const SHARE_TEXT = "Mira este reporte en Huellas a Salvo...";
 const MASCOTA_SHARE_FILENAME = "mascota-huellas.jpg";
+const POSTER_EXTRA_HEIGHT = 500;
+const FOOTER_COLOR = "#D97706";
+
+export type MascotaPosterInput = Pick<
+  MascotaReportada,
+  | "foto_url"
+  | "tipo_reporte"
+  | "nombre_mascota"
+  | "especie"
+  | "ubicacion_zona"
+  | "caracteristicas"
+  | "contacto_telefono"
+>;
 
 function loadCrossOriginImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -27,30 +40,56 @@ function canvasToJpegBlob(canvas: HTMLCanvasElement): Promise<Blob> {
   });
 }
 
-export async function composeMascotaShareImage(
-  fotoUrl: string,
-  tipoReporte: TipoReporte,
-): Promise<Blob> {
-  const img = await loadCrossOriginImage(fotoUrl);
-  const canvas = document.createElement("canvas");
-  canvas.width = img.naturalWidth;
-  canvas.height = img.naturalHeight;
+function wrapText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  maxWidth: number,
+  lineHeight: number,
+  maxBottom?: number,
+): number {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  let line = "";
+  let currentY = y;
 
-  const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    throw new Error("Canvas no disponible");
+  for (const word of words) {
+    const testLine = line ? `${line} ${word}` : word;
+    const fitsWidth = ctx.measureText(testLine).width <= maxWidth;
+
+    if (!fitsWidth && line) {
+      if (maxBottom !== undefined && currentY + lineHeight > maxBottom) {
+        break;
+      }
+      ctx.fillText(line, x, currentY);
+      line = word;
+      currentY += lineHeight;
+    } else {
+      line = testLine;
+    }
   }
 
-  ctx.drawImage(img, 0, 0);
+  if (line && (maxBottom === undefined || currentY + lineHeight <= maxBottom)) {
+    ctx.fillText(line, x, currentY);
+    currentY += lineHeight;
+  }
 
+  return currentY;
+}
+
+function drawStatusBanner(
+  ctx: CanvasRenderingContext2D,
+  canvasWidth: number,
+  tipoReporte: TipoReporte,
+): void {
   const esPerdido = tipoReporte === "PERDIDO";
   const label = esPerdido ? "PERDIDO" : "ENCONTRADO";
   const color = esPerdido ? "#EF4444" : "#22C55E";
 
-  const fontSize = Math.max(18, Math.round(canvas.width * 0.06));
+  const fontSize = Math.max(18, Math.round(canvasWidth * 0.06));
   const paddingX = fontSize * 0.6;
   const paddingY = fontSize * 0.35;
-  const margin = Math.round(canvas.width * 0.03);
+  const margin = Math.round(canvasWidth * 0.03);
 
   ctx.font = `bold ${fontSize}px system-ui, -apple-system, sans-serif`;
   const textWidth = ctx.measureText(label).width;
@@ -64,6 +103,96 @@ export async function composeMascotaShareImage(
   ctx.textBaseline = "middle";
   ctx.textAlign = "left";
   ctx.fillText(label, margin + paddingX, margin + bannerHeight / 2);
+}
+
+export async function composeMascotaShareImage(
+  data: MascotaPosterInput,
+): Promise<Blob> {
+  if (!data.foto_url) {
+    throw new Error("La mascota no tiene foto");
+  }
+
+  const img = await loadCrossOriginImage(data.foto_url);
+  const width = img.naturalWidth;
+  const imageHeight = img.naturalHeight;
+  const footerHeight = Math.max(56, Math.round(width * 0.1));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = imageHeight + POSTER_EXTRA_HEIGHT;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    throw new Error("Canvas no disponible");
+  }
+
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.drawImage(img, 0, 0, width, imageHeight);
+  drawStatusBanner(ctx, width, data.tipo_reporte);
+
+  const paddingX = Math.round(width * 0.05);
+  const contentWidth = width - paddingX * 2;
+  const footerY = canvas.height - footerHeight;
+
+  const contactSize = Math.max(18, Math.round(width * 0.055));
+  const contactY = footerY - Math.round(width * 0.05) - contactSize;
+  const maxDescBottom = contactY - Math.round(width * 0.04);
+
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+
+  let y = imageHeight + Math.round(width * 0.04);
+
+  const nameSize = Math.max(22, Math.round(width * 0.075));
+  ctx.font = `bold ${nameSize}px system-ui, -apple-system, sans-serif`;
+  ctx.fillStyle = "#000000";
+  const displayName = data.nombre_mascota?.trim() || data.especie;
+  ctx.fillText(displayName, paddingX, y);
+  y += nameSize * 1.4;
+
+  const metaSize = Math.max(16, Math.round(width * 0.042));
+  ctx.font = `${metaSize}px system-ui, -apple-system, sans-serif`;
+  ctx.fillStyle = "#52525B";
+  ctx.fillText(
+    `${data.especie} · Zona: ${data.ubicacion_zona}`,
+    paddingX,
+    y,
+  );
+  y += metaSize * 1.6;
+
+  const descSize = Math.max(15, Math.round(width * 0.038));
+  const descLineHeight = descSize * 1.45;
+  ctx.font = `${descSize}px system-ui, -apple-system, sans-serif`;
+  ctx.fillStyle = "#3F3F46";
+  y = wrapText(
+    ctx,
+    data.caracteristicas,
+    paddingX,
+    y,
+    contentWidth,
+    descLineHeight,
+    maxDescBottom,
+  );
+
+  ctx.font = `bold ${contactSize}px system-ui, -apple-system, sans-serif`;
+  ctx.fillStyle = "#000000";
+  ctx.fillText(`CONTACTO: ${data.contacto_telefono}`, paddingX, contactY);
+
+  ctx.fillStyle = FOOTER_COLOR;
+  ctx.fillRect(0, footerY, width, footerHeight);
+
+  const footerFontSize = Math.max(14, Math.round(width * 0.032));
+  ctx.font = `600 ${footerFontSize}px system-ui, -apple-system, sans-serif`;
+  ctx.fillStyle = "#FFFFFF";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(
+    "Generado en huellasasalvo.org",
+    width / 2,
+    footerY + footerHeight / 2,
+  );
 
   return canvasToJpegBlob(canvas);
 }
@@ -111,15 +240,14 @@ export async function shareNativeImage(blob: Blob, filename: string): Promise<vo
 }
 
 export async function shareMascotaPhotoWithFallbacks(
-  fotoUrl: string | null,
-  tipoReporte: TipoReporte,
+  mascota: MascotaPosterInput,
   siteUrl: string,
 ): Promise<"shared-image" | "shared-text" | "downloaded" | "cancelled"> {
   let blob: Blob | null = null;
 
-  if (fotoUrl) {
+  if (mascota.foto_url) {
     try {
-      blob = await composeMascotaShareImage(fotoUrl, tipoReporte);
+      blob = await composeMascotaShareImage(mascota);
     } catch {
       blob = null;
     }

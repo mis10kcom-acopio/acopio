@@ -138,11 +138,7 @@ function MascotaCardActions({ mascota }: { mascota: MascotaReportada }) {
     setShareLabel("Generando…");
 
     try {
-      const result = await shareMascotaPhotoWithFallbacks(
-        mascota.foto_url,
-        mascota.tipo_reporte,
-        SITE_URL,
-      );
+      const result = await shareMascotaPhotoWithFallbacks(mascota, SITE_URL);
 
       if (result !== "cancelled") {
         setShareLabel(
