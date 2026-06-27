@@ -80,7 +80,6 @@ export async function registrarMascota(
     const token = randomUUID();
 
     const estadoRaw = getRequiredSelect(formData, "estado");
-    const especie = getRequiredSelect(formData, "especie");
     const estado = parseEstadoMascota(estadoRaw);
 
     const file = formData.get("foto");
@@ -99,7 +98,6 @@ export async function registrarMascota(
     }
 
     const payload = {
-      especie,
       nombre_mascota: getOptional(formData, "nombre_mascota"),
       caracteristicas: getRequired(formData, "caracteristicas"),
       ubicacion_zona: getRequired(formData, "ubicacion_zona"),

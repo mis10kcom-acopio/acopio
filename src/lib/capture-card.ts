@@ -16,7 +16,6 @@ export type MascotaPosterInput = Pick<
   | "estado"
   | "tipo_reporte"
   | "nombre_mascota"
-  | "especie"
   | "ubicacion_zona"
   | "caracteristicas"
   | "contacto_telefono"
@@ -238,18 +237,14 @@ export async function composeMascotaShareImage(
   const nameSize = Math.max(22, Math.round(width * 0.075));
   ctx.font = `bold ${nameSize}px system-ui, -apple-system, sans-serif`;
   ctx.fillStyle = "#000000";
-  const displayName = data.nombre_mascota?.trim() || data.especie;
+  const displayName = data.nombre_mascota?.trim() || "Mascota reportada";
   ctx.fillText(displayName, paddingX, y);
   y += nameSize * 1.4;
 
   const metaSize = Math.max(16, Math.round(width * 0.042));
   ctx.font = `${metaSize}px system-ui, -apple-system, sans-serif`;
   ctx.fillStyle = "#52525B";
-  ctx.fillText(
-    `${data.especie} · Zona: ${data.ubicacion_zona}`,
-    paddingX,
-    y,
-  );
+  ctx.fillText(`Zona: ${data.ubicacion_zona}`, paddingX, y);
   y += metaSize * 1.6;
 
   const descSize = Math.max(15, Math.round(width * 0.038));

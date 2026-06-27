@@ -40,7 +40,6 @@ function isMissingWhatsappColumnError(message: string): boolean {
 }
 
 type MascotaInsertPayload = {
-  especie: string;
   nombre_mascota: string | null;
   caracteristicas: string;
   ubicacion_zona: string;
@@ -56,7 +55,6 @@ function buildInsertRow(
   includeWhatsapp: boolean,
 ): Record<string, unknown> {
   const row: Record<string, unknown> = {
-    especie: basePayload.especie,
     nombre_mascota: basePayload.nombre_mascota,
     caracteristicas: basePayload.caracteristicas,
     ubicacion_zona: basePayload.ubicacion_zona,

@@ -9,7 +9,6 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE TABLE IF NOT EXISTS mascotas_reportadas (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tipo_reporte TEXT NOT NULL CHECK (tipo_reporte IN ('PERDIDO', 'ENCONTRADO')),
-  especie TEXT NOT NULL,
   nombre_mascota TEXT,
   caracteristicas TEXT NOT NULL,
   ubicacion_zona TEXT NOT NULL,

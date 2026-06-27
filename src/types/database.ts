@@ -7,7 +7,6 @@ export type EstadoStock = "CRITICO" | "MODERADO" | "ABASTECIDO";
 export interface MascotaReportada {
   id: string;
   tipo_reporte: TipoReporte;
-  especie: string;
   nombre_mascota: string | null;
   caracteristicas: string;
   ubicacion_zona: string;

@@ -353,7 +353,6 @@ export async function actualizarMascota(
       supabase,
       registro.id,
       {
-        especie: getRequired(formData, "especie"),
         nombre_mascota: getOptional(formData, "nombre_mascota"),
         caracteristicas: getRequired(formData, "caracteristicas"),
         ubicacion_zona: getRequired(formData, "ubicacion_zona"),

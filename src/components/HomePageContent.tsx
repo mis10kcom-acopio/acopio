@@ -220,7 +220,7 @@ function MascotaCard({ mascota }: { mascota: MascotaReportada }) {
           {mascota.foto_url ? (
             <Image
               src={mascota.foto_url}
-              alt={mascota.nombre_mascota ?? `Mascota ${mascota.especie}`}
+              alt={mascota.nombre_mascota ?? "Mascota reportada"}
               width={600}
               height={600}
               crossOrigin="anonymous"

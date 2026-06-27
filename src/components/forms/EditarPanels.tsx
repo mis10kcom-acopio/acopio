@@ -124,13 +124,6 @@ export function EditarMascotaPanel({
           </FormField>
 
           <FormField
-            label="Especie"
-            name="especie"
-            required
-            defaultValue={registro.especie}
-          />
-
-          <FormField
             label="Nombre de la mascota"
             name="nombre_mascota"
             defaultValue={registro.nombre_mascota ?? ""}

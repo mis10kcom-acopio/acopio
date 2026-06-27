@@ -63,15 +63,6 @@ export function MascotaRegistroForm() {
         <option value="EN_CASA">En Casa</option>
       </FormField>
 
-      <FormField label="Especie" name="especie" as="select" required>
-        <option value="" disabled hidden>
-          Selecciona…
-        </option>
-        <option value="Perro">Perro</option>
-        <option value="Gato">Gato</option>
-        <option value="Otro">Otro</option>
-      </FormField>
-
       <FormField
         label="Nombre de la mascota"
         name="nombre_mascota"
