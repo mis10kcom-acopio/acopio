@@ -1,9 +1,8 @@
-export type TipoReporte = "PERDIDO" | "ENCONTRADO";
+export type TipoReporte = "PERDIDO" | "ENCONTRADO" | "EN_RESGUARDO" | "EN_CASA";
 export type EstadoMascota = "PERDIDO" | "EN_RESGUARDO" | "EN_CASA";
 export type TipoAyuda = "VETERINARIO" | "HOGAR_TEMPORAL" | "RESCATISTA" | "TRANSPORTE";
 export type DisponibilidadVoluntario = "DISPONIBLE" | "LLENO/NO_DISPONIBLE";
 export type EstadoStock = "CRITICO" | "MODERADO" | "ABASTECIDO";
-
 export interface MascotaReportada {
   id: string;
   tipo_reporte: TipoReporte;
@@ -17,7 +16,6 @@ export interface MascotaReportada {
   token_edicion: string;
   creado_el: string;
 }
-
 export interface RedVoluntario {
   id: string;
   tipo_ayuda: TipoAyuda;
@@ -31,7 +29,6 @@ export interface RedVoluntario {
   token_edicion: string;
   creado_el: string;
 }
-
 export interface AcopioMascota {
   id: string;
   nombre_centro: string;
@@ -44,7 +41,6 @@ export interface AcopioMascota {
   token_edicion: string;
   creado_el: string;
 }
-
 export interface HomePageData {
   mascotas: MascotaReportada[];
   voluntarios: RedVoluntario[];

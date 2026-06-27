@@ -1,7 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { EstadoMascota, TipoReporte } from "@/types/database";
 
-/** Columnas permitidas al insertar en mascotas_reportadas. */
 export const MASCOTAS_INSERT_COLUMNS = [
   "tipo_reporte",
   "estado",
@@ -45,13 +44,17 @@ export function toModernDbEstado(estado: EstadoMascota): {
   estado: string;
   tipo_reporte: TipoReporte;
 } {
+  const tipoReporteMap: Record<EstadoMascota, TipoReporte> = {
+    PERDIDO: "PERDIDO",
+    EN_RESGUARDO: "EN_RESGUARDO",
+    EN_CASA: "EN_CASA",
+  };
   return {
     estado,
-    tipo_reporte: estado === "PERDIDO" ? "PERDIDO" : "ENCONTRADO",
+    tipo_reporte: tipoReporteMap[estado],
   };
 }
 
-/** Valores aceptados por la BD antes de la migración a 3 estados. */
 export function toLegacyDbEstado(estado: EstadoMascota): {
   estado: string;
   tipo_reporte: TipoReporte;
@@ -59,7 +62,6 @@ export function toLegacyDbEstado(estado: EstadoMascota): {
   if (estado === "EN_CASA") {
     return { estado: "RESUELTO", tipo_reporte: "ENCONTRADO" };
   }
-
   return {
     estado: "ACTIVO",
     tipo_reporte: estado === "PERDIDO" ? "PERDIDO" : "ENCONTRADO",
@@ -67,7 +69,10 @@ export function toLegacyDbEstado(estado: EstadoMascota): {
 }
 
 export function isMascotaEstadoConstraintError(message: string): boolean {
-  return message.includes("mascotas_reportadas_estado_check");
+  return (
+    message.includes("mascotas_reportadas_estado_check") ||
+    message.includes("mascotas_reportadas_tipo_reporte_check")
+  );
 }
 
 function isMissingWhatsappColumnError(message: string): boolean {
@@ -112,17 +117,12 @@ async function insertRowWithOptionalWhatsappFallback(
   const withWhatsapp = buildInsertRow(basePayload, estadoRow, true);
   let { error } = await tryInsertRow(supabase, withWhatsapp);
 
-  if (!error) {
-    return { error: null };
-  }
+  if (!error) return { error: null };
 
   if (isMissingWhatsappColumnError(error.message)) {
     const withoutWhatsapp = buildInsertRow(basePayload, estadoRow, false);
     ({ error } = await tryInsertRow(supabase, withoutWhatsapp));
-
-    if (!error) {
-      return { error: null };
-    }
+    if (!error) return { error: null };
   }
 
   return { error: error.message };
@@ -147,9 +147,7 @@ export async function insertMascotaReportada(
       estadoRow,
     );
 
-    if (!result.error) {
-      return { error: null };
-    }
+    if (!result.error) return { error: null };
 
     lastError = result.error;
 
@@ -158,9 +156,7 @@ export async function insertMascotaReportada(
     }
   }
 
-  return {
-    error: lastError ?? "No se pudo guardar el reporte.",
-  };
+  return { error: lastError ?? "No se pudo guardar el reporte." };
 }
 
 type MascotaUpdateFields = {
@@ -175,23 +171,11 @@ function pickMascotaUpdateFields(
   fields: Record<string, unknown>,
 ): MascotaUpdateFields {
   const picked: MascotaUpdateFields = {};
-
-  if ("nombre_mascota" in fields) {
-    picked.nombre_mascota = fields.nombre_mascota as string | null;
-  }
-  if ("caracteristicas" in fields) {
-    picked.caracteristicas = fields.caracteristicas as string;
-  }
-  if ("ubicacion_zona" in fields) {
-    picked.ubicacion_zona = fields.ubicacion_zona as string;
-  }
-  if ("contacto_telefono" in fields) {
-    picked.contacto_telefono = fields.contacto_telefono as string;
-  }
-  if ("contacto_whatsapp" in fields) {
-    picked.contacto_whatsapp = fields.contacto_whatsapp as string | null;
-  }
-
+  if ("nombre_mascota" in fields) picked.nombre_mascota = fields.nombre_mascota as string | null;
+  if ("caracteristicas" in fields) picked.caracteristicas = fields.caracteristicas as string;
+  if ("ubicacion_zona" in fields) picked.ubicacion_zona = fields.ubicacion_zona as string;
+  if ("contacto_telefono" in fields) picked.contacto_telefono = fields.contacto_telefono as string;
+  if ("contacto_whatsapp" in fields) picked.contacto_whatsapp = fields.contacto_whatsapp as string | null;
   return picked;
 }
 
@@ -216,21 +200,11 @@ function buildUpdateRow(
     estado: estadoRow.estado,
   };
 
-  if (fields.nombre_mascota !== undefined) {
-    row.nombre_mascota = fields.nombre_mascota;
-  }
-  if (fields.caracteristicas !== undefined) {
-    row.caracteristicas = fields.caracteristicas;
-  }
-  if (fields.ubicacion_zona !== undefined) {
-    row.ubicacion_zona = fields.ubicacion_zona;
-  }
-  if (fields.contacto_telefono !== undefined) {
-    row.contacto_telefono = fields.contacto_telefono;
-  }
-  if (includeWhatsapp && fields.contacto_whatsapp !== undefined) {
-    row.contacto_whatsapp = fields.contacto_whatsapp;
-  }
+  if (fields.nombre_mascota !== undefined) row.nombre_mascota = fields.nombre_mascota;
+  if (fields.caracteristicas !== undefined) row.caracteristicas = fields.caracteristicas;
+  if (fields.ubicacion_zona !== undefined) row.ubicacion_zona = fields.ubicacion_zona;
+  if (fields.contacto_telefono !== undefined) row.contacto_telefono = fields.contacto_telefono;
+  if (includeWhatsapp && fields.contacto_whatsapp !== undefined) row.contacto_whatsapp = fields.contacto_whatsapp;
 
   return row;
 }
@@ -259,33 +233,18 @@ export async function updateMascotaReportada(
         .select("token_edicion")
         .maybeSingle();
 
-      if (!result.error) {
-        return result;
-      }
+      if (!result.error) return result;
 
       lastResult = result;
 
-      if (
-        isMissingWhatsappColumnError(result.error.message) &&
-        includeWhatsapp
-      ) {
-        continue;
-      }
-
-      if (!isMascotaEstadoConstraintError(result.error.message)) {
-        return result;
-      }
+      if (isMissingWhatsappColumnError(result.error.message) && includeWhatsapp) continue;
+      if (!isMascotaEstadoConstraintError(result.error.message)) return result;
 
       break;
     }
   }
 
-  return (
-    lastResult ?? {
-      data: null,
-      error: { message: "No se pudo actualizar el reporte." },
-    }
-  );
+  return lastResult ?? { data: null, error: { message: "No se pudo actualizar el reporte." } };
 }
 
 export async function updateMascotaEstadoOnly(
