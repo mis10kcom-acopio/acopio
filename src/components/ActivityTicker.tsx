@@ -4,8 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ActivityItem } from "@/lib/activity-ticker";
 import { formatRelativeTime } from "@/lib/relative-time";
 
-const ROTATE_MS = 5000;
-const FADE_MS = 500;
+const ROTATE_MS = 18000;
 
 const FALLBACK_MESSAGE =
   "⚡ Última actividad: Plataforma en línea — reportes en tiempo real";
@@ -28,7 +27,6 @@ export function ActivityTicker({ items }: { items: ActivityItem[] }) {
   );
 
   const [index, setIndex] = useState(0);
-  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
     const timeInterval = window.setInterval(() => {
@@ -41,11 +39,7 @@ export function ActivityTicker({ items }: { items: ActivityItem[] }) {
     if (messages.length <= 1) return;
 
     const rotateInterval = window.setInterval(() => {
-      setVisible(false);
-      window.setTimeout(() => {
-        setIndex((current) => (current + 1) % messages.length);
-        setVisible(true);
-      }, FADE_MS);
+      setIndex((current) => (current + 1) % messages.length);
     }, ROTATE_MS);
 
     return () => window.clearInterval(rotateInterval);
@@ -59,17 +53,18 @@ export function ActivityTicker({ items }: { items: ActivityItem[] }) {
 
   return (
     <div
-      className="sticky top-0 z-50 w-full border-b border-slate-800 bg-slate-900 px-4 py-1.5 text-center text-sm text-slate-100"
+      className="sticky top-0 z-50 w-full overflow-hidden border-b border-slate-800 bg-slate-900 py-2 text-base text-slate-100"
       role="status"
       aria-live="polite"
     >
-      <p
-        className={`mx-auto max-w-6xl truncate transition-opacity duration-500 ${
-          visible ? "opacity-100" : "opacity-0"
-        }`}
-      >
-        {message}
-      </p>
+      <div className="mx-auto max-w-6xl overflow-hidden">
+        <p
+          key={`${index}-${message}`}
+          className="activity-ticker-marquee inline-block whitespace-nowrap px-4 text-slate-100"
+        >
+          {message}
+        </p>
+      </div>
     </div>
   );
 }
