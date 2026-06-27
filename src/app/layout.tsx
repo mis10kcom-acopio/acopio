@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ActivityTickerShell } from "@/components/ActivityTickerShell";
 import { SupportFooter } from "@/components/SupportFooter";
 import {
   DEFAULT_OG_IMAGE,
@@ -85,7 +86,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -96,6 +97,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <ActivityTickerShell />
         <div className="flex-1">{children}</div>
         <SupportFooter />
         <GoogleAnalytics gaId="G-ZT47MKQTXM" />
