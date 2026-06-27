@@ -36,29 +36,33 @@ const CTA_LINKS = [
 export function HomeHeader() {
   return (
     <header className="border-b border-amber-200/80 bg-white">
-      <div className="mx-auto max-w-6xl px-4 py-10 sm:py-12">
+      <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
         <div className="flex flex-col items-center text-center">
           <Image
             src="/logohuellas.png"
             alt="Logo Huellas a Salvo"
             width={90}
             height={90}
-            className="mx-auto mb-4 object-contain"
+            className="mx-auto mb-3 object-contain"
             priority
           />
           <h1 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
             Huellas a Salvo
           </h1>
-          <p className="mt-3 max-w-xl text-base leading-relaxed text-zinc-600 sm:text-lg">
-            Plataforma de emergencia para el cuidado de animales en Venezuela.
+          <p className="mt-2 max-w-2xl text-base leading-snug text-zinc-600 sm:text-lg">
+            Plataforma de emergencia en Venezuela para reportar mascotas
+            perdidas, ubicar ayuda veterinaria y organizar centros de acopio.
           </p>
-          <p className="mt-4 max-w-2xl text-sm text-zinc-500 sm:text-base">
-            Reporta mascotas, encuentra ayuda veterinaria, hogares temporales y
-            centros de acopio. Actualizado cada 30 segundos.
+          <p className="mt-2 flex items-center justify-center gap-2 text-xs text-gray-500 sm:text-sm">
+            <span
+              className="h-2 w-2 shrink-0 rounded-full bg-green-500 animate-pulse"
+              aria-hidden
+            />
+            Actualizado cada 30 segundos
           </p>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {CTA_LINKS.map(({ href, label, icon: Icon, className }) => (
             <Link
               key={href}
