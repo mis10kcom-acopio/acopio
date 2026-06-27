@@ -5,7 +5,6 @@ import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { parseEstadoMascota } from "@/lib/mascota-estado";
-import { parseEspecieMascota } from "@/lib/mascota-especie";
 import {
   resolveOptionalFotoUrl,
   uploadImagenStorage,
@@ -85,7 +84,7 @@ export async function registrarMascota(
 
     const { error } = await supabase.from("mascotas_reportadas").insert({
       tipo_reporte: estado === "PERDIDO" ? "PERDIDO" : "ENCONTRADO",
-      especie: parseEspecieMascota(getRequired(formData, "especie")),
+      especie: getRequired(formData, "especie"),
       nombre_mascota: getOptional(formData, "nombre_mascota"),
       caracteristicas: getRequired(formData, "caracteristicas"),
       ubicacion_zona: getRequired(formData, "ubicacion_zona"),

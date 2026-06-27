@@ -15,7 +15,6 @@ import {
   getMascotaEstado,
   MASCOTA_ESTADO_CONFIG,
 } from "@/lib/mascota-estado";
-import { normalizeEspecieForMatch } from "@/lib/mascota-especie";
 import {
   ActionForm,
   FormError,
@@ -127,14 +126,9 @@ export function EditarMascotaPanel({
           <FormField
             label="Especie"
             name="especie"
-            as="select"
             required
-            defaultValue={normalizeEspecieForMatch(registro.especie)}
-          >
-            <option value="Perro">Perro</option>
-            <option value="Gato">Gato</option>
-            <option value="Otro">Otro</option>
-          </FormField>
+            defaultValue={registro.especie}
+          />
 
           <FormField
             label="Nombre de la mascota"

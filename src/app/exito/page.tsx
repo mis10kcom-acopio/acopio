@@ -1,26 +1,9 @@
 import Link from "next/link";
 import { ExitoLinkActions } from "@/components/ExitoLinkActions";
-import { MatchInmediato } from "@/components/MatchInmediato";
-import { findImmediateMatches } from "@/lib/mascota-match";
 import { buildEditUrl, getSiteBaseUrl } from "@/lib/site";
-import { getSupabase } from "@/lib/supabase";
-import type { MascotaReportada } from "@/types/database";
 
 interface ExitoPageProps {
   searchParams: Promise<{ token?: string; telefono?: string }>;
-}
-
-async function fetchMascotaByToken(
-  token: string,
-): Promise<MascotaReportada | null> {
-  const supabase = getSupabase();
-  const { data } = await supabase
-    .from("mascotas_reportadas")
-    .select("*")
-    .eq("token_edicion", token)
-    .maybeSingle();
-
-  return data as MascotaReportada | null;
 }
 
 export default async function ExitoPage({ searchParams }: ExitoPageProps) {
@@ -48,12 +31,6 @@ export default async function ExitoPage({ searchParams }: ExitoPageProps) {
   const editUrl = buildEditUrl(baseUrl, token);
   const telefonoRegistrado = telefono ? decodeURIComponent(telefono) : null;
 
-  const supabase = getSupabase();
-  const mascotaRegistrada = await fetchMascotaByToken(token);
-  const matches = mascotaRegistrada
-    ? await findImmediateMatches(supabase, mascotaRegistrada)
-    : [];
-
   return (
     <main className="flex min-h-screen items-center justify-center bg-amber-50 px-4 py-12">
       <div className="w-full max-w-lg rounded-2xl border border-amber-200 bg-white p-8 shadow-sm">
@@ -62,20 +39,13 @@ export default async function ExitoPage({ searchParams }: ExitoPageProps) {
             ✅
           </span>
           <h1 className="mt-4 text-2xl font-bold leading-tight text-zinc-900 sm:text-3xl">
-            ¡Registro exitoso!
+            Reporte guardado
           </h1>
           <p className="mt-4 text-base text-zinc-600">
             Tu publicación ya está en el listado. Guarda el enlace de abajo
             antes de salir de esta pantalla.
           </p>
         </div>
-
-        {mascotaRegistrada && matches.length > 0 ? (
-          <MatchInmediato
-            matches={matches}
-            tipoReporte={mascotaRegistrada.tipo_reporte}
-          />
-        ) : null}
 
         <ExitoLinkActions editUrl={editUrl} telefono={telefonoRegistrado} />
 
