@@ -1,6 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { EstadoMascota, TipoReporte } from "@/types/database";
 
+type MascotaTokenUpdateResult = {
+  data: { token_edicion: string } | null;
+  error: { message: string } | null;
+};
+
 export function toModernDbEstado(estado: EstadoMascota): {
   estado: string;
   tipo_reporte: TipoReporte;
@@ -156,13 +161,13 @@ export async function updateMascotaReportada(
   id: string,
   fields: Record<string, unknown>,
   estadoLogico: EstadoMascota,
-) {
+): Promise<MascotaTokenUpdateResult> {
   const schemaAttempts = [
     toModernDbEstado(estadoLogico),
     toLegacyDbEstado(estadoLogico),
   ];
 
-  let lastResult: Awaited<ReturnType<typeof supabase.from>> | null = null;
+  let lastResult: MascotaTokenUpdateResult | null = null;
 
   for (const estadoRow of schemaAttempts) {
     for (const includeWhatsapp of [true, false]) {
@@ -207,6 +212,6 @@ export async function updateMascotaEstadoOnly(
   supabase: SupabaseClient,
   id: string,
   estadoLogico: EstadoMascota,
-) {
+): Promise<MascotaTokenUpdateResult> {
   return updateMascotaReportada(supabase, id, {}, estadoLogico);
 }
