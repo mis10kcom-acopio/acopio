@@ -106,7 +106,59 @@ function drawStatusBanner(
 }
 
 const INSTAGRAM_SAVE_HINT =
-  "Mantén presionada la imagen para guardarla y compartirla.";
+  "Haz una captura de pantalla (screenshot) de este cartel y compártela en tus historias o chats para ayudar.";
+
+function measureWrappedLineCount(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+): number {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return 1;
+
+  let line = "";
+  let lineCount = 1;
+
+  for (const word of words) {
+    const testLine = line ? `${line} ${word}` : word;
+    if (ctx.measureText(testLine).width > maxWidth && line) {
+      line = word;
+      lineCount += 1;
+    } else {
+      line = testLine;
+    }
+  }
+
+  return lineCount;
+}
+
+function drawCenteredWrappedText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  centerX: number,
+  startY: number,
+  maxWidth: number,
+  lineHeight: number,
+): void {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  let line = "";
+  let currentY = startY;
+
+  for (const word of words) {
+    const testLine = line ? `${line} ${word}` : word;
+    if (ctx.measureText(testLine).width > maxWidth && line) {
+      ctx.fillText(line, centerX - ctx.measureText(line).width / 2, currentY);
+      line = word;
+      currentY += lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+
+  if (line) {
+    ctx.fillText(line, centerX - ctx.measureText(line).width / 2, currentY);
+  }
+}
 
 export type ComposeMascotaShareImageOptions = {
   forInstagram?: boolean;
@@ -125,9 +177,30 @@ export async function composeMascotaShareImage(
   const width = img.naturalWidth;
   const imageHeight = img.naturalHeight;
   const footerHeight = Math.max(56, Math.round(width * 0.1));
-  const instagramHintHeight = forInstagram
-    ? Math.max(52, Math.round(width * 0.09))
-    : 0;
+
+  const hintFontSize = Math.max(12, Math.round(width * 0.028));
+  const hintLineHeight = hintFontSize * 1.4;
+  const hintPaddingX = Math.round(width * 0.06);
+  const hintMaxWidth = width - hintPaddingX * 2;
+
+  let instagramHintHeight = 0;
+  if (forInstagram) {
+    const measureCtx = document.createElement("canvas").getContext("2d");
+    if (measureCtx) {
+      measureCtx.font = `bold ${hintFontSize}px system-ui, -apple-system, sans-serif`;
+      const lineCount = measureWrappedLineCount(
+        measureCtx,
+        INSTAGRAM_SAVE_HINT,
+        hintMaxWidth,
+      );
+      instagramHintHeight = Math.max(
+        64,
+        Math.round(hintLineHeight * lineCount + hintFontSize * 1.2),
+      );
+    } else {
+      instagramHintHeight = Math.max(72, Math.round(width * 0.12));
+    }
+  }
 
   const canvas = document.createElement("canvas");
   canvas.width = width;
@@ -146,7 +219,7 @@ export async function composeMascotaShareImage(
 
   const paddingX = Math.round(width * 0.05);
   const contentWidth = width - paddingX * 2;
-  const footerY = canvas.height - footerHeight;
+  const footerY = canvas.height - footerHeight - instagramHintHeight;
 
   const contactSize = Math.max(18, Math.round(width * 0.055));
   const contactY = footerY - Math.round(width * 0.05) - contactSize;
@@ -211,15 +284,17 @@ export async function composeMascotaShareImage(
     ctx.fillStyle = "#18181B";
     ctx.fillRect(0, hintY, width, instagramHintHeight);
 
-    const hintFontSize = Math.max(13, Math.round(width * 0.03));
     ctx.font = `bold ${hintFontSize}px system-ui, -apple-system, sans-serif`;
     ctx.fillStyle = "#FFFFFF";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    drawCenteredWrappedText(
+      ctx,
       INSTAGRAM_SAVE_HINT,
       width / 2,
-      hintY + instagramHintHeight / 2,
+      hintY + Math.round(hintFontSize * 0.6),
+      hintMaxWidth,
+      hintLineHeight,
     );
   }
 
