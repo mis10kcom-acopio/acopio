@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
 import { buscarRegistroPorIdentificador } from "@/lib/editar-identificador";
+import {
+  getMascotaEstado,
+  parseEstadoMascota,
+} from "@/lib/mascota-estado";
 import { resolveOptionalFotoUrl } from "@/lib/storage-upload";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import type { ActionState } from "@/types/actions";
@@ -12,7 +16,6 @@ import type {
   EstadoStock,
   MascotaReportada,
   RedVoluntario,
-  TipoReporte,
 } from "@/types/database";
 
 function getRequired(formData: FormData, key: string): string {
@@ -31,11 +34,9 @@ function getOptional(formData: FormData, key: string): string | null {
   return value.trim();
 }
 
-function parseTipoReporte(value: string): TipoReporte {
-  if (value === "PERDIDO" || value === "ENCONTRADO") {
-    return value;
-  }
-  throw new Error("Selecciona un tipo de reporte válido.");
+
+function tipoReporteFromEstado(estado: string): "PERDIDO" | "ENCONTRADO" {
+  return parseEstadoMascota(estado) === "PERDIDO" ? "PERDIDO" : "ENCONTRADO";
 }
 
 export type RegistroPorToken =
@@ -128,7 +129,7 @@ async function buscarAcopioPorIdentificador(
   );
 }
 
-export async function cambiarMascotaAEncontrada(
+export async function cambiarMascotaAEnResguardo(
   identificador: string,
 ): Promise<ActionState> {
   try {
@@ -138,16 +139,19 @@ export async function cambiarMascotaAEncontrada(
     if (!registro) {
       return { error: "Enlace no válido o registro no encontrado.", success: null };
     }
-    if (registro.tipo_reporte === "ENCONTRADO") {
+    if (getMascotaEstado(registro) !== "PERDIDO") {
       return {
-        error: "Este reporte ya está marcado como encontrado.",
+        error: "Solo los reportes en estado Perdido pueden pasar a En Resguardo.",
         success: null,
       };
     }
 
     const { data, error } = await supabase
       .from("mascotas_reportadas")
-      .update({ tipo_reporte: "ENCONTRADO" })
+      .update({
+        estado: "EN_RESGUARDO",
+        tipo_reporte: "ENCONTRADO",
+      })
       .eq("id", registro.id)
       .select("token_edicion")
       .maybeSingle();
@@ -161,7 +165,7 @@ export async function cambiarMascotaAEncontrada(
 
     return await revalidateAndRedirect(
       data.token_edicion,
-      "Reporte actualizado a ENCONTRADO.",
+      "Reporte actualizado a En Resguardo.",
     );
   } catch (error) {
     if (isRedirectError(error)) throw error;
@@ -169,7 +173,14 @@ export async function cambiarMascotaAEncontrada(
   }
 }
 
-export async function marcarMascotaResuelta(
+/** @deprecated Usar cambiarMascotaAEnResguardo */
+export async function cambiarMascotaAEncontrada(
+  identificador: string,
+): Promise<ActionState> {
+  return cambiarMascotaAEnResguardo(identificador);
+}
+
+export async function marcarMascotaEnCasa(
   identificador: string,
 ): Promise<ActionState> {
   try {
@@ -179,10 +190,19 @@ export async function marcarMascotaResuelta(
     if (!registro) {
       return { error: "Enlace no válido o registro no encontrado.", success: null };
     }
+    if (getMascotaEstado(registro) === "EN_CASA") {
+      return {
+        error: "Este reporte ya está marcado como En Casa.",
+        success: null,
+      };
+    }
 
     const { data, error } = await supabase
       .from("mascotas_reportadas")
-      .update({ estado: "RESUELTO" })
+      .update({
+        estado: "EN_CASA",
+        tipo_reporte: "ENCONTRADO",
+      })
       .eq("id", registro.id)
       .select("token_edicion")
       .maybeSingle();
@@ -196,12 +216,19 @@ export async function marcarMascotaResuelta(
 
     return await revalidateAndRedirect(
       data.token_edicion,
-      "¡Marcado como resuelto! El caso ya no aparecerá en el listado público.",
+      "¡La mascota ya está En Casa! El caso quedó cerrado en la plataforma.",
     );
   } catch (error) {
     if (isRedirectError(error)) throw error;
     return handleActionError(error);
   }
+}
+
+/** @deprecated Usar marcarMascotaEnCasa */
+export async function marcarMascotaResuelta(
+  identificador: string,
+): Promise<ActionState> {
+  return marcarMascotaEnCasa(identificador);
 }
 
 export async function marcarVoluntarioNoDisponible(
@@ -329,10 +356,13 @@ export async function actualizarMascota(
       return { error: "Enlace no válido o registro no encontrado.", success: null };
     }
 
+    const estado = parseEstadoMascota(getRequired(formData, "estado"));
+
     const { data, error } = await supabase
       .from("mascotas_reportadas")
       .update({
-        tipo_reporte: parseTipoReporte(getRequired(formData, "tipo_reporte")),
+        estado,
+        tipo_reporte: tipoReporteFromEstado(estado),
         especie: getRequired(formData, "especie"),
         nombre_mascota: getOptional(formData, "nombre_mascota"),
         caracteristicas: getRequired(formData, "caracteristicas"),

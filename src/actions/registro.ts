@@ -4,12 +4,13 @@ import { randomUUID } from "crypto";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { parseEstadoMascota } from "@/lib/mascota-estado";
 import {
   resolveOptionalFotoUrl,
   uploadImagenStorage,
 } from "@/lib/storage-upload";
 import type { ActionState } from "@/types/actions";
-import type { TipoAyuda, TipoReporte } from "@/types/database";
+import type { TipoAyuda } from "@/types/database";
 
 const MASCOTAS_FOLDER = "mascotas";
 const VOLUNTARIOS_FOLDER = "voluntarios";
@@ -30,12 +31,6 @@ function getOptional(formData: FormData, key: string): string | null {
   return value.trim();
 }
 
-function parseTipoReporte(value: string): TipoReporte {
-  if (value === "PERDIDO" || value === "ENCONTRADO") {
-    return value;
-  }
-  throw new Error("Selecciona un tipo de reporte válido.");
-}
 
 function parseTipoAyudaVoluntario(value: string): TipoAyuda {
   const valid: TipoAyuda[] = [
@@ -85,8 +80,10 @@ export async function registrarMascota(
       }
     }
 
+    const estado = parseEstadoMascota(getRequired(formData, "estado"));
+
     const { error } = await supabase.from("mascotas_reportadas").insert({
-      tipo_reporte: parseTipoReporte(getRequired(formData, "tipo_reporte")),
+      tipo_reporte: estado === "PERDIDO" ? "PERDIDO" : "ENCONTRADO",
       especie: getRequired(formData, "especie"),
       nombre_mascota: getOptional(formData, "nombre_mascota"),
       caracteristicas: getRequired(formData, "caracteristicas"),
@@ -94,7 +91,7 @@ export async function registrarMascota(
       contacto_telefono: getRequired(formData, "contacto_telefono"),
       contacto_whatsapp: getOptional(formData, "contacto_whatsapp"),
       foto_url: fotoUrl,
-      estado: "ACTIVO",
+      estado,
       token_edicion: token,
     });
 

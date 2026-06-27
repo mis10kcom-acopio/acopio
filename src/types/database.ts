@@ -1,5 +1,5 @@
 export type TipoReporte = "PERDIDO" | "ENCONTRADO";
-export type EstadoMascota = "ACTIVO" | "RESUELTO";
+export type EstadoMascota = "PERDIDO" | "EN_RESGUARDO" | "EN_CASA";
 export type TipoAyuda = "VETERINARIO" | "HOGAR_TEMPORAL" | "RESCATISTA" | "TRANSPORTE";
 export type DisponibilidadVoluntario = "DISPONIBLE" | "LLENO/NO_DISPONIBLE";
 export type EstadoStock = "CRITICO" | "MODERADO" | "ABASTECIDO";

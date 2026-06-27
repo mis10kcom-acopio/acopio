@@ -17,6 +17,7 @@ import {
   shareMascotaPhotoWithFallbacks,
 } from "@/lib/capture-card";
 import { isInInstagramBrowser } from "@/lib/in-app-browser";
+import { getMascotaEstado, getMascotaEstadoConfig } from "@/lib/mascota-estado";
 import { SITE_URL } from "@/lib/site-config";
 import { buildTelUrl, buildWhatsAppUrl } from "@/lib/whatsapp";
 import type {
@@ -210,7 +211,7 @@ function MascotaCardActions({ mascota }: { mascota: MascotaReportada }) {
 }
 
 function MascotaCard({ mascota }: { mascota: MascotaReportada }) {
-  const esPerdido = mascota.tipo_reporte === "PERDIDO";
+  const estadoConfig = getMascotaEstadoConfig(mascota);
 
   return (
     <article className="overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white shadow-md">
@@ -231,11 +232,9 @@ function MascotaCard({ mascota }: { mascota: MascotaReportada }) {
             <div className="aspect-square w-full rounded-t-2xl bg-zinc-100" />
           )}
           <span
-            className={`absolute top-3 left-3 z-10 rounded-full px-3 py-1.5 text-base font-bold shadow-lg ${
-              esPerdido ? "bg-red-600 text-white" : "bg-emerald-600 text-white"
-            }`}
+            className={`absolute top-3 left-3 z-10 rounded-full px-3 py-1.5 text-base font-bold text-white shadow-lg ${estadoConfig.badgeClass}`}
           >
-            {esPerdido ? "Perdido" : "Encontrado"}
+            {estadoConfig.label}
           </span>
         </div>
         <div className="space-y-4 p-5">
@@ -492,8 +491,12 @@ export function HomePageContent({ data }: { data: HomePageData }) {
 
   const mascotaStats = useMemo(
     () => ({
-      perdidas: data.mascotas.filter((m) => m.tipo_reporte === "PERDIDO").length,
-      encontradas: data.mascotas.filter((m) => m.tipo_reporte === "ENCONTRADO")
+      perdidas: data.mascotas.filter((m) => getMascotaEstado(m) === "PERDIDO")
+        .length,
+      enResguardo: data.mascotas.filter(
+        (m) => getMascotaEstado(m) === "EN_RESGUARDO",
+      ).length,
+      enCasa: data.mascotas.filter((m) => getMascotaEstado(m) === "EN_CASA")
         .length,
     }),
     [data.mascotas],
@@ -523,11 +526,13 @@ export function HomePageContent({ data }: { data: HomePageData }) {
       case "mascotas":
         return (
           <p className="mt-2 text-sm font-semibold leading-snug text-zinc-700">
-            <span className="text-red-700">{mascotaStats.perdidas} Perdidas</span>
+            <span className="text-red-600">{mascotaStats.perdidas} Perdidas</span>
             {" | "}
-            <span className="text-emerald-700">
-              {mascotaStats.encontradas} Encontradas
+            <span className="text-yellow-600">
+              {mascotaStats.enResguardo} En Resguardo
             </span>
+            {" | "}
+            <span className="text-emerald-600">{mascotaStats.enCasa} En Casa</span>
           </p>
         );
       case "red-ayuda":

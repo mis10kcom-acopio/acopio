@@ -21,12 +21,13 @@ export function MascotaRegistroForm() {
     <ActionForm action={formAction} encType="multipart/form-data">
       <FormError message={state.error} />
 
-      <FormField label="Tipo de reporte" name="tipo_reporte" as="select" required>
+      <FormField label="Estado del reporte" name="estado" as="select" required>
         <option value="" disabled>
           Selecciona…
         </option>
         <option value="PERDIDO">Perdido</option>
-        <option value="ENCONTRADO">Encontrado</option>
+        <option value="EN_RESGUARDO">En Resguardo</option>
+        <option value="EN_CASA">En Casa</option>
       </FormField>
 
       <FormField

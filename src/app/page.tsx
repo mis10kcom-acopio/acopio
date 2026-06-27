@@ -12,7 +12,6 @@ async function fetchHomeData(): Promise<HomePageData> {
     supabase
       .from("mascotas_reportadas")
       .select("*")
-      .eq("estado", "ACTIVO")
       .order("creado_el", { ascending: false }),
     supabase
       .from("red_voluntarios")

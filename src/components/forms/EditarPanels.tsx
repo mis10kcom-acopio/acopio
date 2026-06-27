@@ -6,11 +6,15 @@ import {
   actualizarMascota,
   actualizarStockAcopio,
   actualizarVoluntario,
-  cambiarMascotaAEncontrada,
-  marcarMascotaResuelta,
+  cambiarMascotaAEnResguardo,
+  marcarMascotaEnCasa,
   marcarVoluntarioDisponible,
   marcarVoluntarioNoDisponible,
 } from "@/actions/editar";
+import {
+  getMascotaEstado,
+  MASCOTA_ESTADO_CONFIG,
+} from "@/lib/mascota-estado";
 import {
   ActionForm,
   FormError,
@@ -78,21 +82,23 @@ export function EditarMascotaPanel({
   const [formState, formAction] = useActionState(updateAction, initialActionState);
   const [statusError, setStatusError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const yaResuelto = registro.estado === "RESUELTO";
-  const esPerdido = registro.tipo_reporte === "PERDIDO";
+  const estadoActual = getMascotaEstado(registro);
+  const enCasa = estadoActual === "EN_CASA";
+  const esPerdido = estadoActual === "PERDIDO";
+  const enResguardo = estadoActual === "EN_RESGUARDO";
 
-  function handleCambiarAEncontrado() {
+  function handleCambiarAEnResguardo() {
     setStatusError(null);
     startTransition(async () => {
-      const result = await cambiarMascotaAEncontrada(identificador);
+      const result = await cambiarMascotaAEnResguardo(identificador);
       if (result?.error) setStatusError(result.error);
     });
   }
 
-  function handleQuitarDelListado() {
+  function handleMarcarEnCasa() {
     setStatusError(null);
     startTransition(async () => {
-      const result = await marcarMascotaResuelta(identificador);
+      const result = await marcarMascotaEnCasa(identificador);
       if (result?.error) setStatusError(result.error);
     });
   }
@@ -106,14 +112,15 @@ export function EditarMascotaPanel({
         <SectionTitle>Editar datos del reporte</SectionTitle>
         <ActionForm action={formAction}>
           <FormField
-            label="Tipo de reporte"
-            name="tipo_reporte"
+            label="Estado del reporte"
+            name="estado"
             as="select"
             required
-            defaultValue={registro.tipo_reporte}
+            defaultValue={estadoActual}
           >
             <option value="PERDIDO">Perdido</option>
-            <option value="ENCONTRADO">Encontrado</option>
+            <option value="EN_RESGUARDO">En Resguardo</option>
+            <option value="EN_CASA">En Casa</option>
           </FormField>
 
           <FormField
@@ -168,36 +175,35 @@ export function EditarMascotaPanel({
       <section className="space-y-3 border-t border-zinc-200 pt-6">
         <SectionTitle>Acciones rápidas</SectionTitle>
         <p className="text-sm text-zinc-600">
-          Estado en listado:{" "}
+          Estado actual:{" "}
           <span className="font-semibold text-zinc-900">
-            {yaResuelto ? "Oculto (resuelto)" : "Visible (activo)"}
+            {MASCOTA_ESTADO_CONFIG[estadoActual].label}
           </span>
         </p>
 
-        {!yaResuelto ? (
+        {!enCasa ? (
           <div className="grid gap-3">
             {esPerdido && (
               <ActionButton
-                label={pending ? "Actualizando…" : "Marcar como ENCONTRADO"}
-                onClick={handleCambiarAEncontrado}
+                label={pending ? "Actualizando…" : "Marcar En Resguardo"}
+                onClick={handleCambiarAEnResguardo}
+                variant="warning"
+                disabled={pending}
+              />
+            )}
+            {(esPerdido || enResguardo) && (
+              <ActionButton
+                label={pending ? "Actualizando…" : "Marcar En Casa"}
+                onClick={handleMarcarEnCasa}
                 variant="success"
                 disabled={pending}
               />
             )}
-            <ActionButton
-              label={
-                pending
-                  ? "Actualizando…"
-                  : "Quitar del listado público (ya no es necesario)"
-              }
-              onClick={handleQuitarDelListado}
-              variant="warning"
-              disabled={pending}
-            />
           </div>
         ) : (
           <p className="text-center text-sm text-emerald-700">
-            Este reporte ya fue retirado del listado público.
+            Este reporte ya está En Casa. ¡Gracias por ayudar a reunir a la
+            mascota con su familia!
           </p>
         )}
       </section>

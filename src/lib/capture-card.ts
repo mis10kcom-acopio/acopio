@@ -1,4 +1,8 @@
-import type { MascotaReportada, TipoReporte } from "@/types/database";
+import type { EstadoMascota, MascotaReportada } from "@/types/database";
+import {
+  getMascotaEstado,
+  MASCOTA_ESTADO_CONFIG,
+} from "@/lib/mascota-estado";
 
 const SHARE_TITLE = "Huellas a Salvo";
 const SHARE_TEXT = "Mira este reporte en Huellas a Salvo...";
@@ -9,6 +13,7 @@ const FOOTER_COLOR = "#D97706";
 export type MascotaPosterInput = Pick<
   MascotaReportada,
   | "foto_url"
+  | "estado"
   | "tipo_reporte"
   | "nombre_mascota"
   | "especie"
@@ -80,11 +85,11 @@ function wrapText(
 function drawStatusBanner(
   ctx: CanvasRenderingContext2D,
   canvasWidth: number,
-  tipoReporte: TipoReporte,
+  estado: EstadoMascota,
 ): void {
-  const esPerdido = tipoReporte === "PERDIDO";
-  const label = esPerdido ? "PERDIDO" : "ENCONTRADO";
-  const color = esPerdido ? "#EF4444" : "#22C55E";
+  const config = MASCOTA_ESTADO_CONFIG[estado];
+  const label = config.label.toUpperCase();
+  const color = config.canvasColor;
 
   const fontSize = Math.max(18, Math.round(canvasWidth * 0.06));
   const paddingX = fontSize * 0.6;
@@ -215,7 +220,7 @@ export async function composeMascotaShareImage(
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   ctx.drawImage(img, 0, 0, width, imageHeight);
-  drawStatusBanner(ctx, width, data.tipo_reporte);
+  drawStatusBanner(ctx, width, getMascotaEstado(data));
 
   const paddingX = Math.round(width * 0.05);
   const contentWidth = width - paddingX * 2;
