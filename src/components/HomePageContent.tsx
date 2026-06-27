@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   HeartHandshake,
   PawPrint,
@@ -9,7 +10,11 @@ import {
   Stethoscope,
   Warehouse,
 } from "lucide-react";
-import { shareMascotaPhotoWithFallbacks } from "@/lib/capture-card";
+import {
+  composeMascotaShareImage,
+  shareMascotaPhotoWithFallbacks,
+} from "@/lib/capture-card";
+import { isInInstagramBrowser } from "@/lib/in-app-browser";
 import { SITE_URL } from "@/lib/site-config";
 import { buildTelUrl, buildWhatsAppUrl } from "@/lib/whatsapp";
 import type {
@@ -128,9 +133,84 @@ function ContactActions({
   );
 }
 
+function MascotaSharePosterModal({
+  open,
+  imageUrl,
+  onClose,
+}: {
+  open: boolean;
+  imageUrl: string | null;
+  onClose: () => void;
+}) {
+  if (!open || !imageUrl || typeof document === "undefined") {
+    return null;
+  }
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/75 p-4 sm:items-center"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="poster-modal-title"
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl sm:p-5"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <h2 id="poster-modal-title" className="sr-only">
+          Cartel para compartir
+        </h2>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={imageUrl}
+          alt="Cartel de búsqueda de mascota"
+          className="w-full rounded-xl border border-zinc-200"
+        />
+        <p className="mt-4 text-center text-sm leading-relaxed text-zinc-700">
+          <strong>
+            Para compartir, mantén presionada la imagen de arriba y selecciona
+            &apos;Guardar imagen&apos; para usarla en tus aplicaciones de
+            mensajería.
+          </strong>
+        </p>
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-4 w-full rounded-xl bg-zinc-900 px-4 py-3 text-base font-bold text-white transition hover:bg-zinc-800"
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 function MascotaCardActions({ mascota }: { mascota: MascotaReportada }) {
   const [shareLabel, setShareLabel] = useState("Compartir");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [posterModal, setPosterModal] = useState<{
+    open: boolean;
+    imageUrl: string | null;
+  }>({ open: false, imageUrl: null });
+
+  useEffect(() => {
+    return () => {
+      if (posterModal.imageUrl) {
+        URL.revokeObjectURL(posterModal.imageUrl);
+      }
+    };
+  }, [posterModal.imageUrl]);
+
+  function closePosterModal() {
+    setPosterModal((prev) => {
+      if (prev.imageUrl) {
+        URL.revokeObjectURL(prev.imageUrl);
+      }
+      return { open: false, imageUrl: null };
+    });
+  }
 
   async function handleShare() {
     if (isGenerating) return;
@@ -139,13 +219,25 @@ function MascotaCardActions({ mascota }: { mascota: MascotaReportada }) {
     setShareLabel("Generando…");
 
     try {
-      const result = await shareMascotaPhotoWithFallbacks(mascota, SITE_URL);
+      if (isInInstagramBrowser()) {
+        if (!mascota.foto_url) {
+          return;
+        }
 
-      if (result !== "cancelled") {
-        setShareLabel(
-          result === "downloaded" ? "¡Descargada!" : "¡Compartido!",
-        );
+        const blob = await composeMascotaShareImage(mascota);
+        const imageUrl = URL.createObjectURL(blob);
+        setPosterModal({ open: true, imageUrl });
+        setShareLabel("¡Listo!");
         setTimeout(() => setShareLabel("Compartir"), 2500);
+      } else {
+        const result = await shareMascotaPhotoWithFallbacks(mascota, SITE_URL);
+
+        if (result !== "cancelled") {
+          setShareLabel(
+            result === "downloaded" ? "¡Descargada!" : "¡Compartido!",
+          );
+          setTimeout(() => setShareLabel("Compartir"), 2500);
+        }
       }
     } catch {
       // Errores inesperados: sin mensaje al usuario
@@ -156,7 +248,8 @@ function MascotaCardActions({ mascota }: { mascota: MascotaReportada }) {
   }
 
   return (
-    <div className="space-y-3 border-t-2 border-zinc-100 pt-4">
+    <>
+      <div className="space-y-3 border-t-2 border-zinc-100 pt-4">
       <div className="grid grid-cols-2 gap-2">
         {mascota.contacto_whatsapp ? (
           <a
@@ -186,7 +279,13 @@ function MascotaCardActions({ mascota }: { mascota: MascotaReportada }) {
       >
         📞 Llamar — {mascota.contacto_telefono}
       </a>
-    </div>
+      </div>
+      <MascotaSharePosterModal
+        open={posterModal.open}
+        imageUrl={posterModal.imageUrl}
+        onClose={closePosterModal}
+      />
+    </>
   );
 }
 
