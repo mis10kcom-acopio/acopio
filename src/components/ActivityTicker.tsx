@@ -59,7 +59,7 @@ export function ActivityTicker({ items }: { items: ActivityItem[] }) {
 
   return (
     <div
-      className="w-full border-b border-slate-800 bg-slate-900 px-4 py-1.5 text-center text-sm text-slate-100"
+      className="sticky top-0 z-50 w-full border-b border-slate-800 bg-slate-900 px-4 py-1.5 text-center text-sm text-slate-100"
       role="status"
       aria-live="polite"
     >

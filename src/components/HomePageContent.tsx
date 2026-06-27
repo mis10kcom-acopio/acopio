@@ -413,14 +413,16 @@ function ZoneSearchInput({
   onChange,
   placeholder,
   ariaLabel,
+  wrapperClassName = "mb-5",
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
   ariaLabel: string;
+  wrapperClassName?: string;
 }) {
   return (
-    <div className="relative mb-5">
+    <div className={`relative ${wrapperClassName}`}>
       <Search
         className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400"
         aria-hidden
@@ -433,6 +435,21 @@ function ZoneSearchInput({
         aria-label={ariaLabel}
         className="w-full rounded-xl border-2 border-zinc-200 bg-white py-3.5 pl-12 pr-4 text-base text-zinc-900 shadow-sm placeholder:text-zinc-500 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
       />
+    </div>
+  );
+}
+
+function SectionStickyHeader({
+  title,
+  children,
+}: {
+  title: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="sticky top-9 z-40 -mx-4 border-b border-amber-200/60 bg-amber-50 px-4 py-4 shadow-sm">
+      <h2 className="text-2xl font-bold text-zinc-900">{title}</h2>
+      {children ? <div className="mt-4">{children}</div> : null}
     </div>
   );
 }
@@ -602,23 +619,23 @@ export function HomePageContent({ data }: { data: HomePageData }) {
       <div className="mt-8" role="region">
         {activeSection === "mascotas" && (
           <section>
-            <h2 className="mb-5 text-2xl font-bold text-zinc-900">
-              Mascotas Perdidas y Encontradas
-            </h2>
-            {data.mascotas.length > 0 && (
-              <ZoneSearchInput
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder="🔍 Buscar por Zona"
-                ariaLabel="Buscar mascotas por zona, ciudad o municipio"
-              />
-            )}
+            <SectionStickyHeader title="Mascotas Perdidas y Encontradas">
+              {data.mascotas.length > 0 ? (
+                <ZoneSearchInput
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  placeholder="🔍 Buscar por Zona"
+                  ariaLabel="Buscar mascotas por zona, ciudad o municipio"
+                  wrapperClassName="mb-0"
+                />
+              ) : null}
+            </SectionStickyHeader>
             {data.mascotas.length === 0 ? (
               <EmptyState message="No hay reportes activos en este momento." />
             ) : filteredMascotas.length === 0 ? (
               <EmptyState message="No hay mascotas reportadas en esta zona actualmente." />
             ) : (
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredMascotas.map((mascota) => (
                   <MascotaCard key={mascota.id} mascota={mascota} />
                 ))}
@@ -629,23 +646,23 @@ export function HomePageContent({ data }: { data: HomePageData }) {
 
         {activeSection === "red-ayuda" && (
           <section>
-            <h2 className="mb-5 text-2xl font-bold text-zinc-900">
-              Red de Ayuda — Hogares, Rescatistas y Transporte
-            </h2>
-            {redAyuda.length > 0 && (
-              <ZoneSearchInput
-                value={searchQueryRedAyuda}
-                onChange={setSearchQueryRedAyuda}
-                placeholder="🔍 Buscar por Zona"
-                ariaLabel="Buscar voluntarios por zona"
-              />
-            )}
+            <SectionStickyHeader title="Red de Ayuda — Hogares, Rescatistas y Transporte">
+              {redAyuda.length > 0 ? (
+                <ZoneSearchInput
+                  value={searchQueryRedAyuda}
+                  onChange={setSearchQueryRedAyuda}
+                  placeholder="🔍 Buscar por Zona"
+                  ariaLabel="Buscar voluntarios por zona"
+                  wrapperClassName="mb-0"
+                />
+              ) : null}
+            </SectionStickyHeader>
             {redAyuda.length === 0 ? (
               <EmptyState message="No hay voluntarios de ayuda disponibles en este momento." />
             ) : filteredRedAyuda.length === 0 ? (
               <EmptyState message="No hay voluntarios registrados en esta zona actualmente." />
             ) : (
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredRedAyuda.map((voluntario) => (
                   <VoluntarioCard key={voluntario.id} voluntario={voluntario} />
                 ))}
@@ -656,23 +673,23 @@ export function HomePageContent({ data }: { data: HomePageData }) {
 
         {activeSection === "veterinarios" && (
           <section>
-            <h2 className="mb-5 text-2xl font-bold text-zinc-900">
-              Veterinarios y Clínicas Disponibles
-            </h2>
-            {veterinarios.length > 0 && (
-              <ZoneSearchInput
-                value={searchQueryVeterinarios}
-                onChange={setSearchQueryVeterinarios}
-                placeholder="🔍 Buscar por Zona"
-                ariaLabel="Buscar veterinarios por zona"
-              />
-            )}
+            <SectionStickyHeader title="Veterinarios y Clínicas Disponibles">
+              {veterinarios.length > 0 ? (
+                <ZoneSearchInput
+                  value={searchQueryVeterinarios}
+                  onChange={setSearchQueryVeterinarios}
+                  placeholder="🔍 Buscar por Zona"
+                  ariaLabel="Buscar veterinarios por zona"
+                  wrapperClassName="mb-0"
+                />
+              ) : null}
+            </SectionStickyHeader>
             {veterinarios.length === 0 ? (
               <EmptyState message="No hay veterinarios disponibles en este momento." />
             ) : filteredVeterinarios.length === 0 ? (
               <EmptyState message="No hay veterinarios registrados en esta zona actualmente." />
             ) : (
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredVeterinarios.map((voluntario) => (
                   <VoluntarioCard key={voluntario.id} voluntario={voluntario} />
                 ))}
@@ -683,23 +700,23 @@ export function HomePageContent({ data }: { data: HomePageData }) {
 
         {activeSection === "acopio" && (
           <section>
-            <h2 className="mb-5 text-2xl font-bold text-zinc-900">
-              Centros de Acopio de Insumos
-            </h2>
-            {data.acopios.length > 0 && (
-              <ZoneSearchInput
-                value={searchQueryAcopio}
-                onChange={setSearchQueryAcopio}
-                placeholder="🔍 Buscar por Zona"
-                ariaLabel="Buscar centros de acopio por zona"
-              />
-            )}
+            <SectionStickyHeader title="Centros de Acopio de Insumos">
+              {data.acopios.length > 0 ? (
+                <ZoneSearchInput
+                  value={searchQueryAcopio}
+                  onChange={setSearchQueryAcopio}
+                  placeholder="🔍 Buscar por Zona"
+                  ariaLabel="Buscar centros de acopio por zona"
+                  wrapperClassName="mb-0"
+                />
+              ) : null}
+            </SectionStickyHeader>
             {data.acopios.length === 0 ? (
               <EmptyState message="No hay centros de acopio registrados." />
             ) : filteredAcopios.length === 0 ? (
               <EmptyState message="No hay centros de acopio en esta zona actualmente." />
             ) : (
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredAcopios.map((acopio) => (
                   <AcopioCard key={acopio.id} acopio={acopio} />
                 ))}
