@@ -521,7 +521,7 @@ export function HomePageContent({ data }: { data: HomePageData }) {
               <ZoneSearchInput
                 value={searchQuery}
                 onChange={setSearchQuery}
-                placeholder="🔍 Buscar por zona, ciudad o municipio (ej. La Guaira)"
+                placeholder="🔍 Buscar por Zona"
                 ariaLabel="Buscar mascotas por zona, ciudad o municipio"
               />
             )}
@@ -548,7 +548,7 @@ export function HomePageContent({ data }: { data: HomePageData }) {
               <ZoneSearchInput
                 value={searchQueryRedAyuda}
                 onChange={setSearchQueryRedAyuda}
-                placeholder="🔍 Buscar voluntarios, transporte u hogares temporales por zona..."
+                placeholder="🔍 Buscar por Zona"
                 ariaLabel="Buscar voluntarios por zona"
               />
             )}
@@ -575,7 +575,7 @@ export function HomePageContent({ data }: { data: HomePageData }) {
               <ZoneSearchInput
                 value={searchQueryVeterinarios}
                 onChange={setSearchQueryVeterinarios}
-                placeholder="🔍 Buscar clínicas o veterinarios por zona..."
+                placeholder="🔍 Buscar por Zona"
                 ariaLabel="Buscar veterinarios por zona"
               />
             )}
@@ -602,7 +602,7 @@ export function HomePageContent({ data }: { data: HomePageData }) {
               <ZoneSearchInput
                 value={searchQueryAcopio}
                 onChange={setSearchQueryAcopio}
-                placeholder="🔍 Buscar centros de acopio por zona..."
+                placeholder="🔍 Buscar por Zona"
                 ariaLabel="Buscar centros de acopio por zona"
               />
             )}
