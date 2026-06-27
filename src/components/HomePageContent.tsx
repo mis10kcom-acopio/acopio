@@ -414,15 +414,17 @@ function ZoneSearchInput({
   placeholder,
   ariaLabel,
   wrapperClassName = "mb-5",
+  sticky = false,
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
   ariaLabel: string;
   wrapperClassName?: string;
+  sticky?: boolean;
 }) {
-  return (
-    <div className={`relative ${wrapperClassName}`}>
+  const field = (
+    <>
       <Search
         className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400"
         aria-hidden
@@ -435,22 +437,25 @@ function ZoneSearchInput({
         aria-label={ariaLabel}
         className="w-full rounded-xl border-2 border-zinc-200 bg-white py-3.5 pl-12 pr-4 text-base text-zinc-900 shadow-sm placeholder:text-zinc-500 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
       />
-    </div>
+    </>
   );
+
+  if (sticky) {
+    return (
+      <div
+        className={`sticky top-9 z-40 -mx-4 border-b border-amber-200/60 bg-amber-50 px-4 py-2 shadow-sm ${wrapperClassName}`}
+      >
+        <div className="relative">{field}</div>
+      </div>
+    );
+  }
+
+  return <div className={`relative ${wrapperClassName}`}>{field}</div>;
 }
 
-function SectionStickyHeader({
-  title,
-  children,
-}: {
-  title: string;
-  children?: React.ReactNode;
-}) {
+function SectionHeader({ title }: { title: string }) {
   return (
-    <div className="sticky top-9 z-40 -mx-4 border-b border-amber-200/60 bg-amber-50 px-4 py-4 shadow-sm">
-      <h2 className="text-2xl font-bold text-zinc-900">{title}</h2>
-      {children ? <div className="mt-4">{children}</div> : null}
-    </div>
+    <h2 className="mb-5 text-2xl font-bold text-zinc-900">{title}</h2>
   );
 }
 
@@ -619,17 +624,16 @@ export function HomePageContent({ data }: { data: HomePageData }) {
       <div className="mt-8" role="region">
         {activeSection === "mascotas" && (
           <section>
-            <SectionStickyHeader title="Mascotas Perdidas y Encontradas">
-              {data.mascotas.length > 0 ? (
-                <ZoneSearchInput
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  placeholder="🔍 Buscar por Zona"
-                  ariaLabel="Buscar mascotas por zona, ciudad o municipio"
-                  wrapperClassName="mb-0"
-                />
-              ) : null}
-            </SectionStickyHeader>
+            <SectionHeader title="Mascotas Perdidas y Encontradas" />
+            {data.mascotas.length > 0 ? (
+              <ZoneSearchInput
+                sticky
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="🔍 Buscar por Zona"
+                ariaLabel="Buscar mascotas por zona, ciudad o municipio"
+              />
+            ) : null}
             {data.mascotas.length === 0 ? (
               <EmptyState message="No hay reportes activos en este momento." />
             ) : filteredMascotas.length === 0 ? (
@@ -646,17 +650,16 @@ export function HomePageContent({ data }: { data: HomePageData }) {
 
         {activeSection === "red-ayuda" && (
           <section>
-            <SectionStickyHeader title="Red de Ayuda — Hogares, Rescatistas y Transporte">
-              {redAyuda.length > 0 ? (
-                <ZoneSearchInput
-                  value={searchQueryRedAyuda}
-                  onChange={setSearchQueryRedAyuda}
-                  placeholder="🔍 Buscar por Zona"
-                  ariaLabel="Buscar voluntarios por zona"
-                  wrapperClassName="mb-0"
-                />
-              ) : null}
-            </SectionStickyHeader>
+            <SectionHeader title="Red de Ayuda — Hogares, Rescatistas y Transporte" />
+            {redAyuda.length > 0 ? (
+              <ZoneSearchInput
+                sticky
+                value={searchQueryRedAyuda}
+                onChange={setSearchQueryRedAyuda}
+                placeholder="🔍 Buscar por Zona"
+                ariaLabel="Buscar voluntarios por zona"
+              />
+            ) : null}
             {redAyuda.length === 0 ? (
               <EmptyState message="No hay voluntarios de ayuda disponibles en este momento." />
             ) : filteredRedAyuda.length === 0 ? (
@@ -673,17 +676,16 @@ export function HomePageContent({ data }: { data: HomePageData }) {
 
         {activeSection === "veterinarios" && (
           <section>
-            <SectionStickyHeader title="Veterinarios y Clínicas Disponibles">
-              {veterinarios.length > 0 ? (
-                <ZoneSearchInput
-                  value={searchQueryVeterinarios}
-                  onChange={setSearchQueryVeterinarios}
-                  placeholder="🔍 Buscar por Zona"
-                  ariaLabel="Buscar veterinarios por zona"
-                  wrapperClassName="mb-0"
-                />
-              ) : null}
-            </SectionStickyHeader>
+            <SectionHeader title="Veterinarios y Clínicas Disponibles" />
+            {veterinarios.length > 0 ? (
+              <ZoneSearchInput
+                sticky
+                value={searchQueryVeterinarios}
+                onChange={setSearchQueryVeterinarios}
+                placeholder="🔍 Buscar por Zona"
+                ariaLabel="Buscar veterinarios por zona"
+              />
+            ) : null}
             {veterinarios.length === 0 ? (
               <EmptyState message="No hay veterinarios disponibles en este momento." />
             ) : filteredVeterinarios.length === 0 ? (
@@ -700,17 +702,16 @@ export function HomePageContent({ data }: { data: HomePageData }) {
 
         {activeSection === "acopio" && (
           <section>
-            <SectionStickyHeader title="Centros de Acopio de Insumos">
-              {data.acopios.length > 0 ? (
-                <ZoneSearchInput
-                  value={searchQueryAcopio}
-                  onChange={setSearchQueryAcopio}
-                  placeholder="🔍 Buscar por Zona"
-                  ariaLabel="Buscar centros de acopio por zona"
-                  wrapperClassName="mb-0"
-                />
-              ) : null}
-            </SectionStickyHeader>
+            <SectionHeader title="Centros de Acopio de Insumos" />
+            {data.acopios.length > 0 ? (
+              <ZoneSearchInput
+                sticky
+                value={searchQueryAcopio}
+                onChange={setSearchQueryAcopio}
+                placeholder="🔍 Buscar por Zona"
+                ariaLabel="Buscar centros de acopio por zona"
+              />
+            ) : null}
             {data.acopios.length === 0 ? (
               <EmptyState message="No hay centros de acopio registrados." />
             ) : filteredAcopios.length === 0 ? (
