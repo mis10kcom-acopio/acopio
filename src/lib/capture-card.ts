@@ -105,21 +105,33 @@ function drawStatusBanner(
   ctx.fillText(label, margin + paddingX, margin + bannerHeight / 2);
 }
 
+const INSTAGRAM_SAVE_HINT =
+  "Mantén presionada la imagen para guardarla y compartirla.";
+
+export type ComposeMascotaShareImageOptions = {
+  forInstagram?: boolean;
+};
+
 export async function composeMascotaShareImage(
   data: MascotaPosterInput,
+  options: ComposeMascotaShareImageOptions = {},
 ): Promise<Blob> {
   if (!data.foto_url) {
     throw new Error("La mascota no tiene foto");
   }
 
+  const { forInstagram = false } = options;
   const img = await loadCrossOriginImage(data.foto_url);
   const width = img.naturalWidth;
   const imageHeight = img.naturalHeight;
   const footerHeight = Math.max(56, Math.round(width * 0.1));
+  const instagramHintHeight = forInstagram
+    ? Math.max(52, Math.round(width * 0.09))
+    : 0;
 
   const canvas = document.createElement("canvas");
   canvas.width = width;
-  canvas.height = imageHeight + POSTER_EXTRA_HEIGHT;
+  canvas.height = imageHeight + POSTER_EXTRA_HEIGHT + instagramHintHeight;
 
   const ctx = canvas.getContext("2d");
   if (!ctx) {
@@ -194,7 +206,29 @@ export async function composeMascotaShareImage(
     footerY + footerHeight / 2,
   );
 
+  if (forInstagram) {
+    const hintY = footerY + footerHeight;
+    ctx.fillStyle = "#18181B";
+    ctx.fillRect(0, hintY, width, instagramHintHeight);
+
+    const hintFontSize = Math.max(13, Math.round(width * 0.03));
+    ctx.font = `bold ${hintFontSize}px system-ui, -apple-system, sans-serif`;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(
+      INSTAGRAM_SAVE_HINT,
+      width / 2,
+      hintY + instagramHintHeight / 2,
+    );
+  }
+
   return canvasToJpegBlob(canvas);
+}
+
+export function openBlobImagePage(blob: Blob): void {
+  const imageUrl = URL.createObjectURL(blob);
+  window.location.href = imageUrl;
 }
 
 export function downloadBlob(blob: Blob, filename: string): void {
