@@ -1,28 +1,61 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
-import {
-  registrarAcopio,
-  registrarMascota,
-} from "@/actions/registro";
+import { registrarAcopio, registrarMascota } from "@/actions/registro";
+import { ExitoLinkActions } from "@/components/ExitoLinkActions";
 import {
   ActionForm,
   FormError,
   FormField,
   FormFileField,
+  FormSuccess,
   SubmitButton,
 } from "@/components/forms/FormFields";
 import { initialActionState } from "@/types/actions";
 
 export function MascotaRegistroForm() {
-  const [state, formAction] = useActionState(registrarMascota, initialActionState);
+  const [state, formAction] = useActionState(
+    registrarMascota,
+    initialActionState,
+  );
+
+  if (state.success && state.editUrl) {
+    return (
+      <div className="space-y-6">
+        <FormSuccess message={state.success} />
+        <p className="text-center text-base text-zinc-600">
+          Tu publicación ya está en el listado. Guarda el enlace de abajo antes
+          de salir de esta pantalla.
+        </p>
+        <ExitoLinkActions
+          editUrl={state.editUrl}
+          telefono={state.telefono ?? null}
+        />
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Link
+            href={state.editUrl}
+            className="flex-1 rounded-xl bg-amber-600 px-4 py-3.5 text-center text-base font-semibold text-white transition hover:bg-amber-700"
+          >
+            Ir a mi panel de edición
+          </Link>
+          <Link
+            href="/"
+            className="flex-1 rounded-xl border border-zinc-300 bg-white px-4 py-3.5 text-center text-base font-semibold text-zinc-700 transition hover:bg-zinc-50"
+          >
+            Ver listado público
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <ActionForm action={formAction} encType="multipart/form-data">
       <FormError message={state.error} />
 
       <FormField label="Estado del reporte" name="estado" as="select" required>
-        <option value="" disabled>
+        <option value="" disabled hidden>
           Selecciona…
         </option>
         <option value="PERDIDO">Perdido</option>
@@ -30,12 +63,14 @@ export function MascotaRegistroForm() {
         <option value="EN_CASA">En Casa</option>
       </FormField>
 
-      <FormField
-        label="Especie"
-        name="especie"
-        required
-        placeholder="Ej: Perro, Gato, Ave…"
-      />
+      <FormField label="Especie" name="especie" as="select" required>
+        <option value="" disabled hidden>
+          Selecciona…
+        </option>
+        <option value="Perro">Perro</option>
+        <option value="Gato">Gato</option>
+        <option value="Otro">Otro</option>
+      </FormField>
 
       <FormField
         label="Nombre de la mascota"

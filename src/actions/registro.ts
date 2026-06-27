@@ -5,6 +5,7 @@ import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { parseEstadoMascota } from "@/lib/mascota-estado";
+import { buildEditUrl, getSiteBaseUrl } from "@/lib/site";
 import {
   resolveOptionalFotoUrl,
   uploadImagenStorage,
@@ -61,6 +62,14 @@ function redirectExito(token: string, formData: FormData): never {
   );
 }
 
+function getRequiredSelect(formData: FormData, key: string): string {
+  const value = getRequired(formData, key);
+  if (value === "" || value.toLowerCase().startsWith("selecciona")) {
+    throw new Error(`Selecciona una opción válida en "${key}".`);
+  }
+  return value;
+}
+
 export async function registrarMascota(
   _prevState: ActionState,
   formData: FormData,
@@ -69,22 +78,28 @@ export async function registrarMascota(
     const supabase = getSupabaseAdmin();
     const token = randomUUID();
 
+    const estadoRaw = getRequiredSelect(formData, "estado");
+    const especie = getRequiredSelect(formData, "especie");
+    const estado = parseEstadoMascota(estadoRaw);
+
     const file = formData.get("foto");
     let fotoUrl: string | null = null;
 
     if (file instanceof File && file.size > 0) {
       try {
         fotoUrl = await uploadImagenStorage(supabase, file, MASCOTAS_FOLDER);
-      } catch {
-        fotoUrl = null;
+      } catch (uploadError) {
+        const uploadMessage =
+          uploadError instanceof Error
+            ? uploadError.message
+            : "No se pudo subir la foto.";
+        return { error: uploadMessage, success: null };
       }
     }
 
-    const estado = parseEstadoMascota(getRequired(formData, "estado"));
-
-    const { error } = await supabase.from("mascotas_reportadas").insert({
+    const payload = {
       tipo_reporte: estado === "PERDIDO" ? "PERDIDO" : "ENCONTRADO",
-      especie: getRequired(formData, "especie"),
+      especie,
       nombre_mascota: getOptional(formData, "nombre_mascota"),
       caracteristicas: getRequired(formData, "caracteristicas"),
       ubicacion_zona: getRequired(formData, "ubicacion_zona"),
@@ -93,13 +108,35 @@ export async function registrarMascota(
       foto_url: fotoUrl,
       estado,
       token_edicion: token,
-    });
+    };
+
+    let { error } = await supabase.from("mascotas_reportadas").insert(payload);
+
+    if (
+      error?.message.includes("contacto_whatsapp") &&
+      payload.contacto_whatsapp
+    ) {
+      const { contacto_whatsapp: _whatsapp, ...payloadSinWhatsapp } = payload;
+      ({ error } = await supabase
+        .from("mascotas_reportadas")
+        .insert(payloadSinWhatsapp));
+    }
 
     if (error) {
       return { error: error.message, success: null };
     }
 
-    redirectExito(token, formData);
+    const telefono =
+      getOptional(formData, "contacto_whatsapp") ??
+      getRequired(formData, "contacto_telefono");
+    const baseUrl = await getSiteBaseUrl();
+
+    return {
+      error: null,
+      success: "Reporte guardado",
+      editUrl: buildEditUrl(baseUrl, token),
+      telefono,
+    };
   } catch (error) {
     if (isRedirectError(error)) throw error;
     return handleActionError(error);

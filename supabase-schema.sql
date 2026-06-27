@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS mascotas_reportadas (
   caracteristicas TEXT NOT NULL,
   ubicacion_zona TEXT NOT NULL,
   contacto_telefono TEXT NOT NULL,
+  contacto_whatsapp TEXT,
   foto_url TEXT,
   estado TEXT NOT NULL DEFAULT 'PERDIDO' CHECK (estado IN ('PERDIDO', 'EN_RESGUARDO', 'EN_CASA')),
   token_edicion TEXT NOT NULL UNIQUE,
@@ -105,5 +106,6 @@ CREATE POLICY "Lectura pública acopio"
 -- UPDATE mascotas_reportadas SET estado = 'PERDIDO' WHERE estado = 'ACTIVO' AND tipo_reporte = 'PERDIDO';
 -- ALTER TABLE mascotas_reportadas ADD CONSTRAINT mascotas_reportadas_estado_check CHECK (estado IN ('PERDIDO', 'EN_RESGUARDO', 'EN_CASA'));
 -- ALTER TABLE mascotas_reportadas ALTER COLUMN estado SET DEFAULT 'PERDIDO';
+-- ALTER TABLE mascotas_reportadas ADD COLUMN IF NOT EXISTS contacto_whatsapp TEXT;
 -- ALTER TABLE red_voluntarios ADD COLUMN IF NOT EXISTS informacion_adicional TEXT;
 -- ALTER TABLE red_voluntarios ADD COLUMN IF NOT EXISTS foto_url TEXT;

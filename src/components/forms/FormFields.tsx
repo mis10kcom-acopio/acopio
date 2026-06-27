@@ -116,10 +116,11 @@ export function FormError({ message }: { message: string | null }) {
 
   return (
     <div
-      className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+      className="rounded-xl border-2 border-red-300 bg-red-50 px-4 py-4 text-sm font-medium text-red-800"
       role="alert"
     >
-      {message}
+      <p className="font-bold">No se pudo guardar el reporte</p>
+      <p className="mt-1">{message}</p>
     </div>
   );
 }
@@ -178,7 +179,7 @@ export function ActionForm({
   encType?: "multipart/form-data";
 }) {
   return (
-    <form action={action} className={className} encType={encType}>
+    <form action={action} method="post" className={className} encType={encType}>
       {children}
     </form>
   );
