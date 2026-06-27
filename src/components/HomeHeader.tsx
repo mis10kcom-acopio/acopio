@@ -1,5 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
-import { HeartHandshake, Megaphone, PawPrint, Stethoscope, Warehouse } from "lucide-react";
+import { HeartHandshake, Megaphone, Stethoscope, Warehouse } from "lucide-react";
 
 const CTA_LINKS = [
   {
@@ -37,13 +38,14 @@ export function HomeHeader() {
     <header className="border-b border-amber-200/80 bg-white">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:py-12">
         <div className="flex flex-col items-center text-center">
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-100 shadow-inner">
-            <PawPrint
-              className="h-9 w-9 text-amber-700"
-              strokeWidth={2.25}
-              aria-hidden
-            />
-          </div>
+          <Image
+            src="/logohuellas.png"
+            alt="Logo Huellas a Salvo"
+            width={90}
+            height={90}
+            className="mx-auto mb-4 object-contain"
+            priority
+          />
           <h1 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
             Huellas a Salvo
           </h1>
