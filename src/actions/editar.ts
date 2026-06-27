@@ -8,6 +8,7 @@ import {
   getMascotaEstado,
   parseEstadoMascota,
 } from "@/lib/mascota-estado";
+import { parseEspecieMascota } from "@/lib/mascota-especie";
 import { resolveOptionalFotoUrl } from "@/lib/storage-upload";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import type { ActionState } from "@/types/actions";
@@ -363,7 +364,7 @@ export async function actualizarMascota(
       .update({
         estado,
         tipo_reporte: tipoReporteFromEstado(estado),
-        especie: getRequired(formData, "especie"),
+        especie: parseEspecieMascota(getRequired(formData, "especie")),
         nombre_mascota: getOptional(formData, "nombre_mascota"),
         caracteristicas: getRequired(formData, "caracteristicas"),
         ubicacion_zona: getRequired(formData, "ubicacion_zona"),
