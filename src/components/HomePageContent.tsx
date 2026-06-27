@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useMemo, useState } from "react";
+import { RelativePublishedTime } from "@/components/RelativePublishedTime";
 import {
   HeartHandshake,
   PawPrint,
@@ -237,11 +238,16 @@ function MascotaCard({ mascota }: { mascota: MascotaReportada }) {
           </span>
         </div>
         <div className="space-y-4 p-5">
-          {mascota.nombre_mascota && (
-            <h3 className="text-xl font-bold text-zinc-900">
-              {mascota.nombre_mascota}
-            </h3>
-          )}
+          <div className="flex items-start justify-between gap-3">
+            {mascota.nombre_mascota ? (
+              <h3 className="text-xl font-bold text-zinc-900">
+                {mascota.nombre_mascota}
+              </h3>
+            ) : (
+              <span className="sr-only">Mascota reportada</span>
+            )}
+            <RelativePublishedTime date={mascota.creado_el} />
+          </div>
           <p className="text-base leading-relaxed text-zinc-700">
             {mascota.caracteristicas}
           </p>
@@ -305,9 +311,12 @@ function VoluntarioCard({ voluntario }: { voluntario: RedVoluntario }) {
               </Badge>
               <Badge variant="success">Disponible</Badge>
             </div>
-            <h3 className="text-xl font-bold text-zinc-900">
-              {voluntario.nombre_o_clinica}
-            </h3>
+            <div className="flex items-start justify-between gap-3">
+              <h3 className="min-w-0 text-xl font-bold text-zinc-900">
+                {voluntario.nombre_o_clinica}
+              </h3>
+              <RelativePublishedTime date={voluntario.creado_el} />
+            </div>
           </div>
         </div>
         <div className="space-y-4 border-t-2 border-zinc-100 pt-4">
@@ -361,7 +370,12 @@ function AcopioCard({ acopio }: { acopio: AcopioMascota }) {
         <Badge variant={stockVariants[acopio.estado_stock]}>
           {stockLabels[acopio.estado_stock]}
         </Badge>
-        <h3 className="text-xl font-bold text-zinc-900">{acopio.nombre_centro}</h3>
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="min-w-0 text-xl font-bold text-zinc-900">
+            {acopio.nombre_centro}
+          </h3>
+          <RelativePublishedTime date={acopio.creado_el} />
+        </div>
         <p className="text-base text-zinc-700">{acopio.direccion_exacta}</p>
         <p className="text-base text-zinc-800">
           <span className="font-bold">Necesidades: </span>
