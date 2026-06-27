@@ -4,7 +4,10 @@ import { randomUUID } from "crypto";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { insertMascotaReportada } from "@/lib/mascota-db-write";
+import {
+  insertMascotaReportada,
+  type MascotaInsertPayload,
+} from "@/lib/mascota-db-write";
 import { parseEstadoMascota } from "@/lib/mascota-estado";
 import { buildEditUrl, getSiteBaseUrl } from "@/lib/site";
 import {
@@ -97,7 +100,7 @@ export async function registrarMascota(
       }
     }
 
-    const payload = {
+    const payload: MascotaInsertPayload = {
       nombre_mascota: getOptional(formData, "nombre_mascota"),
       caracteristicas: getRequired(formData, "caracteristicas"),
       ubicacion_zona: getRequired(formData, "ubicacion_zona"),

@@ -1,6 +1,41 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { EstadoMascota, TipoReporte } from "@/types/database";
 
+/** Columnas permitidas al insertar en mascotas_reportadas. */
+export const MASCOTAS_INSERT_COLUMNS = [
+  "tipo_reporte",
+  "estado",
+  "nombre_mascota",
+  "caracteristicas",
+  "ubicacion_zona",
+  "contacto_telefono",
+  "contacto_whatsapp",
+  "foto_url",
+  "token_edicion",
+] as const;
+
+export type MascotaInsertPayload = {
+  nombre_mascota: string | null;
+  caracteristicas: string;
+  ubicacion_zona: string;
+  contacto_telefono: string;
+  contacto_whatsapp: string | null;
+  foto_url: string | null;
+  token_edicion: string;
+};
+
+type MascotasReportadasInsertRow = {
+  tipo_reporte: TipoReporte;
+  estado: string;
+  nombre_mascota: string | null;
+  caracteristicas: string;
+  ubicacion_zona: string;
+  contacto_telefono: string;
+  foto_url: string | null;
+  token_edicion: string;
+  contacto_whatsapp?: string;
+};
+
 type MascotaTokenUpdateResult = {
   data: { token_edicion: string } | null;
   error: { message: string } | null;
@@ -39,29 +74,20 @@ function isMissingWhatsappColumnError(message: string): boolean {
   return message.includes("contacto_whatsapp");
 }
 
-type MascotaInsertPayload = {
-  nombre_mascota: string | null;
-  caracteristicas: string;
-  ubicacion_zona: string;
-  contacto_telefono: string;
-  contacto_whatsapp: string | null;
-  foto_url: string | null;
-  token_edicion: string;
-};
-
 function buildInsertRow(
   basePayload: MascotaInsertPayload,
   estadoRow: { estado: string; tipo_reporte: TipoReporte },
   includeWhatsapp: boolean,
-): Record<string, unknown> {
-  const row: Record<string, unknown> = {
+): MascotasReportadasInsertRow {
+  const row: MascotasReportadasInsertRow = {
+    tipo_reporte: estadoRow.tipo_reporte,
+    estado: estadoRow.estado,
     nombre_mascota: basePayload.nombre_mascota,
     caracteristicas: basePayload.caracteristicas,
     ubicacion_zona: basePayload.ubicacion_zona,
     contacto_telefono: basePayload.contacto_telefono,
     foto_url: basePayload.foto_url,
     token_edicion: basePayload.token_edicion,
-    ...estadoRow,
   };
 
   if (includeWhatsapp && basePayload.contacto_whatsapp) {
@@ -73,7 +99,7 @@ function buildInsertRow(
 
 async function tryInsertRow(
   supabase: SupabaseClient,
-  row: Record<string, unknown>,
+  row: MascotasReportadasInsertRow,
 ) {
   return supabase.from("mascotas_reportadas").insert(row);
 }
@@ -137,18 +163,73 @@ export async function insertMascotaReportada(
   };
 }
 
-function buildUpdateRow(
+type MascotaUpdateFields = {
+  nombre_mascota?: string | null;
+  caracteristicas?: string;
+  ubicacion_zona?: string;
+  contacto_telefono?: string;
+  contacto_whatsapp?: string | null;
+};
+
+function pickMascotaUpdateFields(
   fields: Record<string, unknown>,
+): MascotaUpdateFields {
+  const picked: MascotaUpdateFields = {};
+
+  if ("nombre_mascota" in fields) {
+    picked.nombre_mascota = fields.nombre_mascota as string | null;
+  }
+  if ("caracteristicas" in fields) {
+    picked.caracteristicas = fields.caracteristicas as string;
+  }
+  if ("ubicacion_zona" in fields) {
+    picked.ubicacion_zona = fields.ubicacion_zona as string;
+  }
+  if ("contacto_telefono" in fields) {
+    picked.contacto_telefono = fields.contacto_telefono as string;
+  }
+  if ("contacto_whatsapp" in fields) {
+    picked.contacto_whatsapp = fields.contacto_whatsapp as string | null;
+  }
+
+  return picked;
+}
+
+type MascotasReportadasUpdateRow = {
+  tipo_reporte: TipoReporte;
+  estado: string;
+  nombre_mascota?: string | null;
+  caracteristicas?: string;
+  ubicacion_zona?: string;
+  contacto_telefono?: string;
+  contacto_whatsapp?: string | null;
+  foto_url?: string | null;
+};
+
+function buildUpdateRow(
+  fields: MascotaUpdateFields,
   estadoRow: { estado: string; tipo_reporte: TipoReporte },
   includeWhatsapp: boolean,
-): Record<string, unknown> {
-  const row: Record<string, unknown> = {
-    ...fields,
-    ...estadoRow,
+): MascotasReportadasUpdateRow {
+  const row: MascotasReportadasUpdateRow = {
+    tipo_reporte: estadoRow.tipo_reporte,
+    estado: estadoRow.estado,
   };
 
-  if (!includeWhatsapp) {
-    delete row.contacto_whatsapp;
+  if (fields.nombre_mascota !== undefined) {
+    row.nombre_mascota = fields.nombre_mascota;
+  }
+  if (fields.caracteristicas !== undefined) {
+    row.caracteristicas = fields.caracteristicas;
+  }
+  if (fields.ubicacion_zona !== undefined) {
+    row.ubicacion_zona = fields.ubicacion_zona;
+  }
+  if (fields.contacto_telefono !== undefined) {
+    row.contacto_telefono = fields.contacto_telefono;
+  }
+  if (includeWhatsapp && fields.contacto_whatsapp !== undefined) {
+    row.contacto_whatsapp = fields.contacto_whatsapp;
   }
 
   return row;
@@ -160,6 +241,7 @@ export async function updateMascotaReportada(
   fields: Record<string, unknown>,
   estadoLogico: EstadoMascota,
 ): Promise<MascotaTokenUpdateResult> {
+  const safeFields = pickMascotaUpdateFields(fields);
   const schemaAttempts = [
     toModernDbEstado(estadoLogico),
     toLegacyDbEstado(estadoLogico),
@@ -169,7 +251,7 @@ export async function updateMascotaReportada(
 
   for (const estadoRow of schemaAttempts) {
     for (const includeWhatsapp of [true, false]) {
-      const row = buildUpdateRow(fields, estadoRow, includeWhatsapp);
+      const row = buildUpdateRow(safeFields, estadoRow, includeWhatsapp);
       const result = await supabase
         .from("mascotas_reportadas")
         .update(row)
