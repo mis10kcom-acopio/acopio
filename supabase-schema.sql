@@ -99,13 +99,6 @@ CREATE POLICY "Lectura pública acopio"
   ON acopio_mascotas FOR SELECT
   USING (true);
 
--- Migración estado mascotas (3 estados logísticos):
--- ALTER TABLE mascotas_reportadas DROP CONSTRAINT IF EXISTS mascotas_reportadas_estado_check;
--- UPDATE mascotas_reportadas SET estado = 'EN_CASA' WHERE estado = 'RESUELTO';
--- UPDATE mascotas_reportadas SET estado = 'EN_RESGUARDO' WHERE estado = 'ACTIVO' AND tipo_reporte = 'ENCONTRADO';
--- UPDATE mascotas_reportadas SET estado = 'PERDIDO' WHERE estado = 'ACTIVO' AND tipo_reporte = 'PERDIDO';
--- ALTER TABLE mascotas_reportadas ADD CONSTRAINT mascotas_reportadas_estado_check CHECK (estado IN ('PERDIDO', 'EN_RESGUARDO', 'EN_CASA'));
--- ALTER TABLE mascotas_reportadas ALTER COLUMN estado SET DEFAULT 'PERDIDO';
--- ALTER TABLE mascotas_reportadas ADD COLUMN IF NOT EXISTS contacto_whatsapp TEXT;
+-- Migración estado mascotas — usar supabase-migration-estado-mascotas.sql (script completo)
 -- ALTER TABLE red_voluntarios ADD COLUMN IF NOT EXISTS informacion_adicional TEXT;
 -- ALTER TABLE red_voluntarios ADD COLUMN IF NOT EXISTS foto_url TEXT;

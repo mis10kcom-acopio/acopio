@@ -4,6 +4,7 @@ import { randomUUID } from "crypto";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { insertMascotaReportada } from "@/lib/mascota-db-write";
 import { parseEstadoMascota } from "@/lib/mascota-estado";
 import { buildEditUrl, getSiteBaseUrl } from "@/lib/site";
 import {
@@ -98,7 +99,6 @@ export async function registrarMascota(
     }
 
     const payload = {
-      tipo_reporte: estado === "PERDIDO" ? "PERDIDO" : "ENCONTRADO",
       especie,
       nombre_mascota: getOptional(formData, "nombre_mascota"),
       caracteristicas: getRequired(formData, "caracteristicas"),
@@ -106,24 +106,13 @@ export async function registrarMascota(
       contacto_telefono: getRequired(formData, "contacto_telefono"),
       contacto_whatsapp: getOptional(formData, "contacto_whatsapp"),
       foto_url: fotoUrl,
-      estado,
       token_edicion: token,
     };
 
-    let { error } = await supabase.from("mascotas_reportadas").insert(payload);
-
-    if (
-      error?.message.includes("contacto_whatsapp") &&
-      payload.contacto_whatsapp
-    ) {
-      const { contacto_whatsapp: _whatsapp, ...payloadSinWhatsapp } = payload;
-      ({ error } = await supabase
-        .from("mascotas_reportadas")
-        .insert(payloadSinWhatsapp));
-    }
+    const { error } = await insertMascotaReportada(supabase, payload, estado);
 
     if (error) {
-      return { error: error.message, success: null };
+      return { error, success: null };
     }
 
     const telefono =

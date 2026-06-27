@@ -8,6 +8,10 @@ import {
   getMascotaEstado,
   parseEstadoMascota,
 } from "@/lib/mascota-estado";
+import {
+  updateMascotaEstadoOnly,
+  updateMascotaReportada,
+} from "@/lib/mascota-db-write";
 import { resolveOptionalFotoUrl } from "@/lib/storage-upload";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import type { ActionState } from "@/types/actions";
@@ -32,11 +36,6 @@ function getOptional(formData: FormData, key: string): string | null {
     return null;
   }
   return value.trim();
-}
-
-
-function tipoReporteFromEstado(estado: string): "PERDIDO" | "ENCONTRADO" {
-  return parseEstadoMascota(estado) === "PERDIDO" ? "PERDIDO" : "ENCONTRADO";
 }
 
 export type RegistroPorToken =
@@ -146,15 +145,11 @@ export async function cambiarMascotaAEnResguardo(
       };
     }
 
-    const { data, error } = await supabase
-      .from("mascotas_reportadas")
-      .update({
-        estado: "EN_RESGUARDO",
-        tipo_reporte: "ENCONTRADO",
-      })
-      .eq("id", registro.id)
-      .select("token_edicion")
-      .maybeSingle();
+    const { data, error } = await updateMascotaEstadoOnly(
+      supabase,
+      registro.id,
+      "EN_RESGUARDO",
+    );
 
     if (error) {
       return { error: error.message, success: null };
@@ -197,15 +192,11 @@ export async function marcarMascotaEnCasa(
       };
     }
 
-    const { data, error } = await supabase
-      .from("mascotas_reportadas")
-      .update({
-        estado: "EN_CASA",
-        tipo_reporte: "ENCONTRADO",
-      })
-      .eq("id", registro.id)
-      .select("token_edicion")
-      .maybeSingle();
+    const { data, error } = await updateMascotaEstadoOnly(
+      supabase,
+      registro.id,
+      "EN_CASA",
+    );
 
     if (error) {
       return { error: error.message, success: null };
@@ -358,21 +349,19 @@ export async function actualizarMascota(
 
     const estado = parseEstadoMascota(getRequired(formData, "estado"));
 
-    const { data, error } = await supabase
-      .from("mascotas_reportadas")
-      .update({
-        estado,
-        tipo_reporte: tipoReporteFromEstado(estado),
+    const { data, error } = await updateMascotaReportada(
+      supabase,
+      registro.id,
+      {
         especie: getRequired(formData, "especie"),
         nombre_mascota: getOptional(formData, "nombre_mascota"),
         caracteristicas: getRequired(formData, "caracteristicas"),
         ubicacion_zona: getRequired(formData, "ubicacion_zona"),
         contacto_telefono: getRequired(formData, "contacto_telefono"),
         contacto_whatsapp: getOptional(formData, "contacto_whatsapp"),
-      })
-      .eq("id", registro.id)
-      .select("token_edicion")
-      .maybeSingle();
+      },
+      estado,
+    );
 
     if (error) {
       return { error: error.message, success: null };
