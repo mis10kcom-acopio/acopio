@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import { RelativePublishedTime } from "@/components/RelativePublishedTime";
+import { VenezuelaLocalClock } from "@/components/VenezuelaLocalClock";
 import {
   HeartHandshake,
   PawPrint,
@@ -489,15 +490,72 @@ export function HomePageContent({ data }: { data: HomePageData }) {
     [data.acopios, searchQueryAcopio],
   );
 
-  const counts: Record<SectionId, number> = {
-    mascotas: data.mascotas.length,
-    "red-ayuda": redAyuda.length,
-    veterinarios: veterinarios.length,
-    acopio: data.acopios.length,
-  };
+  const mascotaStats = useMemo(
+    () => ({
+      perdidas: data.mascotas.filter((m) => m.tipo_reporte === "PERDIDO").length,
+      encontradas: data.mascotas.filter((m) => m.tipo_reporte === "ENCONTRADO")
+        .length,
+    }),
+    [data.mascotas],
+  );
+
+  const redAyudaStats = useMemo(
+    () => ({
+      hogar: redAyuda.filter((v) => v.tipo_ayuda === "HOGAR_TEMPORAL").length,
+      rescatista: redAyuda.filter((v) => v.tipo_ayuda === "RESCATISTA").length,
+      transporte: redAyuda.filter((v) => v.tipo_ayuda === "TRANSPORTE").length,
+    }),
+    [redAyuda],
+  );
+
+  const acopioStats = useMemo(
+    () => ({
+      critico: data.acopios.filter((a) => a.estado_stock === "CRITICO").length,
+      moderado: data.acopios.filter((a) => a.estado_stock === "MODERADO").length,
+      abastecido: data.acopios.filter((a) => a.estado_stock === "ABASTECIDO")
+        .length,
+    }),
+    [data.acopios],
+  );
+
+  function renderSectionStats(sectionId: SectionId) {
+    switch (sectionId) {
+      case "mascotas":
+        return (
+          <p className="mt-2 text-sm font-semibold leading-snug text-zinc-700">
+            <span className="text-red-700">{mascotaStats.perdidas} Perdidas</span>
+            {" | "}
+            <span className="text-emerald-700">
+              {mascotaStats.encontradas} Encontradas
+            </span>
+          </p>
+        );
+      case "red-ayuda":
+        return (
+          <p className="mt-2 text-sm font-semibold leading-snug text-zinc-700">
+            {redAyudaStats.hogar} Hogar temporal | {redAyudaStats.rescatista}{" "}
+            Rescatistas | {redAyudaStats.transporte} Transporte
+          </p>
+        );
+      case "veterinarios":
+        return (
+          <p className="mt-2 text-sm font-semibold text-sky-800">
+            {veterinarios.length} Veterinarios disponibles
+          </p>
+        );
+      case "acopio":
+        return (
+          <p className="mt-2 text-sm font-semibold leading-snug text-zinc-700">
+            {acopioStats.critico} Crítico 🔴 | {acopioStats.moderado} Moderado 🟡
+            | {acopioStats.abastecido} Abastecido 🟢
+          </p>
+        );
+    }
+  }
 
   return (
     <>
+      <VenezuelaLocalClock />
       <nav
         className="grid grid-cols-2 gap-3 lg:grid-cols-4"
         aria-label="Secciones principales"
@@ -512,28 +570,22 @@ export function HomePageContent({ data }: { data: HomePageData }) {
               type="button"
               onClick={() => setActiveSection(section.id)}
               aria-pressed={isActive}
-              className={`flex min-h-[7.5rem] flex-col items-start justify-between rounded-2xl border-2 bg-white p-5 text-left shadow-lg transition focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+              className={`flex min-h-[8.5rem] flex-col items-start justify-between rounded-2xl border-2 bg-white p-5 text-left shadow-lg transition focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                 isActive
                   ? `border-zinc-900 ${section.activeRing} ring-2 ring-offset-2`
                   : "border-zinc-200 hover:border-zinc-300 hover:shadow-xl"
               }`}
             >
-              <div className="flex w-full items-start justify-between gap-2">
-                <Icon
-                  className={`h-7 w-7 shrink-0 ${section.accent}`}
-                  aria-hidden
-                />
-                <span
-                  className={`text-3xl font-bold leading-none ${section.accent}`}
-                >
-                  {counts[section.id]}
-                </span>
-              </div>
-              <div className="mt-3">
+              <Icon
+                className={`h-7 w-7 shrink-0 ${section.accent}`}
+                aria-hidden
+              />
+              <div className="mt-3 w-full">
                 <p className="text-lg font-bold text-zinc-900 sm:text-xl">
                   {section.label}
                 </p>
-                <p className="mt-1 text-sm font-medium text-zinc-500">
+                {renderSectionStats(section.id)}
+                <p className="mt-1.5 text-xs font-medium text-zinc-500 sm:text-sm">
                   {section.subtitle}
                 </p>
               </div>
