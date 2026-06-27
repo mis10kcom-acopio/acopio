@@ -377,9 +377,53 @@ function EmptyState({ message }: { message: string }) {
   );
 }
 
+function ZoneSearchInput({
+  value,
+  onChange,
+  placeholder,
+  ariaLabel,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  ariaLabel: string;
+}) {
+  return (
+    <div className="relative mb-5">
+      <Search
+        className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400"
+        aria-hidden
+      />
+      <input
+        type="text"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        aria-label={ariaLabel}
+        className="w-full rounded-xl border-2 border-zinc-200 bg-white py-3.5 pl-12 pr-4 text-base text-zinc-900 shadow-sm placeholder:text-zinc-500 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+      />
+    </div>
+  );
+}
+
+function filterByZona<T extends { ubicacion_zona: string }>(
+  items: T[],
+  searchQuery: string,
+): T[] {
+  const query = searchQuery.trim().toLowerCase();
+  if (!query) return items;
+
+  return items.filter((item) =>
+    item.ubicacion_zona.toLowerCase().includes(query),
+  );
+}
+
 export function HomePageContent({ data }: { data: HomePageData }) {
   const [activeSection, setActiveSection] = useState<SectionId>("mascotas");
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchQueryRedAyuda, setSearchQueryRedAyuda] = useState("");
+  const [searchQueryVeterinarios, setSearchQueryVeterinarios] = useState("");
+  const [searchQueryAcopio, setSearchQueryAcopio] = useState("");
 
   const redAyuda = useMemo(
     () =>
@@ -394,14 +438,25 @@ export function HomePageContent({ data }: { data: HomePageData }) {
     [data.voluntarios],
   );
 
-  const filteredMascotas = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) return data.mascotas;
+  const filteredMascotas = useMemo(
+    () => filterByZona(data.mascotas, searchQuery),
+    [data.mascotas, searchQuery],
+  );
 
-    return data.mascotas.filter((mascota) =>
-      mascota.ubicacion_zona.toLowerCase().includes(query),
-    );
-  }, [data.mascotas, searchQuery]);
+  const filteredRedAyuda = useMemo(
+    () => filterByZona(redAyuda, searchQueryRedAyuda),
+    [redAyuda, searchQueryRedAyuda],
+  );
+
+  const filteredVeterinarios = useMemo(
+    () => filterByZona(veterinarios, searchQueryVeterinarios),
+    [veterinarios, searchQueryVeterinarios],
+  );
+
+  const filteredAcopios = useMemo(
+    () => filterByZona(data.acopios, searchQueryAcopio),
+    [data.acopios, searchQueryAcopio],
+  );
 
   const counts: Record<SectionId, number> = {
     mascotas: data.mascotas.length,
@@ -463,20 +518,12 @@ export function HomePageContent({ data }: { data: HomePageData }) {
               Mascotas Perdidas y Encontradas
             </h2>
             {data.mascotas.length > 0 && (
-              <div className="relative mb-5">
-                <Search
-                  className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400"
-                  aria-hidden
-                />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="🔍 Buscar por zona, ciudad o municipio (ej. La Guaira)"
-                  aria-label="Buscar mascotas por zona, ciudad o municipio"
-                  className="w-full rounded-xl border-2 border-zinc-200 bg-white py-3.5 pl-12 pr-4 text-base text-zinc-900 shadow-sm placeholder:text-zinc-500 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
-                />
-              </div>
+              <ZoneSearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="🔍 Buscar por zona, ciudad o municipio (ej. La Guaira)"
+                ariaLabel="Buscar mascotas por zona, ciudad o municipio"
+              />
             )}
             {data.mascotas.length === 0 ? (
               <EmptyState message="No hay reportes activos en este momento." />
@@ -497,11 +544,21 @@ export function HomePageContent({ data }: { data: HomePageData }) {
             <h2 className="mb-5 text-2xl font-bold text-zinc-900">
               Red de Ayuda — Hogares, Rescatistas y Transporte
             </h2>
+            {redAyuda.length > 0 && (
+              <ZoneSearchInput
+                value={searchQueryRedAyuda}
+                onChange={setSearchQueryRedAyuda}
+                placeholder="🔍 Buscar voluntarios, transporte u hogares temporales por zona..."
+                ariaLabel="Buscar voluntarios por zona"
+              />
+            )}
             {redAyuda.length === 0 ? (
               <EmptyState message="No hay voluntarios de ayuda disponibles en este momento." />
+            ) : filteredRedAyuda.length === 0 ? (
+              <EmptyState message="No hay voluntarios registrados en esta zona actualmente." />
             ) : (
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {redAyuda.map((voluntario) => (
+                {filteredRedAyuda.map((voluntario) => (
                   <VoluntarioCard key={voluntario.id} voluntario={voluntario} />
                 ))}
               </div>
@@ -514,11 +571,21 @@ export function HomePageContent({ data }: { data: HomePageData }) {
             <h2 className="mb-5 text-2xl font-bold text-zinc-900">
               Veterinarios y Clínicas Disponibles
             </h2>
+            {veterinarios.length > 0 && (
+              <ZoneSearchInput
+                value={searchQueryVeterinarios}
+                onChange={setSearchQueryVeterinarios}
+                placeholder="🔍 Buscar clínicas o veterinarios por zona..."
+                ariaLabel="Buscar veterinarios por zona"
+              />
+            )}
             {veterinarios.length === 0 ? (
               <EmptyState message="No hay veterinarios disponibles en este momento." />
+            ) : filteredVeterinarios.length === 0 ? (
+              <EmptyState message="No hay veterinarios registrados en esta zona actualmente." />
             ) : (
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {veterinarios.map((voluntario) => (
+                {filteredVeterinarios.map((voluntario) => (
                   <VoluntarioCard key={voluntario.id} voluntario={voluntario} />
                 ))}
               </div>
@@ -531,11 +598,21 @@ export function HomePageContent({ data }: { data: HomePageData }) {
             <h2 className="mb-5 text-2xl font-bold text-zinc-900">
               Centros de Acopio de Insumos
             </h2>
+            {data.acopios.length > 0 && (
+              <ZoneSearchInput
+                value={searchQueryAcopio}
+                onChange={setSearchQueryAcopio}
+                placeholder="🔍 Buscar centros de acopio por zona..."
+                ariaLabel="Buscar centros de acopio por zona"
+              />
+            )}
             {data.acopios.length === 0 ? (
               <EmptyState message="No hay centros de acopio registrados." />
+            ) : filteredAcopios.length === 0 ? (
+              <EmptyState message="No hay centros de acopio en esta zona actualmente." />
             ) : (
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {data.acopios.map((acopio) => (
+                {filteredAcopios.map((acopio) => (
                   <AcopioCard key={acopio.id} acopio={acopio} />
                 ))}
               </div>
