@@ -45,11 +45,58 @@ type MascotaInsertPayload = {
   token_edicion: string;
 };
 
-async function runInsert(
+function buildInsertRow(
+  basePayload: MascotaInsertPayload,
+  estadoRow: { estado: string; tipo_reporte: TipoReporte },
+  includeWhatsapp: boolean,
+): Record<string, unknown> {
+  const row: Record<string, unknown> = {
+    especie: basePayload.especie,
+    nombre_mascota: basePayload.nombre_mascota,
+    caracteristicas: basePayload.caracteristicas,
+    ubicacion_zona: basePayload.ubicacion_zona,
+    contacto_telefono: basePayload.contacto_telefono,
+    foto_url: basePayload.foto_url,
+    token_edicion: basePayload.token_edicion,
+    ...estadoRow,
+  };
+
+  if (includeWhatsapp && basePayload.contacto_whatsapp) {
+    row.contacto_whatsapp = basePayload.contacto_whatsapp;
+  }
+
+  return row;
+}
+
+async function tryInsertRow(
   supabase: SupabaseClient,
-  payload: Record<string, unknown>,
+  row: Record<string, unknown>,
 ) {
-  return supabase.from("mascotas_reportadas").insert(payload);
+  return supabase.from("mascotas_reportadas").insert(row);
+}
+
+async function insertRowWithOptionalWhatsappFallback(
+  supabase: SupabaseClient,
+  basePayload: MascotaInsertPayload,
+  estadoRow: { estado: string; tipo_reporte: TipoReporte },
+): Promise<{ error: string | null }> {
+  const withWhatsapp = buildInsertRow(basePayload, estadoRow, true);
+  let { error } = await tryInsertRow(supabase, withWhatsapp);
+
+  if (!error) {
+    return { error: null };
+  }
+
+  if (isMissingWhatsappColumnError(error.message)) {
+    const withoutWhatsapp = buildInsertRow(basePayload, estadoRow, false);
+    ({ error } = await tryInsertRow(supabase, withoutWhatsapp));
+
+    if (!error) {
+      return { error: null };
+    }
+  }
+
+  return { error: error.message };
 }
 
 export async function insertMascotaReportada(
@@ -57,37 +104,51 @@ export async function insertMascotaReportada(
   basePayload: MascotaInsertPayload,
   estadoLogico: EstadoMascota,
 ): Promise<{ error: string | null }> {
-  const schemaAttempts = [toModernDbEstado(estadoLogico), toLegacyDbEstado(estadoLogico)];
+  const schemaAttempts = [
+    toModernDbEstado(estadoLogico),
+    toLegacyDbEstado(estadoLogico),
+  ];
+
+  let lastError: string | null = null;
 
   for (const estadoRow of schemaAttempts) {
-    const withWhatsapp = { ...basePayload, ...estadoRow };
-    let { error } = await runInsert(supabase, withWhatsapp);
+    const result = await insertRowWithOptionalWhatsappFallback(
+      supabase,
+      basePayload,
+      estadoRow,
+    );
 
-    if (!error) {
+    if (!result.error) {
       return { error: null };
     }
 
-    if (
-      isMissingWhatsappColumnError(error.message) &&
-      withWhatsapp.contacto_whatsapp
-    ) {
-      const { contacto_whatsapp: _whatsapp, ...sinWhatsapp } = withWhatsapp;
-      ({ error } = await runInsert(supabase, sinWhatsapp));
+    lastError = result.error;
 
-      if (!error) {
-        return { error: null };
-      }
-    }
-
-    if (!isMascotaEstadoConstraintError(error.message)) {
-      return { error: error.message };
+    if (!isMascotaEstadoConstraintError(result.error)) {
+      return { error: result.error };
     }
   }
 
   return {
-    error:
-      "No se pudo guardar el estado del reporte. Ejecuta la migración SQL de estados en Supabase.",
+    error: lastError ?? "No se pudo guardar el reporte.",
   };
+}
+
+function buildUpdateRow(
+  fields: Record<string, unknown>,
+  estadoRow: { estado: string; tipo_reporte: TipoReporte },
+  includeWhatsapp: boolean,
+): Record<string, unknown> {
+  const row: Record<string, unknown> = {
+    ...fields,
+    ...estadoRow,
+  };
+
+  if (!includeWhatsapp) {
+    delete row.contacto_whatsapp;
+  }
+
+  return row;
 }
 
 export async function updateMascotaReportada(
@@ -96,27 +157,50 @@ export async function updateMascotaReportada(
   fields: Record<string, unknown>,
   estadoLogico: EstadoMascota,
 ) {
-  const modern = { ...fields, ...toModernDbEstado(estadoLogico) };
-  let result = await supabase
-    .from("mascotas_reportadas")
-    .update(modern)
-    .eq("id", id)
-    .select("token_edicion")
-    .maybeSingle();
+  const schemaAttempts = [
+    toModernDbEstado(estadoLogico),
+    toLegacyDbEstado(estadoLogico),
+  ];
 
-  if (
-    result.error &&
-    isMascotaEstadoConstraintError(result.error.message)
-  ) {
-    result = await supabase
-      .from("mascotas_reportadas")
-      .update({ ...fields, ...toLegacyDbEstado(estadoLogico) })
-      .eq("id", id)
-      .select("token_edicion")
-      .maybeSingle();
+  let lastResult: Awaited<ReturnType<typeof supabase.from>> | null = null;
+
+  for (const estadoRow of schemaAttempts) {
+    for (const includeWhatsapp of [true, false]) {
+      const row = buildUpdateRow(fields, estadoRow, includeWhatsapp);
+      const result = await supabase
+        .from("mascotas_reportadas")
+        .update(row)
+        .eq("id", id)
+        .select("token_edicion")
+        .maybeSingle();
+
+      if (!result.error) {
+        return result;
+      }
+
+      lastResult = result;
+
+      if (
+        isMissingWhatsappColumnError(result.error.message) &&
+        includeWhatsapp
+      ) {
+        continue;
+      }
+
+      if (!isMascotaEstadoConstraintError(result.error.message)) {
+        return result;
+      }
+
+      break;
+    }
   }
 
-  return result;
+  return (
+    lastResult ?? {
+      data: null,
+      error: { message: "No se pudo actualizar el reporte." },
+    }
+  );
 }
 
 export async function updateMascotaEstadoOnly(
