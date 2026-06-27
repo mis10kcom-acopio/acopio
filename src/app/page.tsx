@@ -74,11 +74,6 @@ export default async function HomePage() {
         )}
         <HomePageContent data={data} />
       </div>
-
-      <footer className="border-t border-amber-200/80 bg-white py-8 text-center text-sm text-zinc-500">
-        Huellas a Salvo — Hecho con amor para ayudar a los animales afectados por
-        el terremoto
-      </footer>
     </main>
   );
 }
