@@ -210,11 +210,21 @@ function MascotaCardActions({ mascota }: { mascota: MascotaReportada }) {
   );
 }
 
-function MascotaCard({ mascota }: { mascota: MascotaReportada }) {
+function MascotaCard({
+  mascota,
+  resolved = false,
+}: {
+  mascota: MascotaReportada;
+  resolved?: boolean;
+}) {
   const estadoConfig = getMascotaEstadoConfig(mascota);
 
   return (
-    <article className="overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white shadow-md">
+    <article
+      className={`overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white shadow-md ${
+        resolved ? "opacity-90 grayscale-[20%]" : ""
+      }`}
+    >
       <div className="bg-white">
         <div className="relative">
           {mascota.foto_url ? (
@@ -415,6 +425,7 @@ function ZoneSearchInput({
   ariaLabel,
   wrapperClassName = "mb-5",
   sticky = false,
+  footer,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -422,6 +433,7 @@ function ZoneSearchInput({
   ariaLabel: string;
   wrapperClassName?: string;
   sticky?: boolean;
+  footer?: React.ReactNode;
 }) {
   const field = (
     <>
@@ -446,11 +458,17 @@ function ZoneSearchInput({
         className={`sticky top-9 z-40 -mx-4 border-b border-amber-200/60 bg-amber-50 px-4 py-2 shadow-sm ${wrapperClassName}`}
       >
         <div className="relative">{field}</div>
+        {footer}
       </div>
     );
   }
 
-  return <div className={`relative ${wrapperClassName}`}>{field}</div>;
+  return (
+    <div className={`relative ${wrapperClassName}`}>
+      {field}
+      {footer}
+    </div>
+  );
 }
 
 function SectionHeader({ title }: { title: string }) {
@@ -477,6 +495,7 @@ export function HomePageContent({ data }: { data: HomePageData }) {
   const [searchQueryRedAyuda, setSearchQueryRedAyuda] = useState("");
   const [searchQueryVeterinarios, setSearchQueryVeterinarios] = useState("");
   const [searchQueryAcopio, setSearchQueryAcopio] = useState("");
+  const [showResolvedMascotas, setShowResolvedMascotas] = useState(false);
 
   const redAyuda = useMemo(
     () =>
@@ -491,9 +510,30 @@ export function HomePageContent({ data }: { data: HomePageData }) {
     [data.voluntarios],
   );
 
+  const activeMascotas = useMemo(
+    () =>
+      data.mascotas.filter((mascota) => {
+        const estado = getMascotaEstado(mascota);
+        return estado === "PERDIDO" || estado === "EN_RESGUARDO";
+      }),
+    [data.mascotas],
+  );
+
+  const resolvedMascotas = useMemo(
+    () =>
+      data.mascotas.filter(
+        (mascota) => getMascotaEstado(mascota) === "EN_CASA",
+      ),
+    [data.mascotas],
+  );
+
+  const mascotasForView = showResolvedMascotas
+    ? resolvedMascotas
+    : activeMascotas;
+
   const filteredMascotas = useMemo(
-    () => filterByZona(data.mascotas, searchQuery),
-    [data.mascotas, searchQuery],
+    () => filterByZona(mascotasForView, searchQuery),
+    [mascotasForView, searchQuery],
   );
 
   const filteredRedAyuda = useMemo(
@@ -624,7 +664,13 @@ export function HomePageContent({ data }: { data: HomePageData }) {
       <div className="mt-8" role="region">
         {activeSection === "mascotas" && (
           <section>
-            <SectionHeader title="Mascotas Perdidas y Encontradas" />
+            <SectionHeader
+              title={
+                showResolvedMascotas
+                  ? "Casos resueltos — En Casa"
+                  : "Mascotas Perdidas y En Resguardo"
+              }
+            />
             {data.mascotas.length > 0 ? (
               <ZoneSearchInput
                 sticky
@@ -632,16 +678,45 @@ export function HomePageContent({ data }: { data: HomePageData }) {
                 onChange={setSearchQuery}
                 placeholder="🔍 Buscar por Zona"
                 ariaLabel="Buscar mascotas por zona, ciudad o municipio"
+                footer={
+                  <button
+                    type="button"
+                    onClick={() => setShowResolvedMascotas((current) => !current)}
+                    className="mt-2 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
+                  >
+                    {showResolvedMascotas
+                      ? "Ver casos activos"
+                      : "Ver casos resueltos"}
+                  </button>
+                }
               />
             ) : null}
             {data.mascotas.length === 0 ? (
               <EmptyState message="No hay reportes activos en este momento." />
+            ) : mascotasForView.length === 0 ? (
+              <EmptyState
+                message={
+                  showResolvedMascotas
+                    ? "No hay casos resueltos (en casa) registrados."
+                    : "No hay casos activos (perdidos o en resguardo) en este momento."
+                }
+              />
             ) : filteredMascotas.length === 0 ? (
-              <EmptyState message="No hay mascotas reportadas en esta zona actualmente." />
+              <EmptyState
+                message={
+                  showResolvedMascotas
+                    ? "No hay casos resueltos en esta zona actualmente."
+                    : "No hay casos activos en esta zona actualmente."
+                }
+              />
             ) : (
               <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredMascotas.map((mascota) => (
-                  <MascotaCard key={mascota.id} mascota={mascota} />
+                  <MascotaCard
+                    key={mascota.id}
+                    mascota={mascota}
+                    resolved={showResolvedMascotas}
+                  />
                 ))}
               </div>
             )}
