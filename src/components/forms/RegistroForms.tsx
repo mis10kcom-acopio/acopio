@@ -13,6 +13,7 @@ import {
   SubmitButton,
 } from "@/components/forms/FormFields";
 import { EspecieField } from "@/components/forms/EspecieField";
+import { ImplicitConsentNotice } from "@/components/forms/ImplicitConsentNotice";
 import { initialActionState } from "@/types/actions";
 
 export function MascotaRegistroForm() {
@@ -112,6 +113,8 @@ export function MascotaRegistroForm() {
         hint="Opcional. Toma una foto con la cámara o elige una de tu galería."
       />
 
+      <ImplicitConsentNotice />
+
       <SubmitButton pendingLabel="Subiendo foto y publicando…">
         Publicar reporte
       </SubmitButton>
@@ -171,6 +174,8 @@ export function AcopioRegistroForm() {
         required
         placeholder="Alimento, medicinas, transporte, voluntarios…"
       />
+
+      <ImplicitConsentNotice />
 
       <SubmitButton>Registrar centro de acopio</SubmitButton>
     </ActionForm>

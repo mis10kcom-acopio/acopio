@@ -10,6 +10,7 @@ import {
   FormFileField,
   SubmitButton,
 } from "@/components/forms/FormFields";
+import { ImplicitConsentNotice } from "@/components/forms/ImplicitConsentNotice";
 import { initialActionState } from "@/types/actions";
 
 export default function RegistroVeterinarioPage() {
@@ -72,6 +73,8 @@ export default function RegistroVeterinarioPage() {
           accept="image/*"
           hint="Opcional. Sube el logo de tu clínica o una foto representativa."
         />
+
+        <ImplicitConsentNotice />
 
         <SubmitButton pendingLabel="Subiendo imagen y registrando…">
           Registrar clínica / veterinario
