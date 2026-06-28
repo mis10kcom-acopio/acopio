@@ -1,7 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { MascotasEnCasaSlider } from "@/components/MascotasEnCasaSlider";
+import {
+  MASCOTAS_PER_PAGE,
+  MascotasPagination,
+} from "@/components/MascotasPagination";
 import { RelativePublishedTime } from "@/components/RelativePublishedTime";
 import { VenezuelaLocalClock } from "@/components/VenezuelaLocalClock";
 import {
@@ -496,6 +501,7 @@ export function HomePageContent({ data }: { data: HomePageData }) {
   const [searchQueryVeterinarios, setSearchQueryVeterinarios] = useState("");
   const [searchQueryAcopio, setSearchQueryAcopio] = useState("");
   const [showResolvedMascotas, setShowResolvedMascotas] = useState(false);
+  const [mascotaPage, setMascotaPage] = useState(1);
 
   const redAyuda = useMemo(
     () =>
@@ -534,6 +540,27 @@ export function HomePageContent({ data }: { data: HomePageData }) {
     () => filterByZona(mascotasForView, searchQuery),
     [mascotasForView, searchQuery],
   );
+
+  const enCasaForSlider = useMemo(
+    () => filterByZona(resolvedMascotas, searchQuery),
+    [resolvedMascotas, searchQuery],
+  );
+
+  const totalMascotaPages = Math.max(
+    1,
+    Math.ceil(filteredMascotas.length / MASCOTAS_PER_PAGE),
+  );
+
+  const safeMascotaPage = Math.min(mascotaPage, totalMascotaPages);
+
+  const paginatedMascotas = useMemo(() => {
+    const start = (safeMascotaPage - 1) * MASCOTAS_PER_PAGE;
+    return filteredMascotas.slice(start, start + MASCOTAS_PER_PAGE);
+  }, [filteredMascotas, safeMascotaPage]);
+
+  useEffect(() => {
+    setMascotaPage(1);
+  }, [searchQuery, showResolvedMascotas]);
 
   const filteredRedAyuda = useMemo(
     () => filterByZona(redAyuda, searchQueryRedAyuda),
@@ -713,15 +740,23 @@ export function HomePageContent({ data }: { data: HomePageData }) {
                 }
               />
             ) : (
-              <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {filteredMascotas.map((mascota) => (
-                  <MascotaCard
-                    key={mascota.id}
-                    mascota={mascota}
-                    resolved={showResolvedMascotas}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                  {paginatedMascotas.map((mascota) => (
+                    <MascotaCard
+                      key={mascota.id}
+                      mascota={mascota}
+                      resolved={showResolvedMascotas}
+                    />
+                  ))}
+                </div>
+                <MascotasPagination
+                  page={safeMascotaPage}
+                  totalPages={totalMascotaPages}
+                  onPageChange={setMascotaPage}
+                />
+                <MascotasEnCasaSlider mascotas={enCasaForSlider} />
+              </>
             )}
           </section>
         )}
