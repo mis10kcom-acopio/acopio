@@ -17,7 +17,7 @@ import {
   shareMascotaPhotoWithFallbacks,
 } from "@/lib/capture-card";
 import { isInInstagramBrowser } from "@/lib/in-app-browser";
-import { getMascotaEstado, getMascotaEstadoConfig } from "@/lib/mascota-estado";
+import { getMascotaEstado, getMascotaEstadoConfig, isMascotaEstadoActivo } from "@/lib/mascota-estado";
 import { SITE_URL } from "@/lib/site-config";
 import { buildTelUrl, buildWhatsAppUrl } from "@/lib/whatsapp";
 import type {
@@ -512,10 +512,9 @@ export function HomePageContent({ data }: { data: HomePageData }) {
 
   const activeMascotas = useMemo(
     () =>
-      data.mascotas.filter((mascota) => {
-        const estado = getMascotaEstado(mascota);
-        return estado === "PERDIDO" || estado === "EN_RESGUARDO";
-      }),
+      data.mascotas.filter((mascota) =>
+        isMascotaEstadoActivo(getMascotaEstado(mascota)),
+      ),
     [data.mascotas],
   );
 
@@ -558,6 +557,8 @@ export function HomePageContent({ data }: { data: HomePageData }) {
       enResguardo: data.mascotas.filter(
         (m) => getMascotaEstado(m) === "EN_RESGUARDO",
       ).length,
+      adopcion: data.mascotas.filter((m) => getMascotaEstado(m) === "ADOPCION")
+        .length,
       enCasa: data.mascotas.filter((m) => getMascotaEstado(m) === "EN_CASA")
         .length,
     }),
@@ -593,6 +594,8 @@ export function HomePageContent({ data }: { data: HomePageData }) {
             <span className="text-yellow-600">
               {mascotaStats.enResguardo} En Resguardo
             </span>
+            {" | "}
+            <span className="text-blue-600">{mascotaStats.adopcion} Adopción</span>
             {" | "}
             <span className="text-emerald-600">{mascotaStats.enCasa} En Casa</span>
           </p>
@@ -668,7 +671,7 @@ export function HomePageContent({ data }: { data: HomePageData }) {
               title={
                 showResolvedMascotas
                   ? "Casos resueltos — En Casa"
-                  : "Mascotas Perdidas y En Resguardo"
+                  : "Mascotas Perdidas, En Resguardo y Adopción"
               }
             />
             {data.mascotas.length > 0 ? (
@@ -698,7 +701,7 @@ export function HomePageContent({ data }: { data: HomePageData }) {
                 message={
                   showResolvedMascotas
                     ? "No hay casos resueltos (en casa) registrados."
-                    : "No hay casos activos (perdidos o en resguardo) en este momento."
+                    : "No hay casos activos (perdidos, en resguardo o en adopción) en este momento."
                 }
               />
             ) : filteredMascotas.length === 0 ? (

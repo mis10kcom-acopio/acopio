@@ -4,6 +4,7 @@ export const MASCOTA_ESTADOS: EstadoMascota[] = [
   "PERDIDO",
   "EN_RESGUARDO",
   "EN_CASA",
+  "ADOPCION",
 ];
 
 export const MASCOTA_ESTADO_CONFIG: Record<
@@ -25,6 +26,11 @@ export const MASCOTA_ESTADO_CONFIG: Record<
     badgeClass: "bg-green-500",
     canvasColor: "#22C55E",
   },
+  ADOPCION: {
+    label: "Adopción",
+    badgeClass: "bg-blue-500",
+    canvasColor: "#3B82F6",
+  },
 };
 
 export function parseEstadoMascota(value: string): EstadoMascota {
@@ -42,11 +48,18 @@ export function normalizeEstadoMascota(
     return estado as EstadoMascota;
   }
 
+  if (estado === "ADOPCION" || tipoReporte === "ADOPCION") {
+    return "ADOPCION";
+  }
+
   if (estado === "RESUELTO") {
     return "EN_CASA";
   }
 
   if (estado === "ACTIVO") {
+    if (tipoReporte === "ADOPCION") {
+      return "ADOPCION";
+    }
     return tipoReporte === "ENCONTRADO" ? "EN_RESGUARDO" : "PERDIDO";
   }
 
@@ -63,4 +76,10 @@ export function getMascotaEstadoConfig(
   mascota: Pick<MascotaReportada, "estado" | "tipo_reporte">,
 ) {
   return MASCOTA_ESTADO_CONFIG[getMascotaEstado(mascota)];
+}
+
+export function isMascotaEstadoActivo(estado: EstadoMascota): boolean {
+  return (
+    estado === "PERDIDO" || estado === "EN_RESGUARDO" || estado === "ADOPCION"
+  );
 }

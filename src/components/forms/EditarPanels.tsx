@@ -86,6 +86,7 @@ export function EditarMascotaPanel({
   const enCasa = estadoActual === "EN_CASA";
   const esPerdido = estadoActual === "PERDIDO";
   const enResguardo = estadoActual === "EN_RESGUARDO";
+  const esAdopcion = estadoActual === "ADOPCION";
 
   function handleCambiarAEnResguardo() {
     setStatusError(null);
@@ -121,6 +122,7 @@ export function EditarMascotaPanel({
             <option value="PERDIDO">Perdido</option>
             <option value="EN_RESGUARDO">En Resguardo</option>
             <option value="EN_CASA">En Casa</option>
+            <option value="ADOPCION">Adopción</option>
           </FormField>
 
           <FormField
@@ -184,7 +186,7 @@ export function EditarMascotaPanel({
                 disabled={pending}
               />
             )}
-            {(esPerdido || enResguardo) && (
+            {(esPerdido || enResguardo || esAdopcion) && (
               <ActionButton
                 label={pending ? "Actualizando…" : "Marcar En Casa"}
                 onClick={handleMarcarEnCasa}

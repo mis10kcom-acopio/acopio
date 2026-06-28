@@ -48,6 +48,7 @@ export function toModernDbEstado(estado: EstadoMascota): {
     PERDIDO: "PERDIDO",
     EN_RESGUARDO: "EN_RESGUARDO",
     EN_CASA: "EN_CASA",
+    ADOPCION: "ADOPCION",
   };
   return {
     estado,
@@ -62,10 +63,12 @@ export function toLegacyDbEstado(estado: EstadoMascota): {
   if (estado === "EN_CASA") {
     return { estado: "RESUELTO", tipo_reporte: "ENCONTRADO" };
   }
-  return {
-    estado: "ACTIVO",
-    tipo_reporte: estado === "PERDIDO" ? "PERDIDO" : "ENCONTRADO",
-  };
+
+  if (estado === "PERDIDO") {
+    return { estado: "ACTIVO", tipo_reporte: "PERDIDO" };
+  }
+
+  return { estado: "ACTIVO", tipo_reporte: "ENCONTRADO" };
 }
 
 export function isMascotaEstadoConstraintError(message: string): boolean {
