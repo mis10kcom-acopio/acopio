@@ -16,10 +16,12 @@ import { scrollToElement } from "@/lib/use-scroll-hide-bar";
 import { RelativePublishedTime } from "@/components/RelativePublishedTime";
 import { VenezuelaLocalClock } from "@/components/VenezuelaLocalClock";
 import {
-  HeartHandshake,
+  Home,
   PawPrint,
+  PersonStanding,
   Search,
   Stethoscope,
+  Truck,
   Warehouse,
 } from "lucide-react";
 import { getMascotaEstado, getMascotaEstadoConfig, isMascotaEstadoActivo } from "@/lib/mascota-estado";
@@ -38,10 +40,29 @@ import type {
 
 type SectionId = "mascotas" | "red-ayuda" | "veterinarios" | "acopio";
 
+type NavCardId =
+  | "mascotas"
+  | "veterinarios"
+  | "acopio"
+  | "hogar-temporal"
+  | "rescatista"
+  | "transporte";
+
 type RedAyudaTipoFilter = Extract<
   TipoAyuda,
   "HOGAR_TEMPORAL" | "RESCATISTA" | "TRANSPORTE"
 >;
+
+type NavCard = {
+  id: NavCardId;
+  label: string;
+  subtitle: string;
+  icon: typeof PawPrint;
+  accent: string;
+  activeRing: string;
+  section: SectionId;
+  redAyudaFilter?: RedAyudaTipoFilter;
+};
 
 function StatFilterButton({
   active,
@@ -89,14 +110,7 @@ const TIPOS_RED_AYUDA: TipoAyuda[] = [
   "TRANSPORTE",
 ];
 
-const SECTIONS: {
-  id: SectionId;
-  label: string;
-  subtitle: string;
-  icon: typeof PawPrint;
-  accent: string;
-  activeRing: string;
-}[] = [
+const NAV_ROW_1: NavCard[] = [
   {
     id: "mascotas",
     label: "Mascotas",
@@ -104,14 +118,7 @@ const SECTIONS: {
     icon: PawPrint,
     accent: "text-amber-700",
     activeRing: "ring-amber-500",
-  },
-  {
-    id: "red-ayuda",
-    label: "Red de Ayuda",
-    subtitle: "Hogares, rescatistas y transporte",
-    icon: HeartHandshake,
-    accent: "text-emerald-700",
-    activeRing: "ring-emerald-500",
+    section: "mascotas",
   },
   {
     id: "veterinarios",
@@ -120,6 +127,7 @@ const SECTIONS: {
     icon: Stethoscope,
     accent: "text-sky-700",
     activeRing: "ring-sky-500",
+    section: "veterinarios",
   },
   {
     id: "acopio",
@@ -128,6 +136,40 @@ const SECTIONS: {
     icon: Warehouse,
     accent: "text-orange-700",
     activeRing: "ring-orange-500",
+    section: "acopio",
+  },
+];
+
+const NAV_ROW_2: NavCard[] = [
+  {
+    id: "hogar-temporal",
+    label: "Hogares Temporales",
+    subtitle: "Familias que reciben mascotas",
+    icon: Home,
+    accent: "text-emerald-700",
+    activeRing: "ring-emerald-500",
+    section: "red-ayuda",
+    redAyudaFilter: "HOGAR_TEMPORAL",
+  },
+  {
+    id: "rescatista",
+    label: "Rescatistas",
+    subtitle: "Personas en terreno",
+    icon: PersonStanding,
+    accent: "text-amber-700",
+    activeRing: "ring-amber-500",
+    section: "red-ayuda",
+    redAyudaFilter: "RESCATISTA",
+  },
+  {
+    id: "transporte",
+    label: "Transporte",
+    subtitle: "Traslado de animales",
+    icon: Truck,
+    accent: "text-zinc-700",
+    activeRing: "ring-zinc-500",
+    section: "red-ayuda",
+    redAyudaFilter: "TRANSPORTE",
   },
 ];
 
@@ -615,8 +657,29 @@ export function HomePageContent({ data }: { data: HomePageData }) {
     [data.acopios],
   );
 
-  function renderSectionStats(sectionId: SectionId) {
-    switch (sectionId) {
+  function isNavCardActive(card: NavCard): boolean {
+    if (activeSection !== card.section) return false;
+    if (card.redAyudaFilter) {
+      return redAyudaTipoFilter === card.redAyudaFilter;
+    }
+    return true;
+  }
+
+  function handleNavCardClick(card: NavCard) {
+    setActiveSection(card.section);
+
+    if (card.redAyudaFilter) {
+      setRedAyudaTipoFilter((current) =>
+        current === card.redAyudaFilter ? null : card.redAyudaFilter ?? null,
+      );
+      return;
+    }
+
+    setRedAyudaTipoFilter(null);
+  }
+
+  function renderNavCardStats(cardId: NavCardId) {
+    switch (cardId) {
       case "mascotas":
         return (
           <p className="mt-2 flex flex-wrap items-center gap-x-1 gap-y-1 text-sm font-semibold leading-snug text-zinc-700">
@@ -679,59 +742,10 @@ export function HomePageContent({ data }: { data: HomePageData }) {
             </StatFilterButton>
           </p>
         );
-      case "red-ayuda":
-        return (
-          <p className="mt-2 flex flex-wrap items-center gap-x-1 gap-y-1 text-sm font-semibold leading-snug text-zinc-700">
-            <StatFilterButton
-              active={redAyudaTipoFilter === "HOGAR_TEMPORAL"}
-              onClick={() => {
-                setActiveSection("red-ayuda");
-                setRedAyudaTipoFilter((current) =>
-                  current === "HOGAR_TEMPORAL" ? null : "HOGAR_TEMPORAL",
-                );
-              }}
-              activeClassName="bg-emerald-100 text-emerald-800 ring-emerald-400"
-            >
-              {redAyudaStats.hogar} Hogar temporal
-            </StatFilterButton>
-            <span aria-hidden>|</span>
-            <StatFilterButton
-              active={redAyudaTipoFilter === "RESCATISTA"}
-              onClick={() => {
-                setActiveSection("red-ayuda");
-                setRedAyudaTipoFilter((current) =>
-                  current === "RESCATISTA" ? null : "RESCATISTA",
-                );
-              }}
-              activeClassName="bg-amber-100 text-amber-900 ring-amber-400"
-            >
-              {redAyudaStats.rescatista} Rescatistas
-            </StatFilterButton>
-            <span aria-hidden>|</span>
-            <StatFilterButton
-              active={redAyudaTipoFilter === "TRANSPORTE"}
-              onClick={() => {
-                setActiveSection("red-ayuda");
-                setRedAyudaTipoFilter((current) =>
-                  current === "TRANSPORTE" ? null : "TRANSPORTE",
-                );
-              }}
-              activeClassName="bg-zinc-200 text-zinc-800 ring-zinc-400"
-            >
-              {redAyudaStats.transporte} Transporte
-            </StatFilterButton>
-          </p>
-        );
       case "veterinarios":
         return (
           <p className="mt-2 text-sm font-semibold text-sky-800">
-            <StatFilterButton
-              active={activeSection === "veterinarios"}
-              onClick={() => setActiveSection("veterinarios")}
-              activeClassName="bg-sky-100 text-sky-900 ring-sky-400"
-            >
-              {veterinarios.length} Veterinarios disponibles
-            </StatFilterButton>
+            {veterinarios.length} disponibles
           </p>
         );
       case "acopio":
@@ -777,49 +791,74 @@ export function HomePageContent({ data }: { data: HomePageData }) {
             </StatFilterButton>
           </p>
         );
+      case "hogar-temporal":
+        return (
+          <p className="mt-2 text-sm font-semibold text-emerald-800">
+            {redAyudaStats.hogar} disponibles
+          </p>
+        );
+      case "rescatista":
+        return (
+          <p className="mt-2 text-sm font-semibold text-amber-800">
+            {redAyudaStats.rescatista} disponibles
+          </p>
+        );
+      case "transporte":
+        return (
+          <p className="mt-2 text-sm font-semibold text-zinc-700">
+            {redAyudaStats.transporte} disponibles
+          </p>
+        );
     }
+  }
+
+  function renderNavCard(card: NavCard) {
+    const Icon = card.icon;
+    const isActive = isNavCardActive(card);
+
+    return (
+      <button
+        key={card.id}
+        type="button"
+        onClick={() => handleNavCardClick(card)}
+        aria-pressed={isActive}
+        className={`flex min-h-[8.5rem] flex-col items-start justify-between rounded-2xl border-2 bg-white p-5 text-left shadow-lg transition focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+          isActive
+            ? `border-zinc-900 ${card.activeRing} ring-2 ring-offset-2`
+            : "border-zinc-200 hover:border-zinc-300 hover:shadow-xl"
+        }`}
+      >
+        <Icon className={`h-7 w-7 shrink-0 ${card.accent}`} aria-hidden />
+        <div className="mt-3 w-full">
+          <p className="text-lg font-bold text-zinc-900 sm:text-xl">
+            {card.label}
+          </p>
+          {renderNavCardStats(card.id)}
+          <p className="mt-1.5 text-xs font-medium text-zinc-500 sm:text-sm">
+            {card.subtitle}
+          </p>
+        </div>
+      </button>
+    );
   }
 
   return (
     <>
       <VenezuelaLocalClock />
-      <nav
-        className="grid grid-cols-2 gap-3 lg:grid-cols-4"
-        aria-label="Secciones principales"
-      >
-        {SECTIONS.map((section) => {
-          const Icon = section.icon;
-          const isActive = activeSection === section.id;
-
-          return (
-            <button
-              key={section.id}
-              type="button"
-              onClick={() => setActiveSection(section.id)}
-              aria-pressed={isActive}
-              className={`flex min-h-[8.5rem] flex-col items-start justify-between rounded-2xl border-2 bg-white p-5 text-left shadow-lg transition focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                isActive
-                  ? `border-zinc-900 ${section.activeRing} ring-2 ring-offset-2`
-                  : "border-zinc-200 hover:border-zinc-300 hover:shadow-xl"
-              }`}
-            >
-              <Icon
-                className={`h-7 w-7 shrink-0 ${section.accent}`}
-                aria-hidden
-              />
-              <div className="mt-3 w-full">
-                <p className="text-lg font-bold text-zinc-900 sm:text-xl">
-                  {section.label}
-                </p>
-                {renderSectionStats(section.id)}
-                <p className="mt-1.5 text-xs font-medium text-zinc-500 sm:text-sm">
-                  {section.subtitle}
-                </p>
-              </div>
-            </button>
-          );
-        })}
-      </nav>
+      <div className="space-y-3">
+        <nav
+          className="grid grid-cols-2 gap-3 md:grid-cols-3"
+          aria-label="Secciones principales"
+        >
+          {NAV_ROW_1.map(renderNavCard)}
+        </nav>
+        <nav
+          className="grid grid-cols-2 gap-3 md:grid-cols-3"
+          aria-label="Red de ayuda por tipo"
+        >
+          {NAV_ROW_2.map(renderNavCard)}
+        </nav>
+      </div>
 
       <div className="mt-8" role="region">
         {activeSection === "mascotas" && (
