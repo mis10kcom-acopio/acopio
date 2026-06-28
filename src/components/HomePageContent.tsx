@@ -10,6 +10,7 @@ import {
   MascotasPagination,
 } from "@/components/MascotasPagination";
 import { useIsMdUp } from "@/lib/use-media-query";
+import { scrollToElement } from "@/lib/use-scroll-hide-bar";
 import { RelativePublishedTime } from "@/components/RelativePublishedTime";
 import { VenezuelaLocalClock } from "@/components/VenezuelaLocalClock";
 import {
@@ -499,6 +500,7 @@ export function HomePageContent({ data }: { data: HomePageData }) {
   );
   const [mascotaPage, setMascotaPage] = useState(1);
   const mascotasCardsRef = useRef<HTMLDivElement>(null);
+  const shouldScrollToCardsRef = useRef(false);
   const isMdUp = useIsMdUp();
   const mascotasPerPage = isMdUp
     ? MASCOTAS_PER_PAGE_DESKTOP
@@ -559,12 +561,18 @@ export function HomePageContent({ data }: { data: HomePageData }) {
     setMascotaPage(1);
   }, [searchQuery, especieFilter, mascotasPerPage]);
 
+  useEffect(() => {
+    if (!shouldScrollToCardsRef.current) return;
+    shouldScrollToCardsRef.current = false;
+    scrollToElement(mascotasCardsRef.current, 96);
+  }, [safeMascotaPage]);
+
   function handleMascotaPageChange(nextPage: number) {
+    if (nextPage < 1 || nextPage > totalMascotaPages || nextPage === safeMascotaPage) {
+      return;
+    }
+    shouldScrollToCardsRef.current = true;
     setMascotaPage(nextPage);
-    mascotasCardsRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
   }
 
   const filteredRedAyuda = useMemo(

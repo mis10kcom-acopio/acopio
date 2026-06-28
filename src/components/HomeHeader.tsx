@@ -38,14 +38,16 @@ export function HomeHeader() {
     <header className="border-b border-amber-200/80 bg-white">
       <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
         <div className="flex flex-col items-center text-center">
-          <Image
-            src="/logohuellas.png"
-            alt="Logo Huellas a Salvo"
-            width={90}
-            height={90}
-            className="mx-auto mb-3 object-contain"
-            priority
-          />
+          <Link href="/" className="inline-block rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/40">
+            <Image
+              src="/logohuellas.png"
+              alt="Huellas a Salvo — Ir al inicio"
+              width={90}
+              height={90}
+              className="mx-auto mb-3 object-contain"
+              priority
+            />
+          </Link>
           <h1 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
             Huellas a Salvo
           </h1>

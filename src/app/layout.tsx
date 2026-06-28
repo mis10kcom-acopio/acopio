@@ -99,9 +99,11 @@ export default async function RootLayout({
       lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col bg-zinc-50">
         <ActivityTickerShell />
-        <div className={`flex-1 ${FIXED_SUPPORT_BAR_PADDING}`}>{children}</div>
+        <div className={`flex-1 bg-gradient-to-b from-amber-50 to-zinc-50 ${FIXED_SUPPORT_BAR_PADDING}`}>
+          {children}
+        </div>
         <SupportFooter />
         <GoogleAnalytics gaId="G-ZT47MKQTXM" />
       </body>
