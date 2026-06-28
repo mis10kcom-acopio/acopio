@@ -63,7 +63,7 @@ export default async function HomePage() {
     <main className="min-h-screen bg-gradient-to-b from-amber-50 to-zinc-50">
       <HomeHeader />
 
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
+      <div className="mx-auto max-w-6xl px-4 pt-8 pb-5 sm:pt-10 sm:pb-6">
         {fetchError && (
           <div
             className="mb-6 rounded-2xl border-2 border-red-300 bg-red-50 px-5 py-4 text-base font-medium text-red-800"
