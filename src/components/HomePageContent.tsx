@@ -36,6 +36,7 @@ import {
   buildZonaFilterOptions,
   filterMascotasByZonaGroup,
 } from "@/lib/mascota-zona";
+import { filterMascotasBySearch } from "@/lib/mascota-search";
 import { ZonaFilterPills } from "@/components/ZonaFilterPills";
 import { buildTelUrl, buildWhatsAppUrl } from "@/lib/whatsapp";
 import type {
@@ -553,13 +554,13 @@ export function HomePageContent({ data }: { data: HomePageData }) {
 
   const filteredMascotas = useMemo(() => {
     const byZonaGroup = filterMascotasByZonaGroup(mascotasForList, zonaFilter);
-    const byZona = filterByZona(byZonaGroup, searchQuery);
-    return filterMascotasByEspecie(byZona, especieFilter);
+    const bySearch = filterMascotasBySearch(byZonaGroup, searchQuery);
+    return filterMascotasByEspecie(bySearch, especieFilter);
   }, [mascotasForList, zonaFilter, searchQuery, especieFilter]);
 
   const enCasaForSlider = useMemo(() => {
-    const byZona = filterByZona(resolvedMascotas, searchQuery);
-    return filterMascotasByEspecie(byZona, especieFilter);
+    const bySearch = filterMascotasBySearch(resolvedMascotas, searchQuery);
+    return filterMascotasByEspecie(bySearch, especieFilter);
   }, [resolvedMascotas, searchQuery, especieFilter]);
 
   const totalMascotaPages = Math.max(
@@ -785,8 +786,8 @@ export function HomePageContent({ data }: { data: HomePageData }) {
                 sticky
                 value={searchQuery}
                 onChange={setSearchQuery}
-                placeholder="🔍 Buscar por Zona"
-                ariaLabel="Buscar mascotas por zona, ciudad o municipio"
+                placeholder="🔍 Buscar por nombre, zona, características..."
+                ariaLabel="Buscar mascotas por nombre, zona o características"
                 footer={
                   <div className="mt-3 flex flex-col gap-3">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">

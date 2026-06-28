@@ -9,6 +9,9 @@ import type { MascotaReportada } from "@/types/database";
 const CARD_ACTION_BTN =
   "inline-flex min-h-[2.5rem] w-full min-w-0 items-center justify-center rounded-lg px-2 py-2 text-center text-xs font-semibold leading-tight shadow-sm transition sm:min-h-[2.75rem] sm:px-3 sm:text-sm";
 
+const CARD_CALL_BTN =
+  "inline-flex min-h-[2.5rem] w-full min-w-0 items-center justify-center rounded-lg px-2 py-2 text-center text-[1.2rem] font-semibold leading-tight shadow-sm transition sm:min-h-[2.75rem] sm:px-3 sm:text-[1.4rem]";
+
 const DETAIL_ACTION_BTN =
   "inline-flex min-h-[3rem] items-center justify-center rounded-xl px-4 py-2.5 text-base font-bold shadow-sm transition";
 
@@ -95,7 +98,7 @@ export function MascotaContactActions({
       <a
         href={buildTelUrl(mascota.contacto_telefono)}
         onClick={(event) => event.stopPropagation()}
-        className={`${actionBtn} w-full border-2 border-zinc-200 bg-zinc-50 text-zinc-800 hover:bg-zinc-100 ${
+        className={`${isDetail ? actionBtn : CARD_CALL_BTN} w-full border-2 border-zinc-200 bg-zinc-50 text-zinc-800 hover:bg-zinc-100 ${
           isDetail
             ? "gap-2"
             : "flex-col gap-0.5 sm:flex-row sm:gap-1.5"
@@ -104,7 +107,7 @@ export function MascotaContactActions({
         <span className="shrink-0">📞 Llamar</span>
         <span
           className={`truncate font-medium text-zinc-600 ${
-            isDetail ? "" : "text-[0.65rem] sm:text-xs"
+            isDetail ? "" : "text-[1.04rem] sm:text-[1.2rem]"
           }`}
         >
           {mascota.contacto_telefono}
