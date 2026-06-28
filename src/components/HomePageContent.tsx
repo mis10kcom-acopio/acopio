@@ -505,7 +505,6 @@ export function HomePageContent({ data }: { data: HomePageData }) {
   const mascotasCardsRef = useRef<HTMLDivElement>(null);
   const sectionContentRef = useRef<HTMLDivElement>(null);
   const shouldScrollToCardsRef = useRef(false);
-  const shouldScrollToSectionRef = useRef(false);
   const isXlUp = useIsXlUp();
   const mascotasPerPage = isXlUp
     ? MASCOTAS_PER_PAGE_DESKTOP
@@ -591,11 +590,14 @@ export function HomePageContent({ data }: { data: HomePageData }) {
     scrollToElement(mascotasCardsRef.current, 96);
   }, [safeMascotaPage]);
 
-  useEffect(() => {
-    if (!shouldScrollToSectionRef.current) return;
-    shouldScrollToSectionRef.current = false;
-    sectionContentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
+  function scrollToActiveSection() {
+    window.setTimeout(() => {
+      sectionContentRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 100);
+  }
 
   function handleMascotaPageChange(nextPage: number) {
     if (nextPage < 1 || nextPage > totalMascotaPages || nextPage === safeMascotaPage) {
@@ -680,7 +682,7 @@ export function HomePageContent({ data }: { data: HomePageData }) {
       setRedAyudaTipoFilter(null);
     }
 
-    shouldScrollToSectionRef.current = true;
+    scrollToActiveSection();
   }
 
   function renderNavCardStats(cardId: NavCardId) {

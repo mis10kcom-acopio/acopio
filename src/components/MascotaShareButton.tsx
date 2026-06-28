@@ -105,7 +105,7 @@ export function MascotaContactActions({
         }`}
       >
         <span className="shrink-0">📞 Llamar</span>
-        <span className="min-w-0 truncate font-medium text-zinc-600 tabular-nums">
+        <span className="min-w-0 truncate font-medium text-zinc-600 tabular-nums text-[15px] sm:text-sm">
           {mascota.contacto_telefono}
         </span>
       </a>

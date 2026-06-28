@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  MAX_ZONAS_VISIBLES,
+  MAX_ZONAS_DROPDOWN_VISIBLE,
   type ZonaFilterOption,
 } from "@/lib/mascota-zona";
 
@@ -18,7 +18,6 @@ export function ZonaFilterPills({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [expanded, setExpanded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const activeOption = options.find((option) => option.key === value) ?? null;
@@ -53,12 +52,6 @@ export function ZonaFilterPills({
     return null;
   }
 
-  const hasHiddenOptions = options.length > MAX_ZONAS_VISIBLES;
-  const visibleOptions =
-    expanded || !hasHiddenOptions
-      ? options
-      : options.slice(0, MAX_ZONAS_VISIBLES);
-
   function handleSelect(key: string) {
     onChange(value === key ? null : key);
     setOpen(false);
@@ -73,9 +66,6 @@ export function ZonaFilterPills({
 
   function handleToggleOpen() {
     setOpen((current) => !current);
-    if (open) {
-      setExpanded(false);
-    }
   }
 
   return (
@@ -129,11 +119,16 @@ export function ZonaFilterPills({
           aria-label="Zonas frecuentes"
         >
           <p className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Zonas frecuentes
+            Zonas ({options.length})
           </p>
-          <div className="max-h-[min(14rem,45vh)] overflow-y-auto overscroll-contain pr-1">
+          <div
+            className="overflow-y-auto overscroll-contain pr-1"
+            style={{
+              maxHeight: `calc(${MAX_ZONAS_DROPDOWN_VISIBLE} * 2.25rem)`,
+            }}
+          >
             <div className="flex flex-wrap gap-2">
-              {visibleOptions.map((option) => {
+              {options.map((option) => {
                 const active = value === option.key;
 
                 return (
@@ -161,16 +156,6 @@ export function ZonaFilterPills({
               })}
             </div>
           </div>
-
-          {hasHiddenOptions ? (
-            <button
-              type="button"
-              onClick={() => setExpanded((current) => !current)}
-              className="mt-3 w-full rounded-full border border-dashed border-slate-400 bg-white px-3 py-2 text-sm font-semibold text-slate-600 transition hover:border-slate-600 hover:bg-slate-50"
-            >
-              {expanded ? "Ver menos zonas" : "Ver más zonas..."}
-            </button>
-          ) : null}
         </div>
       ) : null}
     </div>
