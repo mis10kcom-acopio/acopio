@@ -5,6 +5,14 @@ import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
 import { buscarRegistroPorIdentificador } from "@/lib/editar-identificador";
 import {
+  getOptionalSanitizedEspecie,
+  getOptionalSanitizedPhone,
+  getOptionalSanitizedText,
+  getRequiredSanitizedPhone,
+  getRequiredSanitizedText,
+  getRequiredSelect,
+} from "@/lib/form-data-security";
+import {
   getMascotaEstado,
   parseEstadoMascota,
 } from "@/lib/mascota-estado";
@@ -21,22 +29,6 @@ import type {
   MascotaReportada,
   RedVoluntario,
 } from "@/types/database";
-
-function getRequired(formData: FormData, key: string): string {
-  const value = formData.get(key);
-  if (typeof value !== "string" || !value.trim()) {
-    throw new Error(`El campo "${key}" es obligatorio.`);
-  }
-  return value.trim();
-}
-
-function getOptional(formData: FormData, key: string): string | null {
-  const value = formData.get(key);
-  if (typeof value !== "string" || !value.trim()) {
-    return null;
-  }
-  return value.trim();
-}
 
 export type RegistroPorToken =
   | { tipo: "mascota"; registro: MascotaReportada }
@@ -347,18 +339,18 @@ export async function actualizarMascota(
       return { error: "Enlace no válido o registro no encontrado.", success: null };
     }
 
-    const estado = parseEstadoMascota(getRequired(formData, "estado"));
+    const estado = parseEstadoMascota(getRequiredSelect(formData, "estado"));
 
     const { data, error } = await updateMascotaReportada(
       supabase,
       registro.id,
       {
-        nombre_mascota: getOptional(formData, "nombre_mascota"),
-        especie: getOptional(formData, "especie"),
-        caracteristicas: getRequired(formData, "caracteristicas"),
-        ubicacion_zona: getRequired(formData, "ubicacion_zona"),
-        contacto_telefono: getRequired(formData, "contacto_telefono"),
-        contacto_whatsapp: getOptional(formData, "contacto_whatsapp"),
+        nombre_mascota: getOptionalSanitizedText(formData, "nombre_mascota"),
+        especie: getOptionalSanitizedEspecie(formData, "especie"),
+        caracteristicas: getRequiredSanitizedText(formData, "caracteristicas"),
+        ubicacion_zona: getRequiredSanitizedText(formData, "ubicacion_zona"),
+        contacto_telefono: getRequiredSanitizedPhone(formData, "contacto_telefono"),
+        contacto_whatsapp: getOptionalSanitizedPhone(formData, "contacto_whatsapp"),
       },
       estado,
     );
@@ -402,11 +394,14 @@ export async function actualizarVoluntario(
     const { data, error } = await supabase
       .from("red_voluntarios")
       .update({
-        nombre_o_clinica: getRequired(formData, "nombre_o_clinica"),
-        ubicacion_zona: getRequired(formData, "ubicacion_zona"),
-        contacto_telefono: getRequired(formData, "contacto_telefono"),
-        contacto_whatsapp: getOptional(formData, "contacto_whatsapp"),
-        informacion_adicional: getOptional(formData, "informacion_adicional"),
+        nombre_o_clinica: getRequiredSanitizedText(formData, "nombre_o_clinica"),
+        ubicacion_zona: getRequiredSanitizedText(formData, "ubicacion_zona"),
+        contacto_telefono: getRequiredSanitizedPhone(formData, "contacto_telefono"),
+        contacto_whatsapp: getOptionalSanitizedPhone(formData, "contacto_whatsapp"),
+        informacion_adicional: getOptionalSanitizedText(
+          formData,
+          "informacion_adicional",
+        ),
         foto_url: nuevaFotoUrl ?? registro.foto_url,
       })
       .eq("id", registro.id)
@@ -446,12 +441,15 @@ export async function actualizarAcopio(
     const { data, error } = await supabase
       .from("acopio_mascotas")
       .update({
-        nombre_centro: getRequired(formData, "nombre_centro"),
-        ubicacion_zona: getRequired(formData, "ubicacion_zona"),
-        direccion_exacta: getRequired(formData, "direccion_exacta"),
-        contacto_telefono: getRequired(formData, "contacto_telefono"),
-        contacto_whatsapp: getOptional(formData, "contacto_whatsapp"),
-        necesidades_urgentes: getRequired(formData, "necesidades_urgentes"),
+        nombre_centro: getRequiredSanitizedText(formData, "nombre_centro"),
+        ubicacion_zona: getRequiredSanitizedText(formData, "ubicacion_zona"),
+        direccion_exacta: getRequiredSanitizedText(formData, "direccion_exacta"),
+        contacto_telefono: getRequiredSanitizedPhone(formData, "contacto_telefono"),
+        contacto_whatsapp: getOptionalSanitizedPhone(formData, "contacto_whatsapp"),
+        necesidades_urgentes: getRequiredSanitizedText(
+          formData,
+          "necesidades_urgentes",
+        ),
       })
       .eq("id", registro.id)
       .select("token_edicion")

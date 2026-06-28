@@ -3,6 +3,18 @@
 import { randomUUID } from "crypto";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
+import {
+  getOptionalSanitizedEspecie,
+  getOptionalSanitizedPhone,
+  getOptionalSanitizedText,
+  getRequiredSanitizedPhone,
+  getRequiredSanitizedText,
+  getRequiredSelect,
+} from "@/lib/form-data-security";
+import {
+  assertSubmissionRateLimit,
+  recordSuccessfulSubmission,
+} from "@/lib/submission-rate-limit";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import {
   insertMascotaReportada,
@@ -19,23 +31,6 @@ import type { TipoAyuda } from "@/types/database";
 
 const MASCOTAS_FOLDER = "mascotas";
 const VOLUNTARIOS_FOLDER = "voluntarios";
-
-function getRequired(formData: FormData, key: string): string {
-  const value = formData.get(key);
-  if (typeof value !== "string" || !value.trim()) {
-    throw new Error(`El campo "${key}" es obligatorio.`);
-  }
-  return value.trim();
-}
-
-function getOptional(formData: FormData, key: string): string | null {
-  const value = formData.get(key);
-  if (typeof value !== "string" || !value.trim()) {
-    return null;
-  }
-  return value.trim();
-}
-
 
 function parseTipoAyudaVoluntario(value: string): TipoAyuda {
   const valid: TipoAyuda[] = [
@@ -57,21 +52,16 @@ function handleActionError(error: unknown): ActionState {
   return { error: message, success: null };
 }
 
-function redirectExito(token: string, formData: FormData): never {
-  const telefono =
-    getOptional(formData, "contacto_whatsapp") ??
-    getRequired(formData, "contacto_telefono");
-  redirect(
-    `/exito?token=${token}&telefono=${encodeURIComponent(telefono)}`,
-  );
+function redirectExito(token: string, telefono: string): never {
+  redirect(`/exito?token=${token}&telefono=${encodeURIComponent(telefono)}`);
 }
 
-function getRequiredSelect(formData: FormData, key: string): string {
-  const value = getRequired(formData, key);
-  if (value === "" || value.toLowerCase().startsWith("selecciona")) {
-    throw new Error(`Selecciona una opción válida en "${key}".`);
+async function guardSubmissionRateLimit(): Promise<ActionState | null> {
+  const rateLimit = await assertSubmissionRateLimit();
+  if (!rateLimit.ok) {
+    return { error: rateLimit.message, success: null };
   }
-  return value;
+  return null;
 }
 
 export async function registrarMascota(
@@ -79,6 +69,9 @@ export async function registrarMascota(
   formData: FormData,
 ): Promise<ActionState> {
   try {
+    const rateLimited = await guardSubmissionRateLimit();
+    if (rateLimited) return rateLimited;
+
     const supabase = getSupabaseAdmin();
     const token = randomUUID();
 
@@ -101,12 +94,12 @@ export async function registrarMascota(
     }
 
     const payload: MascotaInsertPayload = {
-      nombre_mascota: getOptional(formData, "nombre_mascota"),
-      especie: getOptional(formData, "especie"),
-      caracteristicas: getRequired(formData, "caracteristicas"),
-      ubicacion_zona: getRequired(formData, "ubicacion_zona"),
-      contacto_telefono: getRequired(formData, "contacto_telefono"),
-      contacto_whatsapp: getOptional(formData, "contacto_whatsapp"),
+      nombre_mascota: getOptionalSanitizedText(formData, "nombre_mascota"),
+      especie: getOptionalSanitizedEspecie(formData, "especie"),
+      caracteristicas: getRequiredSanitizedText(formData, "caracteristicas"),
+      ubicacion_zona: getRequiredSanitizedText(formData, "ubicacion_zona"),
+      contacto_telefono: getRequiredSanitizedPhone(formData, "contacto_telefono"),
+      contacto_whatsapp: getOptionalSanitizedPhone(formData, "contacto_whatsapp"),
       foto_url: fotoUrl,
       token_edicion: token,
     };
@@ -117,9 +110,10 @@ export async function registrarMascota(
       return { error, success: null };
     }
 
+    await recordSuccessfulSubmission();
+
     const telefono =
-      getOptional(formData, "contacto_whatsapp") ??
-      getRequired(formData, "contacto_telefono");
+      payload.contacto_whatsapp ?? payload.contacto_telefono;
     const baseUrl = await getSiteBaseUrl();
 
     return {
@@ -139,6 +133,9 @@ export async function registrarVoluntario(
   formData: FormData,
 ): Promise<ActionState> {
   try {
+    const rateLimited = await guardSubmissionRateLimit();
+    if (rateLimited) return rateLimited;
+
     const supabase = getSupabaseAdmin();
     const token = randomUUID();
     const fotoUrl = await resolveOptionalFotoUrl(
@@ -147,13 +144,25 @@ export async function registrarVoluntario(
       VOLUNTARIOS_FOLDER,
     );
 
+    const contactoTelefono = getRequiredSanitizedPhone(
+      formData,
+      "contacto_telefono",
+    );
+    const contactoWhatsapp = getOptionalSanitizedPhone(
+      formData,
+      "contacto_whatsapp",
+    );
+
     const { error } = await supabase.from("red_voluntarios").insert({
-      tipo_ayuda: parseTipoAyudaVoluntario(getRequired(formData, "tipo_ayuda")),
-      nombre_o_clinica: getRequired(formData, "nombre_o_clinica"),
-      ubicacion_zona: getRequired(formData, "ubicacion_zona"),
-      contacto_telefono: getRequired(formData, "contacto_telefono"),
-      contacto_whatsapp: getOptional(formData, "contacto_whatsapp"),
-      informacion_adicional: getOptional(formData, "informacion_adicional"),
+      tipo_ayuda: parseTipoAyudaVoluntario(getRequiredSelect(formData, "tipo_ayuda")),
+      nombre_o_clinica: getRequiredSanitizedText(formData, "nombre_o_clinica"),
+      ubicacion_zona: getRequiredSanitizedText(formData, "ubicacion_zona"),
+      contacto_telefono: contactoTelefono,
+      contacto_whatsapp: contactoWhatsapp,
+      informacion_adicional: getOptionalSanitizedText(
+        formData,
+        "informacion_adicional",
+      ),
       foto_url: fotoUrl,
       disponibilidad: "DISPONIBLE",
       token_edicion: token,
@@ -163,7 +172,8 @@ export async function registrarVoluntario(
       return { error: error.message, success: null };
     }
 
-    redirectExito(token, formData);
+    await recordSuccessfulSubmission();
+    redirectExito(token, contactoWhatsapp ?? contactoTelefono);
   } catch (error) {
     if (isRedirectError(error)) throw error;
     return handleActionError(error);
@@ -175,6 +185,9 @@ export async function registrarVeterinario(
   formData: FormData,
 ): Promise<ActionState> {
   try {
+    const rateLimited = await guardSubmissionRateLimit();
+    if (rateLimited) return rateLimited;
+
     const supabase = getSupabaseAdmin();
     const token = randomUUID();
     const fotoUrl = await resolveOptionalFotoUrl(
@@ -183,13 +196,25 @@ export async function registrarVeterinario(
       VOLUNTARIOS_FOLDER,
     );
 
+    const contactoTelefono = getRequiredSanitizedPhone(
+      formData,
+      "contacto_telefono",
+    );
+    const contactoWhatsapp = getOptionalSanitizedPhone(
+      formData,
+      "contacto_whatsapp",
+    );
+
     const { error } = await supabase.from("red_voluntarios").insert({
       tipo_ayuda: "VETERINARIO",
-      nombre_o_clinica: getRequired(formData, "nombre_o_clinica"),
-      ubicacion_zona: getRequired(formData, "ubicacion_zona"),
-      contacto_telefono: getRequired(formData, "contacto_telefono"),
-      contacto_whatsapp: getOptional(formData, "contacto_whatsapp"),
-      informacion_adicional: getOptional(formData, "informacion_adicional"),
+      nombre_o_clinica: getRequiredSanitizedText(formData, "nombre_o_clinica"),
+      ubicacion_zona: getRequiredSanitizedText(formData, "ubicacion_zona"),
+      contacto_telefono: contactoTelefono,
+      contacto_whatsapp: contactoWhatsapp,
+      informacion_adicional: getOptionalSanitizedText(
+        formData,
+        "informacion_adicional",
+      ),
       foto_url: fotoUrl,
       disponibilidad: "DISPONIBLE",
       token_edicion: token,
@@ -199,7 +224,8 @@ export async function registrarVeterinario(
       return { error: error.message, success: null };
     }
 
-    redirectExito(token, formData);
+    await recordSuccessfulSubmission();
+    redirectExito(token, contactoWhatsapp ?? contactoTelefono);
   } catch (error) {
     if (isRedirectError(error)) throw error;
     return handleActionError(error);
@@ -211,16 +237,31 @@ export async function registrarAcopio(
   formData: FormData,
 ): Promise<ActionState> {
   try {
+    const rateLimited = await guardSubmissionRateLimit();
+    if (rateLimited) return rateLimited;
+
     const supabase = getSupabaseAdmin();
     const token = randomUUID();
 
+    const contactoTelefono = getRequiredSanitizedPhone(
+      formData,
+      "contacto_telefono",
+    );
+    const contactoWhatsapp = getOptionalSanitizedPhone(
+      formData,
+      "contacto_whatsapp",
+    );
+
     const { error } = await supabase.from("acopio_mascotas").insert({
-      nombre_centro: getRequired(formData, "nombre_centro"),
-      ubicacion_zona: getRequired(formData, "ubicacion_zona"),
-      direccion_exacta: getRequired(formData, "direccion_exacta"),
-      contacto_telefono: getRequired(formData, "contacto_telefono"),
-      contacto_whatsapp: getOptional(formData, "contacto_whatsapp"),
-      necesidades_urgentes: getRequired(formData, "necesidades_urgentes"),
+      nombre_centro: getRequiredSanitizedText(formData, "nombre_centro"),
+      ubicacion_zona: getRequiredSanitizedText(formData, "ubicacion_zona"),
+      direccion_exacta: getRequiredSanitizedText(formData, "direccion_exacta"),
+      contacto_telefono: contactoTelefono,
+      contacto_whatsapp: contactoWhatsapp,
+      necesidades_urgentes: getRequiredSanitizedText(
+        formData,
+        "necesidades_urgentes",
+      ),
       estado_stock: "MODERADO",
       token_edicion: token,
     });
@@ -229,7 +270,8 @@ export async function registrarAcopio(
       return { error: error.message, success: null };
     }
 
-    redirectExito(token, formData);
+    await recordSuccessfulSubmission();
+    redirectExito(token, contactoWhatsapp ?? contactoTelefono);
   } catch (error) {
     if (isRedirectError(error)) throw error;
     return handleActionError(error);
