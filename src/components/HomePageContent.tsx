@@ -496,7 +496,9 @@ export function HomePageContent({ data }: { data: HomePageData }) {
   );
   const [mascotaPage, setMascotaPage] = useState(1);
   const mascotasCardsRef = useRef<HTMLDivElement>(null);
+  const sectionContentRef = useRef<HTMLDivElement>(null);
   const shouldScrollToCardsRef = useRef(false);
+  const shouldScrollToSectionRef = useRef(false);
   const isXlUp = useIsXlUp();
   const mascotasPerPage = isXlUp
     ? MASCOTAS_PER_PAGE_DESKTOP
@@ -569,6 +571,12 @@ export function HomePageContent({ data }: { data: HomePageData }) {
     shouldScrollToCardsRef.current = false;
     scrollToElement(mascotasCardsRef.current, 96);
   }, [safeMascotaPage]);
+
+  useEffect(() => {
+    if (!shouldScrollToSectionRef.current) return;
+    shouldScrollToSectionRef.current = false;
+    sectionContentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
 
   function handleMascotaPageChange(nextPage: number) {
     if (nextPage < 1 || nextPage > totalMascotaPages || nextPage === safeMascotaPage) {
@@ -649,10 +657,11 @@ export function HomePageContent({ data }: { data: HomePageData }) {
       setRedAyudaTipoFilter((current) =>
         current === card.redAyudaFilter ? null : card.redAyudaFilter ?? null,
       );
-      return;
+    } else {
+      setRedAyudaTipoFilter(null);
     }
 
-    setRedAyudaTipoFilter(null);
+    shouldScrollToSectionRef.current = true;
   }
 
   function renderNavCardStats(cardId: NavCardId) {
@@ -745,7 +754,11 @@ export function HomePageContent({ data }: { data: HomePageData }) {
         {NAV_CARDS.map(renderNavCard)}
       </nav>
 
-      <div className="mt-8" role="region">
+      <div
+        ref={sectionContentRef}
+        className="mt-8 scroll-mt-24"
+        role="region"
+      >
         {activeSection === "mascotas" && (
           <section>
             <SectionHeader title="Mascotas Perdidas, En Resguardo y Adopción" />

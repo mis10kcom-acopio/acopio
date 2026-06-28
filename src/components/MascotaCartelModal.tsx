@@ -161,11 +161,14 @@ export function MascotaCartelModal({
 export function MascotaCartelButton({
   mascota,
   className = "",
+  layout = "card",
 }: {
   mascota: MascotaPosterInput & { id?: string };
   className?: string;
+  layout?: "card" | "detail";
 }) {
   const [open, setOpen] = useState(false);
+  const isDetail = layout === "detail";
 
   return (
     <>
@@ -176,7 +179,11 @@ export function MascotaCartelButton({
           event.stopPropagation();
           setOpen(true);
         }}
-        className={`inline-flex min-h-[2.75rem] items-center justify-center rounded-xl border-2 border-amber-300 bg-amber-50 px-3 py-2.5 text-sm font-bold text-amber-900 shadow-sm transition hover:bg-amber-100 sm:text-base ${className}`}
+        className={`inline-flex min-w-0 items-center justify-center rounded-lg border-2 border-amber-300 bg-amber-50 text-amber-900 shadow-sm transition hover:bg-amber-100 ${
+          isDetail
+            ? "min-h-[3rem] rounded-xl px-4 py-2.5 text-base font-bold"
+            : "min-h-[2.5rem] w-full px-2 py-2 text-xs font-semibold leading-tight sm:min-h-[2.75rem] sm:px-3 sm:text-sm"
+        } ${className}`}
       >
         📥 Cartel
       </button>

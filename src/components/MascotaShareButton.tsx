@@ -6,15 +6,24 @@ import { buildMascotaPublicUrl } from "@/lib/mascota-url";
 import { buildTelUrl, buildWhatsAppUrl } from "@/lib/whatsapp";
 import type { MascotaReportada } from "@/types/database";
 
+const CARD_ACTION_BTN =
+  "inline-flex min-h-[2.5rem] w-full min-w-0 items-center justify-center rounded-lg px-2 py-2 text-center text-xs font-semibold leading-tight shadow-sm transition sm:min-h-[2.75rem] sm:px-3 sm:text-sm";
+
+const DETAIL_ACTION_BTN =
+  "inline-flex min-h-[3rem] items-center justify-center rounded-xl px-4 py-2.5 text-base font-bold shadow-sm transition";
+
 export function MascotaShareButton({
   mascotaId,
   className = "",
   fullWidth = false,
+  layout = "card",
 }: {
   mascotaId: string;
   className?: string;
   fullWidth?: boolean;
+  layout?: "card" | "detail";
 }) {
+  const isDetail = layout === "detail";
   const [label, setLabel] = useState("Compartir");
   const [isCopying, setIsCopying] = useState(false);
 
@@ -29,10 +38,10 @@ export function MascotaShareButton({
     try {
       const url = buildMascotaPublicUrl(mascotaId);
       await navigator.clipboard.writeText(url);
-      setLabel("¡Enlace copiado!");
+      setLabel(isDetail ? "¡Enlace copiado!" : "¡Copiado!");
       setTimeout(() => setLabel("Compartir"), 2500);
     } catch {
-      setLabel("No se pudo copiar");
+      setLabel("Error");
       setTimeout(() => setLabel("Compartir"), 2500);
     } finally {
       setIsCopying(false);
@@ -44,9 +53,9 @@ export function MascotaShareButton({
       type="button"
       onClick={handleShare}
       disabled={isCopying}
-      className={`inline-flex min-h-[2.75rem] items-center justify-center rounded-xl bg-sky-600 px-2 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60 sm:px-3 sm:text-base ${fullWidth ? "w-full" : ""} ${className}`}
+      className={`${isDetail ? DETAIL_ACTION_BTN : CARD_ACTION_BTN} bg-sky-600 text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60 ${fullWidth ? "w-full" : ""} ${className}`}
     >
-      {label}
+      <span className="truncate">{label}</span>
     </button>
   );
 }
@@ -59,11 +68,12 @@ export function MascotaContactActions({
   layout?: "card" | "detail";
 }) {
   const isDetail = layout === "detail";
+  const actionBtn = isDetail ? DETAIL_ACTION_BTN : CARD_ACTION_BTN;
 
   return (
     <div className={isDetail ? "space-y-3" : "space-y-3 border-t-2 border-zinc-100 pt-4"}>
       <div
-        className={`grid gap-2 ${
+        className={`grid gap-2 [&>*]:min-w-0 ${
           mascota.contacto_whatsapp ? "grid-cols-3" : "grid-cols-2"
         }`}
       >
@@ -73,21 +83,32 @@ export function MascotaContactActions({
             target="_blank"
             rel="noopener noreferrer"
             onClick={(event) => event.stopPropagation()}
-            className="inline-flex min-h-[2.75rem] items-center justify-center rounded-xl bg-[#25D366] px-2 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#1da851] sm:px-3 sm:text-base"
+            className={`${actionBtn} bg-[#25D366] text-white hover:bg-[#1da851]`}
           >
             WhatsApp
           </a>
         ) : null}
-        <MascotaShareButton mascotaId={mascota.id} />
-        <MascotaCartelButton mascota={mascota} />
+        <MascotaShareButton mascotaId={mascota.id} layout={layout} />
+        <MascotaCartelButton mascota={mascota} layout={layout} />
       </div>
 
       <a
         href={buildTelUrl(mascota.contacto_telefono)}
         onClick={(event) => event.stopPropagation()}
-        className="inline-flex min-h-[2.75rem] w-full items-center justify-center rounded-xl border-2 border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm font-bold text-zinc-800 transition hover:bg-zinc-100 sm:text-base"
+        className={`${actionBtn} w-full border-2 border-zinc-200 bg-zinc-50 text-zinc-800 hover:bg-zinc-100 ${
+          isDetail
+            ? "gap-2"
+            : "flex-col gap-0.5 sm:flex-row sm:gap-1.5"
+        }`}
       >
-        📞 Llamar — {mascota.contacto_telefono}
+        <span className="shrink-0">📞 Llamar</span>
+        <span
+          className={`truncate font-medium text-zinc-600 ${
+            isDetail ? "" : "text-[0.65rem] sm:text-xs"
+          }`}
+        >
+          {mascota.contacto_telefono}
+        </span>
       </a>
     </div>
   );
