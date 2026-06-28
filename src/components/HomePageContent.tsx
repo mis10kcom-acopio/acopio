@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MascotasEnCasaSlider } from "@/components/MascotasEnCasaSlider";
+import { EspecieFilterPills } from "@/components/EspecieFilterPills";
 import {
   MASCOTAS_PER_PAGE_DESKTOP,
   MASCOTAS_PER_PAGE_MOBILE,
@@ -25,6 +26,7 @@ import {
 } from "@/lib/capture-card";
 import { isInInstagramBrowser } from "@/lib/in-app-browser";
 import { getMascotaEstado, getMascotaEstadoConfig, isMascotaEstadoActivo } from "@/lib/mascota-estado";
+import { filterMascotasByEspecie, type EspecieFilterId } from "@/lib/mascota-especie";
 import { SITE_URL } from "@/lib/site-config";
 import { buildTelUrl, buildWhatsAppUrl } from "@/lib/whatsapp";
 import type {
@@ -492,6 +494,9 @@ export function HomePageContent({ data }: { data: HomePageData }) {
   const [searchQueryRedAyuda, setSearchQueryRedAyuda] = useState("");
   const [searchQueryVeterinarios, setSearchQueryVeterinarios] = useState("");
   const [searchQueryAcopio, setSearchQueryAcopio] = useState("");
+  const [especieFilter, setEspecieFilter] = useState<EspecieFilterId | null>(
+    null,
+  );
   const [mascotaPage, setMascotaPage] = useState(1);
   const mascotasCardsRef = useRef<HTMLDivElement>(null);
   const isMdUp = useIsMdUp();
@@ -528,15 +533,15 @@ export function HomePageContent({ data }: { data: HomePageData }) {
     [data.mascotas],
   );
 
-  const filteredMascotas = useMemo(
-    () => filterByZona(activeMascotas, searchQuery),
-    [activeMascotas, searchQuery],
-  );
+  const filteredMascotas = useMemo(() => {
+    const byZona = filterByZona(activeMascotas, searchQuery);
+    return filterMascotasByEspecie(byZona, especieFilter);
+  }, [activeMascotas, searchQuery, especieFilter]);
 
-  const enCasaForSlider = useMemo(
-    () => filterByZona(resolvedMascotas, searchQuery),
-    [resolvedMascotas, searchQuery],
-  );
+  const enCasaForSlider = useMemo(() => {
+    const byZona = filterByZona(resolvedMascotas, searchQuery);
+    return filterMascotasByEspecie(byZona, especieFilter);
+  }, [resolvedMascotas, searchQuery, especieFilter]);
 
   const totalMascotaPages = Math.max(
     1,
@@ -552,7 +557,7 @@ export function HomePageContent({ data }: { data: HomePageData }) {
 
   useEffect(() => {
     setMascotaPage(1);
-  }, [searchQuery, mascotasPerPage]);
+  }, [searchQuery, especieFilter, mascotasPerPage]);
 
   function handleMascotaPageChange(nextPage: number) {
     setMascotaPage(nextPage);
@@ -702,6 +707,12 @@ export function HomePageContent({ data }: { data: HomePageData }) {
                 onChange={setSearchQuery}
                 placeholder="🔍 Buscar por Zona"
                 ariaLabel="Buscar mascotas por zona, ciudad o municipio"
+                footer={
+                  <EspecieFilterPills
+                    value={especieFilter}
+                    onChange={setEspecieFilter}
+                  />
+                }
               />
             ) : null}
             {data.mascotas.length === 0 ? (
@@ -709,7 +720,7 @@ export function HomePageContent({ data }: { data: HomePageData }) {
             ) : activeMascotas.length === 0 ? (
               <EmptyState message="No hay casos activos (perdidos, en resguardo o en adopción) en este momento." />
             ) : filteredMascotas.length === 0 ? (
-              <EmptyState message="No hay casos activos en esta zona actualmente." />
+              <EmptyState message="No hay casos activos con los filtros seleccionados." />
             ) : (
               <>
                 <div

@@ -12,6 +12,7 @@ import {
   FormSuccess,
   SubmitButton,
 } from "@/components/forms/FormFields";
+import { EspecieField } from "@/components/forms/EspecieField";
 import { initialActionState } from "@/types/actions";
 
 export function MascotaRegistroForm() {
@@ -63,6 +64,8 @@ export function MascotaRegistroForm() {
         <option value="EN_CASA">En Casa</option>
         <option value="ADOPCION">Adopción</option>
       </FormField>
+
+      <EspecieField />
 
       <FormField
         label="Nombre de la mascota"

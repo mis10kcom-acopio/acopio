@@ -12,6 +12,7 @@ export interface MascotaReportada {
   id: string;
   tipo_reporte: TipoReporte;
   nombre_mascota: string | null;
+  especie?: string | null;
   caracteristicas: string;
   ubicacion_zona: string;
   contacto_telefono: string;

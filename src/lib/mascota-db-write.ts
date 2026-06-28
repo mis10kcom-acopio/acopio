@@ -5,6 +5,7 @@ export const MASCOTAS_INSERT_COLUMNS = [
   "tipo_reporte",
   "estado",
   "nombre_mascota",
+  "especie",
   "caracteristicas",
   "ubicacion_zona",
   "contacto_telefono",
@@ -15,6 +16,7 @@ export const MASCOTAS_INSERT_COLUMNS = [
 
 export type MascotaInsertPayload = {
   nombre_mascota: string | null;
+  especie: string | null;
   caracteristicas: string;
   ubicacion_zona: string;
   contacto_telefono: string;
@@ -27,6 +29,7 @@ type MascotasReportadasInsertRow = {
   tipo_reporte: TipoReporte;
   estado: string;
   nombre_mascota: string | null;
+  especie?: string | null;
   caracteristicas: string;
   ubicacion_zona: string;
   contacto_telefono: string;
@@ -91,6 +94,7 @@ function buildInsertRow(
     tipo_reporte: estadoRow.tipo_reporte,
     estado: estadoRow.estado,
     nombre_mascota: basePayload.nombre_mascota,
+    especie: basePayload.especie,
     caracteristicas: basePayload.caracteristicas,
     ubicacion_zona: basePayload.ubicacion_zona,
     contacto_telefono: basePayload.contacto_telefono,
@@ -164,6 +168,7 @@ export async function insertMascotaReportada(
 
 type MascotaUpdateFields = {
   nombre_mascota?: string | null;
+  especie?: string | null;
   caracteristicas?: string;
   ubicacion_zona?: string;
   contacto_telefono?: string;
@@ -175,6 +180,7 @@ function pickMascotaUpdateFields(
 ): MascotaUpdateFields {
   const picked: MascotaUpdateFields = {};
   if ("nombre_mascota" in fields) picked.nombre_mascota = fields.nombre_mascota as string | null;
+  if ("especie" in fields) picked.especie = fields.especie as string | null;
   if ("caracteristicas" in fields) picked.caracteristicas = fields.caracteristicas as string;
   if ("ubicacion_zona" in fields) picked.ubicacion_zona = fields.ubicacion_zona as string;
   if ("contacto_telefono" in fields) picked.contacto_telefono = fields.contacto_telefono as string;
@@ -186,6 +192,7 @@ type MascotasReportadasUpdateRow = {
   tipo_reporte: TipoReporte;
   estado: string;
   nombre_mascota?: string | null;
+  especie?: string | null;
   caracteristicas?: string;
   ubicacion_zona?: string;
   contacto_telefono?: string;
@@ -204,6 +211,7 @@ function buildUpdateRow(
   };
 
   if (fields.nombre_mascota !== undefined) row.nombre_mascota = fields.nombre_mascota;
+  if (fields.especie !== undefined) row.especie = fields.especie;
   if (fields.caracteristicas !== undefined) row.caracteristicas = fields.caracteristicas;
   if (fields.ubicacion_zona !== undefined) row.ubicacion_zona = fields.ubicacion_zona;
   if (fields.contacto_telefono !== undefined) row.contacto_telefono = fields.contacto_telefono;

@@ -23,6 +23,7 @@ import {
   FormSuccess,
   SubmitButton,
 } from "@/components/forms/FormFields";
+import { EspecieField } from "@/components/forms/EspecieField";
 import { initialActionState } from "@/types/actions";
 import type {
   AcopioMascota,
@@ -124,6 +125,8 @@ export function EditarMascotaPanel({
             <option value="EN_CASA">En Casa</option>
             <option value="ADOPCION">Adopción</option>
           </FormField>
+
+          <EspecieField defaultValue={registro.especie} />
 
           <FormField
             label="Nombre de la mascota"

@@ -102,6 +102,7 @@ export async function registrarMascota(
 
     const payload: MascotaInsertPayload = {
       nombre_mascota: getOptional(formData, "nombre_mascota"),
+      especie: getOptional(formData, "especie"),
       caracteristicas: getRequired(formData, "caracteristicas"),
       ubicacion_zona: getRequired(formData, "ubicacion_zona"),
       contacto_telefono: getRequired(formData, "contacto_telefono"),
