@@ -1,36 +1,30 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { ChevronLeft, ChevronRight, Home, PawPrint } from "lucide-react";
 import { useRef } from "react";
-import { buildMascotaPublicPath } from "@/lib/mascota-url";
 import type { MascotaReportada } from "@/types/database";
 
-const SCROLL_STEP = 220;
+const SCROLL_STEP = 242;
 
 function EnCasaSlide({ mascota }: { mascota: MascotaReportada }) {
   const label = mascota.nombre_mascota?.trim() || "Mascota en casa";
 
   return (
-    <Link
-      href={buildMascotaPublicPath(mascota.id)}
-      className="group relative shrink-0 cursor-pointer snap-start"
-      title={label}
-    >
-      <div className="relative h-20 w-20 overflow-hidden rounded-full border-2 border-emerald-300 bg-white shadow-sm transition group-hover:border-emerald-400 sm:h-[5.5rem] sm:w-[5.5rem]">
+    <div className="relative shrink-0 snap-start" title={label}>
+      <div className="relative h-[5.5rem] w-[5.5rem] overflow-hidden rounded-full border-2 border-emerald-300 bg-white shadow-sm sm:h-[6.0625rem] sm:w-[6.0625rem]">
         {mascota.foto_url ? (
           <Image
             src={mascota.foto_url}
             alt={label}
-            width={88}
-            height={88}
+            width={97}
+            height={97}
             className="h-full w-full object-cover"
             loading="lazy"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-emerald-50 text-emerald-600">
-            <PawPrint className="h-8 w-8" aria-hidden />
+            <PawPrint className="h-9 w-9" aria-hidden />
           </div>
         )}
         <span className="absolute -right-0.5 -top-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white shadow-md ring-2 ring-white">
@@ -38,7 +32,7 @@ function EnCasaSlide({ mascota }: { mascota: MascotaReportada }) {
         </span>
       </div>
       <span className="sr-only">{label}</span>
-    </Link>
+    </div>
   );
 }
 
@@ -62,7 +56,7 @@ export function MascotasEnCasaSlider({
 
   return (
     <section
-      className="mb-5 mt-8 rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50 to-white p-4 sm:p-5"
+      className="mt-8 rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50 to-white p-4 sm:p-5"
       aria-labelledby="en-casa-slider-heading"
     >
       <div className="mb-4">
@@ -89,7 +83,7 @@ export function MascotasEnCasaSlider({
 
         <div
           ref={scrollRef}
-          className="flex min-w-0 flex-1 gap-3 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex min-w-0 flex-1 gap-3 overflow-x-auto scroll-smooth snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           aria-label="Mascotas que ya están en casa"
         >
           {mascotas.map((mascota) => (

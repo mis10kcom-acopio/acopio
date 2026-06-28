@@ -8,9 +8,9 @@ export function SupportFooter() {
   return (
     <>
       <footer
-        className={`mt-auto border-t border-amber-200/80 bg-white ${FIXED_SUPPORT_BAR_PADDING}`}
+        className={`border-t border-amber-200/80 bg-white ${FIXED_SUPPORT_BAR_PADDING}`}
       >
-        <div className="px-4 pt-5 pb-8 sm:pt-6 sm:pb-10">
+        <div className="px-4 pb-8 pt-4 sm:pb-10">
           <Image
             src="/logohuellas.png"
             alt="Huellas a Salvo"

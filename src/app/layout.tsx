@@ -101,7 +101,7 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-zinc-50">
         <ActivityTickerShell />
-        <div className={`flex-1 bg-gradient-to-b from-amber-50 to-zinc-50 ${FIXED_SUPPORT_BAR_PADDING}`}>
+        <div className={`bg-gradient-to-b from-amber-50 to-zinc-50 ${FIXED_SUPPORT_BAR_PADDING}`}>
           {children}
         </div>
         <SupportFooter />
