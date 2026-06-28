@@ -168,6 +168,237 @@ export type ComposeMascotaShareImageOptions = {
   forInstagram?: boolean;
 };
 
+const STORY_POSTER_WIDTH = 1080;
+const STORY_POSTER_HEIGHT = 1920;
+const STORY_PHOTO_HEIGHT = 1080;
+const STORY_FOOTER_HEIGHT = 220;
+const STORY_CARTEL_FILENAME = "cartel-huellas-a-salvo.jpg";
+
+export const STORY_POSTER_ASPECT = STORY_POSTER_WIDTH / STORY_POSTER_HEIGHT;
+
+function drawCoverImage(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  dx: number,
+  dy: number,
+  dWidth: number,
+  dHeight: number,
+): void {
+  const imgRatio = img.naturalWidth / img.naturalHeight;
+  const boxRatio = dWidth / dHeight;
+
+  let sx = 0;
+  let sy = 0;
+  let sw = img.naturalWidth;
+  let sh = img.naturalHeight;
+
+  if (imgRatio > boxRatio) {
+    sw = img.naturalHeight * boxRatio;
+    sx = (img.naturalWidth - sw) / 2;
+  } else {
+    sh = img.naturalWidth / boxRatio;
+    sy = (img.naturalHeight - sh) / 2;
+  }
+
+  ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dWidth, dHeight);
+}
+
+function drawPhotoPlaceholder(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+): void {
+  ctx.fillStyle = "#FEF3C7";
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.fillStyle = "#D97706";
+  ctx.font = "bold 120px system-ui, -apple-system, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("🐾", width / 2, height / 2);
+}
+
+function truncateTextToLines(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+  maxLines: number,
+): string {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "";
+
+  const lines: string[] = [];
+  let line = "";
+
+  for (const word of words) {
+    const testLine = line ? `${line} ${word}` : word;
+    if (ctx.measureText(testLine).width > maxWidth && line) {
+      lines.push(line);
+      line = word;
+      if (lines.length >= maxLines) break;
+    } else {
+      line = testLine;
+    }
+  }
+
+  if (lines.length < maxLines && line) {
+    lines.push(line);
+  } else if (lines.length >= maxLines && lines[maxLines - 1]) {
+    let last = lines[maxLines - 1];
+    while (ctx.measureText(`${last}…`).width > maxWidth && last.length > 0) {
+      last = last.slice(0, -1);
+    }
+    lines[maxLines - 1] = `${last}…`;
+  }
+
+  return lines.join("\n");
+}
+
+/** Cartel vertical 9:16 para historias de Instagram y redes sociales. */
+export async function composeMascotaStoryPoster(
+  data: MascotaPosterInput,
+): Promise<Blob> {
+  const width = STORY_POSTER_WIDTH;
+  const height = STORY_POSTER_HEIGHT;
+  const photoHeight = STORY_PHOTO_HEIGHT;
+  const footerHeight = STORY_FOOTER_HEIGHT;
+  const infoTop = photoHeight;
+  const infoHeight = height - photoHeight - footerHeight;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    throw new Error("Canvas no disponible");
+  }
+
+  ctx.fillStyle = "#FFFBEB";
+  ctx.fillRect(0, 0, width, height);
+
+  if (data.foto_url) {
+    try {
+      const img = await loadCrossOriginImage(data.foto_url);
+      drawCoverImage(ctx, img, 0, 0, width, photoHeight);
+    } catch {
+      drawPhotoPlaceholder(ctx, width, photoHeight);
+    }
+  } else {
+    drawPhotoPlaceholder(ctx, width, photoHeight);
+  }
+
+  const estado = getMascotaEstado(data);
+  drawStatusBanner(ctx, width, estado);
+
+  ctx.fillStyle = "#FFFBEB";
+  ctx.fillRect(0, infoTop, width, infoHeight);
+
+  const paddingX = 72;
+  const contentWidth = width - paddingX * 2;
+  let y = infoTop + 56;
+
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+
+  const nameSize = 56;
+  ctx.font = `bold ${nameSize}px system-ui, -apple-system, sans-serif`;
+  ctx.fillStyle = "#18181B";
+  const displayName = data.nombre_mascota?.trim() || "Mascota reportada";
+  y = wrapText(ctx, displayName, paddingX, y, contentWidth, nameSize * 1.15) + 12;
+
+  const estadoConfig = MASCOTA_ESTADO_CONFIG[estado];
+  const badgeFontSize = 34;
+  ctx.font = `bold ${badgeFontSize}px system-ui, -apple-system, sans-serif`;
+  const badgeLabel = estadoConfig.label.toUpperCase();
+  const badgePaddingX = 24;
+  const badgePaddingY = 12;
+  const badgeTextWidth = ctx.measureText(badgeLabel).width;
+  const badgeWidth = badgeTextWidth + badgePaddingX * 2;
+  const badgeHeight = badgeFontSize + badgePaddingY * 2;
+
+  ctx.fillStyle = estadoConfig.canvasColor;
+  ctx.fillRect(paddingX, y, badgeWidth, badgeHeight);
+
+  ctx.fillStyle = "#FFFFFF";
+  ctx.textBaseline = "middle";
+  ctx.fillText(badgeLabel, paddingX + badgePaddingX, y + badgeHeight / 2);
+  ctx.textBaseline = "top";
+  y += badgeHeight + 28;
+
+  const metaSize = 38;
+  ctx.font = `600 ${metaSize}px system-ui, -apple-system, sans-serif`;
+  ctx.fillStyle = "#3F3F46";
+  ctx.fillText(`📍 ${data.ubicacion_zona}`, paddingX, y);
+  y += metaSize * 1.55;
+
+  ctx.fillText(`📞 ${data.contacto_telefono}`, paddingX, y);
+  y += metaSize * 1.55;
+
+  const descSize = 34;
+  const descLineHeight = descSize * 1.45;
+  ctx.font = `${descSize}px system-ui, -apple-system, sans-serif`;
+  ctx.fillStyle = "#52525B";
+
+  const footerTop = height - footerHeight;
+  const maxDescBottom = footerTop - 24;
+  const maxDescLines = Math.max(
+    2,
+    Math.floor((maxDescBottom - y) / descLineHeight),
+  );
+  const truncatedDesc = truncateTextToLines(
+    ctx,
+    data.caracteristicas,
+    contentWidth,
+    maxDescLines,
+  );
+
+  for (const line of truncatedDesc.split("\n")) {
+    if (y + descLineHeight > maxDescBottom) break;
+    ctx.fillText(line, paddingX, y);
+    y += descLineHeight;
+  }
+
+  const footerY = height - footerHeight;
+  ctx.fillStyle = "#FEF3C7";
+  ctx.fillRect(0, footerY, width, footerHeight);
+
+  ctx.strokeStyle = "#FDE68A";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, footerY);
+  ctx.lineTo(width, footerY);
+  ctx.stroke();
+
+  try {
+    const logoUrl = `${window.location.origin}/logohuellas.png`;
+    const logo = await loadCrossOriginImage(logoUrl);
+    const logoSize = 88;
+    const logoX = width / 2 - logoSize / 2;
+    const logoY = footerY + 28;
+    ctx.drawImage(logo, logoX, logoY, logoSize, logoSize);
+  } catch {
+    ctx.font = "bold 40px system-ui, -apple-system, sans-serif";
+    ctx.fillStyle = "#D97706";
+    ctx.textAlign = "center";
+    ctx.fillText("Huellas a Salvo", width / 2, footerY + 52);
+  }
+
+  ctx.font = "600 32px system-ui, -apple-system, sans-serif";
+  ctx.fillStyle = "#92400E";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.fillText("huellasasalvo.org", width / 2, footerY + 132);
+
+  return canvasToJpegBlob(canvas);
+}
+
+export function downloadMascotaStoryPoster(blob: Blob): void {
+  downloadBlob(blob, STORY_CARTEL_FILENAME);
+}
+
+export { STORY_CARTEL_FILENAME };
+
 export async function composeMascotaShareImage(
   data: MascotaPosterInput,
   options: ComposeMascotaShareImageOptions = {},

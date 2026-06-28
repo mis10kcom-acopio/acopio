@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { MascotaCartelButton } from "@/components/MascotaCartelModal";
 import { buildMascotaPublicUrl } from "@/lib/mascota-url";
 import { buildTelUrl, buildWhatsAppUrl } from "@/lib/whatsapp";
 import type { MascotaReportada } from "@/types/database";
@@ -43,7 +44,7 @@ export function MascotaShareButton({
       type="button"
       onClick={handleShare}
       disabled={isCopying}
-      className={`inline-flex min-h-[2.75rem] items-center justify-center rounded-xl bg-sky-600 px-3 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60 sm:text-base ${fullWidth ? "w-full" : ""} ${className}`}
+      className={`inline-flex min-h-[2.75rem] items-center justify-center rounded-xl bg-sky-600 px-2 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60 sm:px-3 sm:text-base ${fullWidth ? "w-full" : ""} ${className}`}
     >
       {label}
     </button>
@@ -61,22 +62,24 @@ export function MascotaContactActions({
 
   return (
     <div className={isDetail ? "space-y-3" : "space-y-3 border-t-2 border-zinc-100 pt-4"}>
-      <div className={`grid gap-2 ${mascota.contacto_whatsapp ? "grid-cols-2" : "grid-cols-1"}`}>
+      <div
+        className={`grid gap-2 ${
+          mascota.contacto_whatsapp ? "grid-cols-3" : "grid-cols-2"
+        }`}
+      >
         {mascota.contacto_whatsapp ? (
           <a
             href={buildWhatsAppUrl(mascota.contacto_whatsapp)}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(event) => event.stopPropagation()}
-            className="inline-flex min-h-[2.75rem] items-center justify-center rounded-xl bg-[#25D366] px-3 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#1da851] sm:text-base"
+            className="inline-flex min-h-[2.75rem] items-center justify-center rounded-xl bg-[#25D366] px-2 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#1da851] sm:px-3 sm:text-base"
           >
             WhatsApp
           </a>
         ) : null}
-        <MascotaShareButton
-          mascotaId={mascota.id}
-          fullWidth={!mascota.contacto_whatsapp}
-        />
+        <MascotaShareButton mascotaId={mascota.id} />
+        <MascotaCartelButton mascota={mascota} />
       </div>
 
       <a
