@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 import { FixedSupportBar } from "@/components/FixedSupportBar";
 import { FIXED_SUPPORT_BAR_PADDING } from "@/lib/support-footer-constants";
 
@@ -21,14 +20,6 @@ export function SupportFooter() {
           />
           <p className="mx-auto mt-3 max-w-md text-center text-sm text-gray-500">
             Hecho con amor para ayudar a los animales afectados por el terremoto
-          </p>
-          <p className="mt-2 text-center">
-            <Link
-              href="/terminos"
-              className="text-xs text-gray-400 transition hover:text-gray-600"
-            >
-              Términos y Privacidad
-            </Link>
           </p>
         </div>
       </footer>

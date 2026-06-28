@@ -3,4 +3,4 @@ export const SUPPORT_WHATSAPP_URL =
 
 /** Compensa la altura de la barra fija de WhatsApp en el layout principal. */
 export const FIXED_SUPPORT_BAR_PADDING =
-  "pb-[calc(5rem+env(safe-area-inset-bottom,0px))] sm:pb-[calc(4rem+env(safe-area-inset-bottom,0px))]";
+  "pb-[calc(6rem+env(safe-area-inset-bottom,0px))] sm:pb-[calc(5rem+env(safe-area-inset-bottom,0px))]";
