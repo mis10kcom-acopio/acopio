@@ -1,15 +1,17 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MascotasEnCasaSlider } from "@/components/MascotasEnCasaSlider";
 import { EspecieFilterPills } from "@/components/EspecieFilterPills";
+import { MascotaContactActions } from "@/components/MascotaShareButton";
 import {
   MASCOTAS_PER_PAGE_DESKTOP,
   MASCOTAS_PER_PAGE_MOBILE,
   MascotasPagination,
 } from "@/components/MascotasPagination";
-import { useIsMdUp } from "@/lib/use-media-query";
+import { useIsXlUp } from "@/lib/use-media-query";
 import { scrollToElement } from "@/lib/use-scroll-hide-bar";
 import { RelativePublishedTime } from "@/components/RelativePublishedTime";
 import { VenezuelaLocalClock } from "@/components/VenezuelaLocalClock";
@@ -20,18 +22,14 @@ import {
   Stethoscope,
   Warehouse,
 } from "lucide-react";
-import {
-  composeMascotaShareImage,
-  openBlobImagePage,
-  shareMascotaPhotoWithFallbacks,
-} from "@/lib/capture-card";
-import { isInInstagramBrowser } from "@/lib/in-app-browser";
 import { getMascotaEstado, getMascotaEstadoConfig, isMascotaEstadoActivo } from "@/lib/mascota-estado";
+import { buildMascotaPublicPath } from "@/lib/mascota-url";
 import { filterMascotasByEspecie, type EspecieFilterId } from "@/lib/mascota-especie";
-import { SITE_URL } from "@/lib/site-config";
 import { buildTelUrl, buildWhatsAppUrl } from "@/lib/whatsapp";
 import type {
   AcopioMascota,
+  EstadoMascota,
+  EstadoStock,
   HomePageData,
   MascotaReportada,
   RedVoluntario,
@@ -39,6 +37,51 @@ import type {
 } from "@/types/database";
 
 type SectionId = "mascotas" | "red-ayuda" | "veterinarios" | "acopio";
+
+type RedAyudaTipoFilter = Extract<
+  TipoAyuda,
+  "HOGAR_TEMPORAL" | "RESCATISTA" | "TRANSPORTE"
+>;
+
+function StatFilterButton({
+  active,
+  onClick,
+  children,
+  activeClassName,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+  activeClassName: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={(event) => {
+        event.stopPropagation();
+        onClick();
+      }}
+      aria-pressed={active}
+      className={`rounded-md px-1 py-0.5 transition ${
+        active ? `${activeClassName} ring-2 ring-offset-1` : "hover:bg-zinc-100"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function ClearFilterButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="mt-3 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50"
+    >
+      Limpiar filtro
+    </button>
+  );
+}
 
 const TIPOS_RED_AYUDA: TipoAyuda[] = [
   "HOGAR_TEMPORAL",
@@ -146,86 +189,12 @@ function ContactActions({
   );
 }
 
-function MascotaCardActions({ mascota }: { mascota: MascotaReportada }) {
-  const [shareLabel, setShareLabel] = useState("Compartir");
-  const [isGenerating, setIsGenerating] = useState(false);
-
-  async function handleShare() {
-    if (isGenerating) return;
-
-    setIsGenerating(true);
-    setShareLabel("Generando…");
-
-    try {
-      if (isInInstagramBrowser()) {
-        if (!mascota.foto_url) {
-          return;
-        }
-
-        const blob = await composeMascotaShareImage(mascota, {
-          forInstagram: true,
-        });
-        openBlobImagePage(blob);
-        return;
-      }
-
-      const result = await shareMascotaPhotoWithFallbacks(mascota, SITE_URL);
-
-      if (result !== "cancelled") {
-        setShareLabel(
-          result === "downloaded" ? "¡Descargada!" : "¡Compartido!",
-        );
-        setTimeout(() => setShareLabel("Compartir"), 2500);
-      }
-    } catch {
-      // Errores inesperados: sin mensaje al usuario
-    } finally {
-      setIsGenerating(false);
-      setShareLabel((prev) => (prev === "Generando…" ? "Compartir" : prev));
-    }
-  }
-
-  return (
-    <div className="space-y-3 border-t-2 border-zinc-100 pt-4">
-      <div className="grid grid-cols-2 gap-2">
-        {mascota.contacto_whatsapp ? (
-          <a
-            href={buildWhatsAppUrl(mascota.contacto_whatsapp)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex min-h-[2.75rem] items-center justify-center rounded-xl bg-[#25D366] px-3 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#1da851] sm:text-base"
-          >
-            WhatsApp
-          </a>
-        ) : null}
-        <button
-          type="button"
-          onClick={handleShare}
-          disabled={isGenerating}
-          className={`inline-flex min-h-[2.75rem] items-center justify-center rounded-xl bg-sky-600 px-3 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60 sm:text-base ${
-            mascota.contacto_whatsapp ? "" : "col-span-2"
-          }`}
-        >
-          {shareLabel}
-        </button>
-      </div>
-
-      <a
-        href={buildTelUrl(mascota.contacto_telefono)}
-        className="inline-flex min-h-[2.75rem] w-full items-center justify-center rounded-xl border-2 border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm font-bold text-zinc-800 transition hover:bg-zinc-100 sm:text-base"
-      >
-        📞 Llamar — {mascota.contacto_telefono}
-      </a>
-    </div>
-  );
-}
-
 function MascotaCard({ mascota }: { mascota: MascotaReportada }) {
   const estadoConfig = getMascotaEstadoConfig(mascota);
 
   return (
-    <article className="overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white shadow-md">
-      <div className="bg-white">
+    <article className="overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white shadow-md transition hover:border-zinc-300 hover:shadow-lg">
+      <Link href={buildMascotaPublicPath(mascota.id)} className="block bg-white">
         <div className="relative">
           {mascota.foto_url ? (
             <Image
@@ -234,9 +203,9 @@ function MascotaCard({ mascota }: { mascota: MascotaReportada }) {
               width={600}
               height={600}
               crossOrigin="anonymous"
-              className="w-full aspect-square object-cover rounded-t-2xl"
+              className="aspect-square w-full rounded-t-2xl object-cover"
               loading="lazy"
-              sizes="(max-width: 768px) 100vw, 400px"
+              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
             />
           ) : (
             <div className="aspect-square w-full rounded-t-2xl bg-zinc-100" />
@@ -258,7 +227,7 @@ function MascotaCard({ mascota }: { mascota: MascotaReportada }) {
             )}
             <RelativePublishedTime date={mascota.creado_el} />
           </div>
-          <p className="text-base leading-relaxed text-zinc-700">
+          <p className="line-clamp-3 text-base leading-relaxed text-zinc-700">
             {mascota.caracteristicas}
           </p>
           <div>
@@ -270,9 +239,9 @@ function MascotaCard({ mascota }: { mascota: MascotaReportada }) {
             </p>
           </div>
         </div>
-      </div>
+      </Link>
       <div className="px-5 pb-5">
-        <MascotaCardActions mascota={mascota} />
+        <MascotaContactActions mascota={mascota} />
       </div>
     </article>
   );
@@ -498,11 +467,17 @@ export function HomePageContent({ data }: { data: HomePageData }) {
   const [especieFilter, setEspecieFilter] = useState<EspecieFilterId | null>(
     null,
   );
+  const [mascotaEstadoFilter, setMascotaEstadoFilter] =
+    useState<EstadoMascota | null>(null);
+  const [redAyudaTipoFilter, setRedAyudaTipoFilter] =
+    useState<RedAyudaTipoFilter | null>(null);
+  const [acopioStockFilter, setAcopioStockFilter] =
+    useState<EstadoStock | null>(null);
   const [mascotaPage, setMascotaPage] = useState(1);
   const mascotasCardsRef = useRef<HTMLDivElement>(null);
   const shouldScrollToCardsRef = useRef(false);
-  const isMdUp = useIsMdUp();
-  const mascotasPerPage = isMdUp
+  const isXlUp = useIsXlUp();
+  const mascotasPerPage = isXlUp
     ? MASCOTAS_PER_PAGE_DESKTOP
     : MASCOTAS_PER_PAGE_MOBILE;
 
@@ -535,10 +510,22 @@ export function HomePageContent({ data }: { data: HomePageData }) {
     [data.mascotas],
   );
 
+  const mascotasForList = useMemo(() => {
+    if (mascotaEstadoFilter === "EN_CASA") {
+      return resolvedMascotas;
+    }
+    if (mascotaEstadoFilter) {
+      return activeMascotas.filter(
+        (mascota) => getMascotaEstado(mascota) === mascotaEstadoFilter,
+      );
+    }
+    return activeMascotas;
+  }, [activeMascotas, resolvedMascotas, mascotaEstadoFilter]);
+
   const filteredMascotas = useMemo(() => {
-    const byZona = filterByZona(activeMascotas, searchQuery);
+    const byZona = filterByZona(mascotasForList, searchQuery);
     return filterMascotasByEspecie(byZona, especieFilter);
-  }, [activeMascotas, searchQuery, especieFilter]);
+  }, [mascotasForList, searchQuery, especieFilter]);
 
   const enCasaForSlider = useMemo(() => {
     const byZona = filterByZona(resolvedMascotas, searchQuery);
@@ -559,7 +546,7 @@ export function HomePageContent({ data }: { data: HomePageData }) {
 
   useEffect(() => {
     setMascotaPage(1);
-  }, [searchQuery, especieFilter, mascotasPerPage]);
+  }, [searchQuery, especieFilter, mascotaEstadoFilter, mascotasPerPage]);
 
   useEffect(() => {
     if (!shouldScrollToCardsRef.current) return;
@@ -575,20 +562,24 @@ export function HomePageContent({ data }: { data: HomePageData }) {
     setMascotaPage(nextPage);
   }
 
-  const filteredRedAyuda = useMemo(
-    () => filterByZona(redAyuda, searchQueryRedAyuda),
-    [redAyuda, searchQueryRedAyuda],
-  );
+  const filteredRedAyuda = useMemo(() => {
+    const byTipo = redAyudaTipoFilter
+      ? redAyuda.filter((v) => v.tipo_ayuda === redAyudaTipoFilter)
+      : redAyuda;
+    return filterByZona(byTipo, searchQueryRedAyuda);
+  }, [redAyuda, redAyudaTipoFilter, searchQueryRedAyuda]);
 
   const filteredVeterinarios = useMemo(
     () => filterByZona(veterinarios, searchQueryVeterinarios),
     [veterinarios, searchQueryVeterinarios],
   );
 
-  const filteredAcopios = useMemo(
-    () => filterByZona(data.acopios, searchQueryAcopio),
-    [data.acopios, searchQueryAcopio],
-  );
+  const filteredAcopios = useMemo(() => {
+    const byStock = acopioStockFilter
+      ? data.acopios.filter((a) => a.estado_stock === acopioStockFilter)
+      : data.acopios;
+    return filterByZona(byStock, searchQueryAcopio);
+  }, [data.acopios, acopioStockFilter, searchQueryAcopio]);
 
   const mascotaStats = useMemo(
     () => ({
@@ -628,36 +619,162 @@ export function HomePageContent({ data }: { data: HomePageData }) {
     switch (sectionId) {
       case "mascotas":
         return (
-          <p className="mt-2 text-sm font-semibold leading-snug text-zinc-700">
-            <span className="text-red-600">{mascotaStats.perdidas} Perdidas</span>
-            {" | "}
-            <span className="text-yellow-600">
-              {mascotaStats.enResguardo} En Resguardo
-            </span>
-            {" | "}
-            <span className="text-blue-600">{mascotaStats.adopcion} Adopción</span>
-            {" | "}
-            <span className="text-emerald-600">{mascotaStats.enCasa} En Casa</span>
+          <p className="mt-2 flex flex-wrap items-center gap-x-1 gap-y-1 text-sm font-semibold leading-snug text-zinc-700">
+            <StatFilterButton
+              active={mascotaEstadoFilter === "PERDIDO"}
+              onClick={() => {
+                setActiveSection("mascotas");
+                setMascotaEstadoFilter((current) =>
+                  current === "PERDIDO" ? null : "PERDIDO",
+                );
+              }}
+              activeClassName="bg-red-100 text-red-700 ring-red-400"
+            >
+              <span className="text-red-600">{mascotaStats.perdidas} Perdidas</span>
+            </StatFilterButton>
+            <span aria-hidden>|</span>
+            <StatFilterButton
+              active={mascotaEstadoFilter === "EN_RESGUARDO"}
+              onClick={() => {
+                setActiveSection("mascotas");
+                setMascotaEstadoFilter((current) =>
+                  current === "EN_RESGUARDO" ? null : "EN_RESGUARDO",
+                );
+              }}
+              activeClassName="bg-yellow-100 text-yellow-800 ring-yellow-400"
+            >
+              <span className="text-yellow-600">
+                {mascotaStats.enResguardo} En Resguardo
+              </span>
+            </StatFilterButton>
+            <span aria-hidden>|</span>
+            <StatFilterButton
+              active={mascotaEstadoFilter === "ADOPCION"}
+              onClick={() => {
+                setActiveSection("mascotas");
+                setMascotaEstadoFilter((current) =>
+                  current === "ADOPCION" ? null : "ADOPCION",
+                );
+              }}
+              activeClassName="bg-blue-100 text-blue-800 ring-blue-400"
+            >
+              <span className="text-blue-600">
+                {mascotaStats.adopcion} Adopción
+              </span>
+            </StatFilterButton>
+            <span aria-hidden>|</span>
+            <StatFilterButton
+              active={mascotaEstadoFilter === "EN_CASA"}
+              onClick={() => {
+                setActiveSection("mascotas");
+                setMascotaEstadoFilter((current) =>
+                  current === "EN_CASA" ? null : "EN_CASA",
+                );
+              }}
+              activeClassName="bg-emerald-100 text-emerald-800 ring-emerald-400"
+            >
+              <span className="text-emerald-600">
+                {mascotaStats.enCasa} En Casa
+              </span>
+            </StatFilterButton>
           </p>
         );
       case "red-ayuda":
         return (
-          <p className="mt-2 text-sm font-semibold leading-snug text-zinc-700">
-            {redAyudaStats.hogar} Hogar temporal | {redAyudaStats.rescatista}{" "}
-            Rescatistas | {redAyudaStats.transporte} Transporte
+          <p className="mt-2 flex flex-wrap items-center gap-x-1 gap-y-1 text-sm font-semibold leading-snug text-zinc-700">
+            <StatFilterButton
+              active={redAyudaTipoFilter === "HOGAR_TEMPORAL"}
+              onClick={() => {
+                setActiveSection("red-ayuda");
+                setRedAyudaTipoFilter((current) =>
+                  current === "HOGAR_TEMPORAL" ? null : "HOGAR_TEMPORAL",
+                );
+              }}
+              activeClassName="bg-emerald-100 text-emerald-800 ring-emerald-400"
+            >
+              {redAyudaStats.hogar} Hogar temporal
+            </StatFilterButton>
+            <span aria-hidden>|</span>
+            <StatFilterButton
+              active={redAyudaTipoFilter === "RESCATISTA"}
+              onClick={() => {
+                setActiveSection("red-ayuda");
+                setRedAyudaTipoFilter((current) =>
+                  current === "RESCATISTA" ? null : "RESCATISTA",
+                );
+              }}
+              activeClassName="bg-amber-100 text-amber-900 ring-amber-400"
+            >
+              {redAyudaStats.rescatista} Rescatistas
+            </StatFilterButton>
+            <span aria-hidden>|</span>
+            <StatFilterButton
+              active={redAyudaTipoFilter === "TRANSPORTE"}
+              onClick={() => {
+                setActiveSection("red-ayuda");
+                setRedAyudaTipoFilter((current) =>
+                  current === "TRANSPORTE" ? null : "TRANSPORTE",
+                );
+              }}
+              activeClassName="bg-zinc-200 text-zinc-800 ring-zinc-400"
+            >
+              {redAyudaStats.transporte} Transporte
+            </StatFilterButton>
           </p>
         );
       case "veterinarios":
         return (
           <p className="mt-2 text-sm font-semibold text-sky-800">
-            {veterinarios.length} Veterinarios disponibles
+            <StatFilterButton
+              active={activeSection === "veterinarios"}
+              onClick={() => setActiveSection("veterinarios")}
+              activeClassName="bg-sky-100 text-sky-900 ring-sky-400"
+            >
+              {veterinarios.length} Veterinarios disponibles
+            </StatFilterButton>
           </p>
         );
       case "acopio":
         return (
-          <p className="mt-2 text-sm font-semibold leading-snug text-zinc-700">
-            {acopioStats.critico} Crítico 🔴 | {acopioStats.moderado} Moderado 🟡
-            | {acopioStats.abastecido} Abastecido 🟢
+          <p className="mt-2 flex flex-wrap items-center gap-x-1 gap-y-1 text-sm font-semibold leading-snug text-zinc-700">
+            <StatFilterButton
+              active={acopioStockFilter === "CRITICO"}
+              onClick={() => {
+                setActiveSection("acopio");
+                setAcopioStockFilter((current) =>
+                  current === "CRITICO" ? null : "CRITICO",
+                );
+              }}
+              activeClassName="bg-red-100 text-red-800 ring-red-400"
+            >
+              {acopioStats.critico} Crítico 🔴
+            </StatFilterButton>
+            <span aria-hidden>|</span>
+            <StatFilterButton
+              active={acopioStockFilter === "MODERADO"}
+              onClick={() => {
+                setActiveSection("acopio");
+                setAcopioStockFilter((current) =>
+                  current === "MODERADO" ? null : "MODERADO",
+                );
+              }}
+              activeClassName="bg-yellow-100 text-yellow-900 ring-yellow-400"
+            >
+              {acopioStats.moderado} Moderado 🟡
+            </StatFilterButton>
+            <span aria-hidden>|</span>
+            <StatFilterButton
+              active={acopioStockFilter === "ABASTECIDO"}
+              onClick={() => {
+                setActiveSection("acopio");
+                setAcopioStockFilter((current) =>
+                  current === "ABASTECIDO" ? null : "ABASTECIDO",
+                );
+              }}
+              activeClassName="bg-emerald-100 text-emerald-800 ring-emerald-400"
+            >
+              {acopioStats.abastecido} Abastecido 🟢
+            </StatFilterButton>
           </p>
         );
     }
@@ -725,18 +842,30 @@ export function HomePageContent({ data }: { data: HomePageData }) {
             ) : null}
             {data.mascotas.length === 0 ? (
               <EmptyState message="No hay reportes activos en este momento." />
-            ) : activeMascotas.length === 0 ? (
-              <EmptyState message="No hay casos activos (perdidos, en resguardo o en adopción) en este momento." />
             ) : filteredMascotas.length === 0 ? (
-              <EmptyState message="No hay casos activos con los filtros seleccionados." />
+              <div className="text-center">
+                <EmptyState message="No hay resultados con los filtros seleccionados." />
+                {mascotaEstadoFilter ? (
+                  <ClearFilterButton
+                    onClick={() => setMascotaEstadoFilter(null)}
+                  />
+                ) : null}
+              </div>
             ) : (
               <>
+                {mascotaEstadoFilter ? (
+                  <div className="mb-4 flex justify-end">
+                    <ClearFilterButton
+                      onClick={() => setMascotaEstadoFilter(null)}
+                    />
+                  </div>
+                ) : null}
                 <div
                   ref={mascotasCardsRef}
                   className="scroll-mt-24"
                   id="mascotas-cards"
                 >
-                  <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
                     {paginatedMascotas.map((mascota) => (
                       <MascotaCard key={mascota.id} mascota={mascota} />
                     ))}
@@ -747,7 +876,9 @@ export function HomePageContent({ data }: { data: HomePageData }) {
                   totalPages={totalMascotaPages}
                   onPageChange={handleMascotaPageChange}
                 />
-                <MascotasEnCasaSlider mascotas={enCasaForSlider} />
+                {mascotaEstadoFilter !== "EN_CASA" ? (
+                  <MascotasEnCasaSlider mascotas={enCasaForSlider} />
+                ) : null}
               </>
             )}
           </section>
@@ -768,13 +899,29 @@ export function HomePageContent({ data }: { data: HomePageData }) {
             {redAyuda.length === 0 ? (
               <EmptyState message="No hay voluntarios de ayuda disponibles en este momento." />
             ) : filteredRedAyuda.length === 0 ? (
-              <EmptyState message="No hay voluntarios registrados en esta zona actualmente." />
+              <div className="text-center">
+                <EmptyState message="No hay voluntarios con los filtros seleccionados." />
+                {redAyudaTipoFilter ? (
+                  <ClearFilterButton
+                    onClick={() => setRedAyudaTipoFilter(null)}
+                  />
+                ) : null}
+              </div>
             ) : (
-              <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <>
+                {redAyudaTipoFilter ? (
+                  <div className="mb-4 flex justify-end">
+                    <ClearFilterButton
+                      onClick={() => setRedAyudaTipoFilter(null)}
+                    />
+                  </div>
+                ) : null}
+                <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredRedAyuda.map((voluntario) => (
                   <VoluntarioCard key={voluntario.id} voluntario={voluntario} />
                 ))}
               </div>
+              </>
             )}
           </section>
         )}
@@ -820,13 +967,25 @@ export function HomePageContent({ data }: { data: HomePageData }) {
             {data.acopios.length === 0 ? (
               <EmptyState message="No hay centros de acopio registrados." />
             ) : filteredAcopios.length === 0 ? (
-              <EmptyState message="No hay centros de acopio en esta zona actualmente." />
-            ) : (
-              <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {filteredAcopios.map((acopio) => (
-                  <AcopioCard key={acopio.id} acopio={acopio} />
-                ))}
+              <div className="text-center">
+                <EmptyState message="No hay centros de acopio con los filtros seleccionados." />
+                {acopioStockFilter ? (
+                  <ClearFilterButton onClick={() => setAcopioStockFilter(null)} />
+                ) : null}
               </div>
+            ) : (
+              <>
+                {acopioStockFilter ? (
+                  <div className="mb-4 flex justify-end">
+                    <ClearFilterButton onClick={() => setAcopioStockFilter(null)} />
+                  </div>
+                ) : null}
+                <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                  {filteredAcopios.map((acopio) => (
+                    <AcopioCard key={acopio.id} acopio={acopio} />
+                  ))}
+                </div>
+              </>
             )}
           </section>
         )}

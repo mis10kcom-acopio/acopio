@@ -20,3 +20,12 @@ export function useIsMdUp() {
     () => false,
   );
 }
+
+/** Tailwind `xl` breakpoint (1280px). */
+export function useIsXlUp() {
+  return useSyncExternalStore(
+    (onChange) => subscribeMediaQuery("(min-width: 1280px)", onChange),
+    () => getMediaQuerySnapshot("(min-width: 1280px)"),
+    () => false,
+  );
+}
