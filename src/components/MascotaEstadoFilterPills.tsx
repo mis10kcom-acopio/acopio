@@ -1,20 +1,31 @@
 "use client";
 
-import {
-  ESPECIE_FILTER_OPTIONS,
-  type EspecieFilterId,
-} from "@/lib/mascota-especie";
+import type { EstadoMascota } from "@/types/database";
 
-export function EspecieFilterPills({
+export type MascotaEstadoFilterId = Extract<
+  EstadoMascota,
+  "PERDIDO" | "EN_RESGUARDO" | "ADOPCION"
+>;
+
+const ESTADO_FILTER_OPTIONS: {
+  id: MascotaEstadoFilterId;
+  label: string;
+}[] = [
+  { id: "PERDIDO", label: "Perdidas" },
+  { id: "EN_RESGUARDO", label: "En Resguardo" },
+  { id: "ADOPCION", label: "Adopción" },
+];
+
+export function MascotaEstadoFilterPills({
   value,
   onChange,
-  className = "mt-3",
+  className = "",
 }: {
-  value: EspecieFilterId | null;
-  onChange: (value: EspecieFilterId | null) => void;
+  value: MascotaEstadoFilterId | null;
+  onChange: (value: MascotaEstadoFilterId | null) => void;
   className?: string;
 }) {
-  function handleToggle(filterId: EspecieFilterId) {
+  function handleToggle(filterId: MascotaEstadoFilterId) {
     onChange(value === filterId ? null : filterId);
   }
 
@@ -22,9 +33,9 @@ export function EspecieFilterPills({
     <div
       className={`flex flex-wrap gap-2 ${className}`}
       role="group"
-      aria-label="Filtrar por especie"
+      aria-label="Filtrar por estado"
     >
-      {ESPECIE_FILTER_OPTIONS.map((option) => {
+      {ESTADO_FILTER_OPTIONS.map((option) => {
         const active = value === option.id;
 
         return (

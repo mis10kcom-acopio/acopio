@@ -5,6 +5,11 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MascotasEnCasaSlider } from "@/components/MascotasEnCasaSlider";
 import { EspecieFilterPills } from "@/components/EspecieFilterPills";
+import { AcopioStockFilterPills } from "@/components/AcopioStockFilterPills";
+import {
+  MascotaEstadoFilterPills,
+  type MascotaEstadoFilterId,
+} from "@/components/MascotaEstadoFilterPills";
 import { MascotaContactActions } from "@/components/MascotaShareButton";
 import {
   MASCOTAS_PER_PAGE_DESKTOP,
@@ -30,7 +35,6 @@ import { filterMascotasByEspecie, type EspecieFilterId } from "@/lib/mascota-esp
 import { buildTelUrl, buildWhatsAppUrl } from "@/lib/whatsapp";
 import type {
   AcopioMascota,
-  EstadoMascota,
   EstadoStock,
   HomePageData,
   MascotaReportada,
@@ -63,34 +67,6 @@ type NavCard = {
   section: SectionId;
   redAyudaFilter?: RedAyudaTipoFilter;
 };
-
-function StatFilterButton({
-  active,
-  onClick,
-  children,
-  activeClassName,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-  activeClassName: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={(event) => {
-        event.stopPropagation();
-        onClick();
-      }}
-      aria-pressed={active}
-      className={`rounded-md px-1 py-0.5 transition ${
-        active ? `${activeClassName} ring-2 ring-offset-1` : "hover:bg-zinc-100"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
 
 function ClearFilterButton({ onClick }: { onClick: () => void }) {
   return (
@@ -172,6 +148,8 @@ const NAV_ROW_2: NavCard[] = [
     redAyudaFilter: "TRANSPORTE",
   },
 ];
+
+const NAV_CARDS: NavCard[] = [...NAV_ROW_1, ...NAV_ROW_2];
 
 function Badge({
   children,
@@ -510,11 +488,12 @@ export function HomePageContent({ data }: { data: HomePageData }) {
     null,
   );
   const [mascotaEstadoFilter, setMascotaEstadoFilter] =
-    useState<EstadoMascota | null>(null);
+    useState<MascotaEstadoFilterId | null>(null);
   const [redAyudaTipoFilter, setRedAyudaTipoFilter] =
     useState<RedAyudaTipoFilter | null>(null);
-  const [acopioStockFilter, setAcopioStockFilter] =
-    useState<EstadoStock | null>(null);
+  const [acopioStockFilters, setAcopioStockFilters] = useState<EstadoStock[]>(
+    [],
+  );
   const [mascotaPage, setMascotaPage] = useState(1);
   const mascotasCardsRef = useRef<HTMLDivElement>(null);
   const shouldScrollToCardsRef = useRef(false);
@@ -553,16 +532,11 @@ export function HomePageContent({ data }: { data: HomePageData }) {
   );
 
   const mascotasForList = useMemo(() => {
-    if (mascotaEstadoFilter === "EN_CASA") {
-      return resolvedMascotas;
-    }
-    if (mascotaEstadoFilter) {
-      return activeMascotas.filter(
-        (mascota) => getMascotaEstado(mascota) === mascotaEstadoFilter,
-      );
-    }
-    return activeMascotas;
-  }, [activeMascotas, resolvedMascotas, mascotaEstadoFilter]);
+    if (!mascotaEstadoFilter) return activeMascotas;
+    return activeMascotas.filter(
+      (mascota) => getMascotaEstado(mascota) === mascotaEstadoFilter,
+    );
+  }, [activeMascotas, mascotaEstadoFilter]);
 
   const filteredMascotas = useMemo(() => {
     const byZona = filterByZona(mascotasForList, searchQuery);
@@ -617,11 +591,14 @@ export function HomePageContent({ data }: { data: HomePageData }) {
   );
 
   const filteredAcopios = useMemo(() => {
-    const byStock = acopioStockFilter
-      ? data.acopios.filter((a) => a.estado_stock === acopioStockFilter)
-      : data.acopios;
+    const byStock =
+      acopioStockFilters.length > 0
+        ? data.acopios.filter((acopio) =>
+            acopioStockFilters.includes(acopio.estado_stock),
+          )
+        : data.acopios;
     return filterByZona(byStock, searchQueryAcopio);
-  }, [data.acopios, acopioStockFilter, searchQueryAcopio]);
+  }, [data.acopios, acopioStockFilters, searchQueryAcopio]);
 
   const mascotaStats = useMemo(
     () => ({
@@ -682,64 +659,16 @@ export function HomePageContent({ data }: { data: HomePageData }) {
     switch (cardId) {
       case "mascotas":
         return (
-          <p className="mt-2 flex flex-wrap items-center gap-x-1 gap-y-1 text-sm font-semibold leading-snug text-zinc-700">
-            <StatFilterButton
-              active={mascotaEstadoFilter === "PERDIDO"}
-              onClick={() => {
-                setActiveSection("mascotas");
-                setMascotaEstadoFilter((current) =>
-                  current === "PERDIDO" ? null : "PERDIDO",
-                );
-              }}
-              activeClassName="bg-red-100 text-red-700 ring-red-400"
-            >
-              <span className="text-red-600">{mascotaStats.perdidas} Perdidas</span>
-            </StatFilterButton>
-            <span aria-hidden>|</span>
-            <StatFilterButton
-              active={mascotaEstadoFilter === "EN_RESGUARDO"}
-              onClick={() => {
-                setActiveSection("mascotas");
-                setMascotaEstadoFilter((current) =>
-                  current === "EN_RESGUARDO" ? null : "EN_RESGUARDO",
-                );
-              }}
-              activeClassName="bg-yellow-100 text-yellow-800 ring-yellow-400"
-            >
-              <span className="text-yellow-600">
-                {mascotaStats.enResguardo} En Resguardo
-              </span>
-            </StatFilterButton>
-            <span aria-hidden>|</span>
-            <StatFilterButton
-              active={mascotaEstadoFilter === "ADOPCION"}
-              onClick={() => {
-                setActiveSection("mascotas");
-                setMascotaEstadoFilter((current) =>
-                  current === "ADOPCION" ? null : "ADOPCION",
-                );
-              }}
-              activeClassName="bg-blue-100 text-blue-800 ring-blue-400"
-            >
-              <span className="text-blue-600">
-                {mascotaStats.adopcion} Adopción
-              </span>
-            </StatFilterButton>
-            <span aria-hidden>|</span>
-            <StatFilterButton
-              active={mascotaEstadoFilter === "EN_CASA"}
-              onClick={() => {
-                setActiveSection("mascotas");
-                setMascotaEstadoFilter((current) =>
-                  current === "EN_CASA" ? null : "EN_CASA",
-                );
-              }}
-              activeClassName="bg-emerald-100 text-emerald-800 ring-emerald-400"
-            >
-              <span className="text-emerald-600">
-                {mascotaStats.enCasa} En Casa
-              </span>
-            </StatFilterButton>
+          <p className="mt-2 text-sm font-semibold leading-snug text-zinc-700">
+            <span className="text-red-600">{mascotaStats.perdidas} Perdidas</span>
+            {" | "}
+            <span className="text-yellow-600">
+              {mascotaStats.enResguardo} En Resguardo
+            </span>
+            {" | "}
+            <span className="text-blue-600">{mascotaStats.adopcion} Adopción</span>
+            {" | "}
+            <span className="text-emerald-600">{mascotaStats.enCasa} En Casa</span>
           </p>
         );
       case "veterinarios":
@@ -750,45 +679,9 @@ export function HomePageContent({ data }: { data: HomePageData }) {
         );
       case "acopio":
         return (
-          <p className="mt-2 flex flex-wrap items-center gap-x-1 gap-y-1 text-sm font-semibold leading-snug text-zinc-700">
-            <StatFilterButton
-              active={acopioStockFilter === "CRITICO"}
-              onClick={() => {
-                setActiveSection("acopio");
-                setAcopioStockFilter((current) =>
-                  current === "CRITICO" ? null : "CRITICO",
-                );
-              }}
-              activeClassName="bg-red-100 text-red-800 ring-red-400"
-            >
-              {acopioStats.critico} Crítico 🔴
-            </StatFilterButton>
-            <span aria-hidden>|</span>
-            <StatFilterButton
-              active={acopioStockFilter === "MODERADO"}
-              onClick={() => {
-                setActiveSection("acopio");
-                setAcopioStockFilter((current) =>
-                  current === "MODERADO" ? null : "MODERADO",
-                );
-              }}
-              activeClassName="bg-yellow-100 text-yellow-900 ring-yellow-400"
-            >
-              {acopioStats.moderado} Moderado 🟡
-            </StatFilterButton>
-            <span aria-hidden>|</span>
-            <StatFilterButton
-              active={acopioStockFilter === "ABASTECIDO"}
-              onClick={() => {
-                setActiveSection("acopio");
-                setAcopioStockFilter((current) =>
-                  current === "ABASTECIDO" ? null : "ABASTECIDO",
-                );
-              }}
-              activeClassName="bg-emerald-100 text-emerald-800 ring-emerald-400"
-            >
-              {acopioStats.abastecido} Abastecido 🟢
-            </StatFilterButton>
+          <p className="mt-2 text-sm font-semibold leading-snug text-zinc-700">
+            {acopioStats.critico} Crítico 🔴 | {acopioStats.moderado} Moderado 🟡
+            | {acopioStats.abastecido} Abastecido 🟢
           </p>
         );
       case "hogar-temporal":
@@ -822,19 +715,19 @@ export function HomePageContent({ data }: { data: HomePageData }) {
         type="button"
         onClick={() => handleNavCardClick(card)}
         aria-pressed={isActive}
-        className={`flex min-h-[8.5rem] flex-col items-start justify-between rounded-2xl border-2 bg-white p-5 text-left shadow-lg transition focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+        className={`flex h-full min-h-[9.5rem] flex-col items-start justify-between rounded-2xl border-2 bg-white p-4 text-left shadow-lg transition focus:outline-none focus:ring-2 focus:ring-offset-2 sm:p-5 ${
           isActive
             ? `border-zinc-900 ${card.activeRing} ring-2 ring-offset-2`
             : "border-zinc-200 hover:border-zinc-300 hover:shadow-xl"
         }`}
       >
         <Icon className={`h-7 w-7 shrink-0 ${card.accent}`} aria-hidden />
-        <div className="mt-3 w-full">
-          <p className="text-lg font-bold text-zinc-900 sm:text-xl">
+        <div className="mt-3 flex w-full flex-1 flex-col justify-end">
+          <p className="text-base font-bold leading-tight text-zinc-900 sm:text-lg">
             {card.label}
           </p>
           {renderNavCardStats(card.id)}
-          <p className="mt-1.5 text-xs font-medium text-zinc-500 sm:text-sm">
+          <p className="mt-1.5 text-xs font-medium leading-snug text-zinc-500">
             {card.subtitle}
           </p>
         </div>
@@ -845,20 +738,12 @@ export function HomePageContent({ data }: { data: HomePageData }) {
   return (
     <>
       <VenezuelaLocalClock />
-      <div className="space-y-3">
-        <nav
-          className="grid grid-cols-2 gap-3 md:grid-cols-3"
-          aria-label="Secciones principales"
-        >
-          {NAV_ROW_1.map(renderNavCard)}
-        </nav>
-        <nav
-          className="grid grid-cols-2 gap-3 md:grid-cols-3"
-          aria-label="Red de ayuda por tipo"
-        >
-          {NAV_ROW_2.map(renderNavCard)}
-        </nav>
-      </div>
+      <nav
+        className="grid auto-rows-fr grid-cols-2 gap-3 md:grid-cols-3 [&>*]:h-full"
+        aria-label="Secciones y estadísticas"
+      >
+        {NAV_CARDS.map(renderNavCard)}
+      </nav>
 
       <div className="mt-8" role="region">
         {activeSection === "mascotas" && (
@@ -872,33 +757,27 @@ export function HomePageContent({ data }: { data: HomePageData }) {
                 placeholder="🔍 Buscar por Zona"
                 ariaLabel="Buscar mascotas por zona, ciudad o municipio"
                 footer={
-                  <EspecieFilterPills
-                    value={especieFilter}
-                    onChange={setEspecieFilter}
-                  />
+                  <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <EspecieFilterPills
+                      value={especieFilter}
+                      onChange={setEspecieFilter}
+                      className="mt-0"
+                    />
+                    <MascotaEstadoFilterPills
+                      value={mascotaEstadoFilter}
+                      onChange={setMascotaEstadoFilter}
+                      className="lg:justify-end"
+                    />
+                  </div>
                 }
               />
             ) : null}
             {data.mascotas.length === 0 ? (
               <EmptyState message="No hay reportes activos en este momento." />
             ) : filteredMascotas.length === 0 ? (
-              <div className="text-center">
-                <EmptyState message="No hay resultados con los filtros seleccionados." />
-                {mascotaEstadoFilter ? (
-                  <ClearFilterButton
-                    onClick={() => setMascotaEstadoFilter(null)}
-                  />
-                ) : null}
-              </div>
+              <EmptyState message="No hay resultados con los filtros seleccionados." />
             ) : (
               <>
-                {mascotaEstadoFilter ? (
-                  <div className="mb-4 flex justify-end">
-                    <ClearFilterButton
-                      onClick={() => setMascotaEstadoFilter(null)}
-                    />
-                  </div>
-                ) : null}
                 <div
                   ref={mascotasCardsRef}
                   className="scroll-mt-24"
@@ -915,9 +794,7 @@ export function HomePageContent({ data }: { data: HomePageData }) {
                   totalPages={totalMascotaPages}
                   onPageChange={handleMascotaPageChange}
                 />
-                {mascotaEstadoFilter !== "EN_CASA" ? (
-                  <MascotasEnCasaSlider mascotas={enCasaForSlider} />
-                ) : null}
+                <MascotasEnCasaSlider mascotas={enCasaForSlider} />
               </>
             )}
           </section>
@@ -1001,30 +878,24 @@ export function HomePageContent({ data }: { data: HomePageData }) {
                 onChange={setSearchQueryAcopio}
                 placeholder="🔍 Buscar por Zona"
                 ariaLabel="Buscar centros de acopio por zona"
+                footer={
+                  <AcopioStockFilterPills
+                    value={acopioStockFilters}
+                    onChange={setAcopioStockFilters}
+                  />
+                }
               />
             ) : null}
             {data.acopios.length === 0 ? (
               <EmptyState message="No hay centros de acopio registrados." />
             ) : filteredAcopios.length === 0 ? (
-              <div className="text-center">
-                <EmptyState message="No hay centros de acopio con los filtros seleccionados." />
-                {acopioStockFilter ? (
-                  <ClearFilterButton onClick={() => setAcopioStockFilter(null)} />
-                ) : null}
-              </div>
+              <EmptyState message="No hay centros de acopio con los filtros seleccionados." />
             ) : (
-              <>
-                {acopioStockFilter ? (
-                  <div className="mb-4 flex justify-end">
-                    <ClearFilterButton onClick={() => setAcopioStockFilter(null)} />
-                  </div>
-                ) : null}
-                <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                  {filteredAcopios.map((acopio) => (
-                    <AcopioCard key={acopio.id} acopio={acopio} />
-                  ))}
-                </div>
-              </>
+              <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {filteredAcopios.map((acopio) => (
+                  <AcopioCard key={acopio.id} acopio={acopio} />
+                ))}
+              </div>
             )}
           </section>
         )}
