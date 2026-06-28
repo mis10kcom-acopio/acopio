@@ -1,31 +1,122 @@
-const GENERIC_WORDS = new Set([
-  "sector",
-  "calle",
-  "avenida",
-  "av",
-  "res",
-  "residencia",
-  "edificio",
-  "edif",
-  "urb",
-  "urbanizacion",
-  "cerca",
-  "frente",
-  "detras",
-  "esquina",
-  "local",
-]);
-
-const LOWERCASE_PARTICLES = new Set(["la", "de", "del", "y"]);
-
 export const MIN_MASCOTAS_POR_ZONA = 2;
-export const MAX_ZONAS_VISIBLES = 8;
+export const MAX_ZONAS_VISIBLES = 10;
 
 export type ZonaFilterOption = {
   key: string;
   label: string;
   count: number;
 };
+
+const REFERENCE_ZONES = [
+  "Lechería",
+  "Puerto La Cruz",
+  "Caracas",
+  "Maracaibo",
+  "Valencia",
+  "Barquisimeto",
+  "Maracay",
+  "Ciudad Guayana",
+  "Maturín",
+  "San Cristóbal",
+  "Barinas",
+  "Ciudad Bolívar",
+  "Barcelona",
+  "Cumaná",
+  "Punto Fijo",
+  "Cabimas",
+  "Mérida",
+  "Ciudad Ojeda",
+  "Coro",
+  "Turmero",
+  "Los Teques",
+  "Guanare",
+  "San Felipe",
+  "Acarigua",
+  "Araure",
+  "Carora",
+  "El Tigre",
+  "Guarenas",
+  "Cabudare",
+  "Carúpano",
+  "San Fernando de Apure",
+  "Puerto Cabello",
+  "El Tocuyo",
+  "Valera",
+  "La Victoria",
+  "Calabozo",
+  "Porlamar",
+  "Pampatar",
+  "El Vigía",
+  "Puerto Ayacucho",
+  "Tucupita",
+  "Guatire",
+  "23 de Enero",
+  "Altagracia",
+  "Antímano",
+  "Candelaria",
+  "Caricuao",
+  "Catedral",
+  "Coche",
+  "El Junquito",
+  "El Paraíso",
+  "El Recreo",
+  "El Valle",
+  "La Pastora",
+  "La Vega",
+  "Macarao",
+  "San Agustín",
+  "San Bernardino",
+  "San José",
+  "San Juan",
+  "San Pedro",
+  "Santa Rosalía",
+  "Santa Teresa",
+  "Sucre",
+  "Caraballeda",
+  "Caribe",
+  "Los Corales",
+  "Tanaguarena",
+  "Palmar Este",
+  "Palmar Oeste",
+  "Cerro Grande",
+  "Carayaca",
+  "El Limón",
+  "Chichiriviche de la Costa",
+  "Puerto Cruz",
+  "Tarma",
+  "Tirima",
+  "Carlos Soublette",
+  "10 de Marzo",
+  "Montesano",
+  "Pariata",
+  "Mare Abajo",
+  "Los Dos Cerritos",
+  "Caruao",
+  "Chuspa",
+  "La Sabana",
+  "Todasana",
+  "Osma",
+  "Oritapo",
+  "Quebrada Seca",
+  "Catia La Mar",
+  "Playa Grande",
+  "La Guaira",
+  "Macuto",
+  "Maiquetía",
+  "Naiguatá",
+  "Urimare",
+  "Los Caracas",
+  "Guacara",
+  "Naguanagua",
+  "San Diego",
+  "Tocuyito",
+  "Los Guayos",
+  "Mariara",
+  "San Joaquín",
+  "Morón",
+  "Tucacas",
+  "Chichiriviche",
+] as const;
 
 function normalizeText(value: string): string {
   return value
@@ -37,102 +128,58 @@ function normalizeText(value: string): string {
     .trim();
 }
 
-function getSignificantWords(value: string): string[] {
-  return normalizeText(value)
-    .split(" ")
-    .filter((word) => word && !GENERIC_WORDS.has(word));
+function toZoneKey(label: string): string {
+  return normalizeText(label).replace(/\s+/g, "-");
 }
 
-function titleCasePlaceName(words: string[]): string {
-  return words
-    .map((word, index) => {
-      const lower = word.toLowerCase();
-      if (index > 0 && LOWERCASE_PARTICLES.has(lower)) {
-        return lower;
-      }
-      return lower.charAt(0).toUpperCase() + lower.slice(1);
-    })
-    .join(" ");
-}
+export function matchZonaReferencia(ubicacionZona: string): string | null {
+  const normalizedUbicacion = normalizeText(ubicacionZona);
+  if (!normalizedUbicacion) return null;
 
-function extractZoneLabel(significantWords: string[], fallback: string): string {
-  if (significantWords.length === 0) {
-    const trimmed = fallback.trim();
-    return trimmed || "Sin zona";
-  }
+  let bestMatch: string | null = null;
+  let bestLength = 0;
 
-  return titleCasePlaceName(significantWords.slice(0, 3));
-}
+  for (const zone of REFERENCE_ZONES) {
+    const normalizedZone = normalizeText(zone);
+    if (!normalizedZone) continue;
 
-export function getMascotaZonaGroupKey(ubicacionZona: string): string {
-  const normalized = normalizeText(ubicacionZona);
-
-  if (normalized.includes("guaira")) {
-    return "la-guaira";
-  }
-
-  const significantWords = getSignificantWords(ubicacionZona);
-  if (significantWords.length === 0) {
-    return normalized || "sin-zona";
-  }
-
-  return significantWords[0];
-}
-
-export function getMascotaZonaLabel(ubicacionZona: string): string {
-  const normalized = normalizeText(ubicacionZona);
-
-  if (normalized.includes("guaira")) {
-    return "La Guaira";
-  }
-
-  return extractZoneLabel(getSignificantWords(ubicacionZona), ubicacionZona);
-}
-
-function pickBestLabel(labels: Map<string, number>): string {
-  let bestLabel = "";
-  let bestCount = -1;
-  let bestWordCount = -1;
-
-  for (const [label, count] of labels) {
-    const wordCount = label.split(" ").length;
     if (
-      count > bestCount ||
-      (count === bestCount && wordCount > bestWordCount)
+      normalizedUbicacion.includes(normalizedZone) &&
+      normalizedZone.length > bestLength
     ) {
-      bestLabel = label;
-      bestCount = count;
-      bestWordCount = wordCount;
+      bestMatch = zone;
+      bestLength = normalizedZone.length;
     }
   }
 
-  return bestLabel;
+  return bestMatch;
+}
+
+export function getMascotaZonaGroupKey(ubicacionZona: string): string | null {
+  const match = matchZonaReferencia(ubicacionZona);
+  return match ? toZoneKey(match) : null;
+}
+
+export function getMascotaZonaLabel(ubicacionZona: string): string | null {
+  return matchZonaReferencia(ubicacionZona);
 }
 
 export function buildZonaFilterOptions(
   mascotas: { ubicacion_zona: string }[],
 ): ZonaFilterOption[] {
-  const groups = new Map<
-    string,
-    { labels: Map<string, number>; count: number }
-  >();
+  const groups = new Map<string, { label: string; count: number }>();
 
   for (const mascota of mascotas) {
-    const key = getMascotaZonaGroupKey(mascota.ubicacion_zona);
-    const label = getMascotaZonaLabel(mascota.ubicacion_zona);
+    const label = matchZonaReferencia(mascota.ubicacion_zona);
+    if (!label) continue;
 
-    const group = groups.get(key) ?? { labels: new Map(), count: 0 };
+    const key = toZoneKey(label);
+    const group = groups.get(key) ?? { label, count: 0 };
     group.count += 1;
-    group.labels.set(label, (group.labels.get(label) ?? 0) + 1);
     groups.set(key, group);
   }
 
-  return [...groups.entries()]
-    .map(([key, group]) => ({
-      key,
-      label: pickBestLabel(group.labels),
-      count: group.count,
-    }))
+  return [...groups.values()]
     .filter((option) => option.count >= MIN_MASCOTAS_POR_ZONA)
     .sort((left, right) => {
       if (right.count !== left.count) {
@@ -140,7 +187,12 @@ export function buildZonaFilterOptions(
       }
 
       return left.label.localeCompare(right.label, "es");
-    });
+    })
+    .map((option) => ({
+      key: toZoneKey(option.label),
+      label: option.label,
+      count: option.count,
+    }));
 }
 
 export function matchesZonaFilter(

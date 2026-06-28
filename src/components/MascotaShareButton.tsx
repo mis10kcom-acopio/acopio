@@ -10,7 +10,7 @@ const CARD_ACTION_BTN =
   "inline-flex min-h-[2.5rem] w-full min-w-0 items-center justify-center rounded-lg px-2 py-2 text-center text-xs font-semibold leading-tight shadow-sm transition sm:min-h-[2.75rem] sm:px-3 sm:text-sm";
 
 const CARD_CALL_BTN =
-  "inline-flex min-h-[2.5rem] w-full min-w-0 flex-row flex-nowrap items-center justify-center gap-1 whitespace-nowrap rounded-lg px-2 py-2 text-center text-[0.6875rem] font-semibold leading-none shadow-sm transition sm:min-h-[2.75rem] sm:gap-1.5 sm:px-3 sm:text-sm sm:leading-tight";
+  "inline-flex min-h-[2.5rem] w-full min-w-0 flex-row flex-nowrap items-center justify-center gap-1 whitespace-nowrap rounded-lg px-2 py-2 text-center text-xs font-semibold leading-tight shadow-sm transition sm:min-h-[2.75rem] sm:gap-1.5 sm:px-3 sm:text-sm";
 
 const DETAIL_ACTION_BTN =
   "inline-flex min-h-[3rem] items-center justify-center rounded-xl px-4 py-2.5 text-base font-bold shadow-sm transition";
