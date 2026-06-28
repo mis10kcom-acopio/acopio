@@ -32,6 +32,11 @@ import {
 import { getMascotaEstado, getMascotaEstadoConfig, isMascotaEstadoActivo } from "@/lib/mascota-estado";
 import { buildMascotaPublicPath } from "@/lib/mascota-url";
 import { filterMascotasByEspecie, type EspecieFilterId } from "@/lib/mascota-especie";
+import {
+  buildZonaFilterOptions,
+  filterMascotasByZonaGroup,
+} from "@/lib/mascota-zona";
+import { ZonaFilterPills } from "@/components/ZonaFilterPills";
 import { buildTelUrl, buildWhatsAppUrl } from "@/lib/whatsapp";
 import type {
   AcopioMascota,
@@ -489,6 +494,7 @@ export function HomePageContent({ data }: { data: HomePageData }) {
   );
   const [mascotaEstadoFilter, setMascotaEstadoFilter] =
     useState<MascotaEstadoFilterId | null>(null);
+  const [zonaFilter, setZonaFilter] = useState<string | null>(null);
   const [redAyudaTipoFilter, setRedAyudaTipoFilter] =
     useState<RedAyudaTipoFilter | null>(null);
   const [acopioStockFilters, setAcopioStockFilters] = useState<EstadoStock[]>(
@@ -525,6 +531,11 @@ export function HomePageContent({ data }: { data: HomePageData }) {
     [data.mascotas],
   );
 
+  const zonaFilterOptions = useMemo(
+    () => buildZonaFilterOptions(activeMascotas),
+    [activeMascotas],
+  );
+
   const resolvedMascotas = useMemo(
     () =>
       data.mascotas.filter(
@@ -541,9 +552,10 @@ export function HomePageContent({ data }: { data: HomePageData }) {
   }, [activeMascotas, mascotaEstadoFilter]);
 
   const filteredMascotas = useMemo(() => {
-    const byZona = filterByZona(mascotasForList, searchQuery);
+    const byZonaGroup = filterMascotasByZonaGroup(mascotasForList, zonaFilter);
+    const byZona = filterByZona(byZonaGroup, searchQuery);
     return filterMascotasByEspecie(byZona, especieFilter);
-  }, [mascotasForList, searchQuery, especieFilter]);
+  }, [mascotasForList, zonaFilter, searchQuery, especieFilter]);
 
   const enCasaForSlider = useMemo(() => {
     const byZona = filterByZona(resolvedMascotas, searchQuery);
@@ -564,7 +576,13 @@ export function HomePageContent({ data }: { data: HomePageData }) {
 
   useEffect(() => {
     setMascotaPage(1);
-  }, [searchQuery, especieFilter, mascotaEstadoFilter, mascotasPerPage]);
+  }, [searchQuery, especieFilter, mascotaEstadoFilter, zonaFilter, mascotasPerPage]);
+
+  useEffect(() => {
+    if (!zonaFilter) return;
+    if (zonaFilterOptions.some((option) => option.key === zonaFilter)) return;
+    setZonaFilter(null);
+  }, [zonaFilter, zonaFilterOptions]);
 
   useEffect(() => {
     if (!shouldScrollToCardsRef.current) return;
@@ -770,16 +788,23 @@ export function HomePageContent({ data }: { data: HomePageData }) {
                 placeholder="🔍 Buscar por Zona"
                 ariaLabel="Buscar mascotas por zona, ciudad o municipio"
                 footer={
-                  <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                    <EspecieFilterPills
-                      value={especieFilter}
-                      onChange={setEspecieFilter}
-                      className="mt-0"
-                    />
-                    <MascotaEstadoFilterPills
-                      value={mascotaEstadoFilter}
-                      onChange={setMascotaEstadoFilter}
-                      className="lg:justify-end"
+                  <div className="mt-3 flex flex-col gap-3">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <EspecieFilterPills
+                        value={especieFilter}
+                        onChange={setEspecieFilter}
+                        className="mt-0"
+                      />
+                      <MascotaEstadoFilterPills
+                        value={mascotaEstadoFilter}
+                        onChange={setMascotaEstadoFilter}
+                        className="lg:justify-end"
+                      />
+                    </div>
+                    <ZonaFilterPills
+                      options={zonaFilterOptions}
+                      value={zonaFilter}
+                      onChange={setZonaFilter}
                     />
                   </div>
                 }
