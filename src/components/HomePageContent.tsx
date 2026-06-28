@@ -1,12 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MascotasEnCasaSlider } from "@/components/MascotasEnCasaSlider";
 import {
-  MASCOTAS_PER_PAGE,
+  MASCOTAS_PER_PAGE_DESKTOP,
+  MASCOTAS_PER_PAGE_MOBILE,
   MascotasPagination,
 } from "@/components/MascotasPagination";
+import { useIsMdUp } from "@/lib/use-media-query";
 import { RelativePublishedTime } from "@/components/RelativePublishedTime";
 import { VenezuelaLocalClock } from "@/components/VenezuelaLocalClock";
 import {
@@ -502,6 +504,11 @@ export function HomePageContent({ data }: { data: HomePageData }) {
   const [searchQueryAcopio, setSearchQueryAcopio] = useState("");
   const [showResolvedMascotas, setShowResolvedMascotas] = useState(false);
   const [mascotaPage, setMascotaPage] = useState(1);
+  const mascotasCardsRef = useRef<HTMLDivElement>(null);
+  const isMdUp = useIsMdUp();
+  const mascotasPerPage = isMdUp
+    ? MASCOTAS_PER_PAGE_DESKTOP
+    : MASCOTAS_PER_PAGE_MOBILE;
 
   const redAyuda = useMemo(
     () =>
@@ -548,19 +555,27 @@ export function HomePageContent({ data }: { data: HomePageData }) {
 
   const totalMascotaPages = Math.max(
     1,
-    Math.ceil(filteredMascotas.length / MASCOTAS_PER_PAGE),
+    Math.ceil(filteredMascotas.length / mascotasPerPage),
   );
 
   const safeMascotaPage = Math.min(mascotaPage, totalMascotaPages);
 
   const paginatedMascotas = useMemo(() => {
-    const start = (safeMascotaPage - 1) * MASCOTAS_PER_PAGE;
-    return filteredMascotas.slice(start, start + MASCOTAS_PER_PAGE);
-  }, [filteredMascotas, safeMascotaPage]);
+    const start = (safeMascotaPage - 1) * mascotasPerPage;
+    return filteredMascotas.slice(start, start + mascotasPerPage);
+  }, [filteredMascotas, safeMascotaPage, mascotasPerPage]);
 
   useEffect(() => {
     setMascotaPage(1);
-  }, [searchQuery, showResolvedMascotas]);
+  }, [searchQuery, showResolvedMascotas, mascotasPerPage]);
+
+  function handleMascotaPageChange(nextPage: number) {
+    setMascotaPage(nextPage);
+    mascotasCardsRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }
 
   const filteredRedAyuda = useMemo(
     () => filterByZona(redAyuda, searchQueryRedAyuda),
@@ -741,19 +756,25 @@ export function HomePageContent({ data }: { data: HomePageData }) {
               />
             ) : (
               <>
-                <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                  {paginatedMascotas.map((mascota) => (
-                    <MascotaCard
-                      key={mascota.id}
-                      mascota={mascota}
-                      resolved={showResolvedMascotas}
-                    />
-                  ))}
+                <div
+                  ref={mascotasCardsRef}
+                  className="scroll-mt-24"
+                  id="mascotas-cards"
+                >
+                  <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                    {paginatedMascotas.map((mascota) => (
+                      <MascotaCard
+                        key={mascota.id}
+                        mascota={mascota}
+                        resolved={showResolvedMascotas}
+                      />
+                    ))}
+                  </div>
                 </div>
                 <MascotasPagination
                   page={safeMascotaPage}
                   totalPages={totalMascotaPages}
-                  onPageChange={setMascotaPage}
+                  onPageChange={handleMascotaPageChange}
                 />
                 <MascotasEnCasaSlider mascotas={enCasaForSlider} />
               </>
