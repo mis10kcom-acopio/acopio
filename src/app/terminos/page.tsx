@@ -33,7 +33,7 @@ export default function TerminosPage() {
             <p className="mt-3">
               Huellas a Salvo es una plataforma digital de información, 100%
               gratuita y sin fines de lucro, creada exclusivamente para atender
-              la emergencia generada por el terremoto del 26 de junio en
+              la emergencia generada por el terremoto del 24 de junio de 2026 en
               Venezuela. Nuestro único objetivo es servir como un puente de
               comunicación para conectar a los dueños de animales extraviados
               con rescatistas, voluntarios, hogares temporales y clínicas
