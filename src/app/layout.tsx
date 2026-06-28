@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ActivityTickerShell } from "@/components/ActivityTickerShell";
-import { SupportFooter } from "@/components/SupportFooter";
+import {
+  FIXED_SUPPORT_BAR_PADDING,
+  SupportFooter,
+} from "@/components/SupportFooter";
 import {
   DEFAULT_OG_IMAGE,
   SITE_NAME,
@@ -98,7 +101,7 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <ActivityTickerShell />
-        <div className="flex-1">{children}</div>
+        <div className={`flex-1 ${FIXED_SUPPORT_BAR_PADDING}`}>{children}</div>
         <SupportFooter />
         <GoogleAnalytics gaId="G-ZT47MKQTXM" />
       </body>

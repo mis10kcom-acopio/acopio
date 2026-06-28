@@ -3,23 +3,33 @@ import Image from "next/image";
 const SUPPORT_WHATSAPP_URL =
   "https://wa.me/584121591072?text=Hola,%20registr%C3%A9%20mi%20n%C3%BAmero%20[Escribe%20tu%20n%C3%BAmero]%20en%20Huellas%20a%20Salvo%20y%20perd%C3%AD%20mi%20enlace%20de%20edici%C3%B3n.%20%C2%BFMe%20ayudas%20a%20recuperarlo%3F";
 
+/** Compensa la altura de la barra fija de WhatsApp en el layout principal. */
+export const FIXED_SUPPORT_BAR_PADDING =
+  "pb-[calc(5rem+env(safe-area-inset-bottom,0px))] sm:pb-[calc(4rem+env(safe-area-inset-bottom,0px))]";
+
 export function SupportFooter() {
   return (
-    <footer className="mt-auto border-t border-amber-200/80 bg-white">
-      <div className="px-4 py-8 sm:py-10">
-        <Image
-          src="/logohuellas.png"
-          alt="Huellas a Salvo"
-          width={48}
-          height={48}
-          className="mx-auto h-12 w-12 object-contain"
-        />
-        <p className="mx-auto mt-3 max-w-md text-center text-sm text-gray-500">
-          Hecho con amor para ayudar a los animales afectados por el terremoto
-        </p>
-      </div>
+    <>
+      <footer className={`mt-auto border-t border-amber-200/80 bg-white ${FIXED_SUPPORT_BAR_PADDING}`}>
+        <div className="px-4 py-8 sm:py-10">
+          <Image
+            src="/logohuellas.png"
+            alt="Huellas a Salvo"
+            width={48}
+            height={48}
+            className="mx-auto h-12 w-12 object-contain"
+          />
+          <p className="mx-auto mt-3 max-w-md text-center text-sm text-gray-500">
+            Hecho con amor para ayudar a los animales afectados por el terremoto
+          </p>
+        </div>
+      </footer>
 
-      <div className="border-t border-zinc-200 bg-zinc-50 px-4 py-4">
+      <div
+        className="fixed bottom-0 left-0 right-0 z-50 border-t border-zinc-200 bg-zinc-50 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]"
+        role="contentinfo"
+        aria-label="Soporte por WhatsApp"
+      >
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-center gap-2 text-center sm:flex-row sm:gap-3">
           <p className="text-xs text-zinc-500">
             ¿Perdiste tu enlace de edición o necesitas ayuda?
@@ -42,6 +52,6 @@ export function SupportFooter() {
           </a>
         </div>
       </div>
-    </footer>
+    </>
   );
 }
