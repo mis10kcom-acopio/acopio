@@ -26,6 +26,7 @@ import {
   SubmitButton,
 } from "@/components/forms/FormFields";
 import { EspecieField } from "@/components/forms/EspecieField";
+import { MascotaFotosEditSection } from "@/components/forms/MascotaFotosEditSection";
 import { initialActionState } from "@/types/actions";
 import type {
   AcopioMascota,
@@ -133,9 +134,12 @@ export function EditarMascotaPanel({
         <form
           action={formAction}
           method="post"
+          encType="multipart/form-data"
           className="space-y-5"
           onSubmit={handleUpdateSubmit}
         >
+          <MascotaFotosEditSection registro={registro} />
+
           <FormField
             label="Estado del reporte"
             name="estado"

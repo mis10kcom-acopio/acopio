@@ -3,6 +3,7 @@ import {
   getMascotaEstado,
   MASCOTA_ESTADO_CONFIG,
 } from "@/lib/mascota-estado";
+import { getMascotaPrimaryFotoUrl } from "@/lib/mascota-fotos";
 
 const SHARE_TITLE = "Huellas a Salvo";
 const SHARE_TEXT = "Mira este reporte en Huellas a Salvo...";
@@ -13,6 +14,8 @@ const FOOTER_COLOR = "#D97706";
 export type MascotaPosterInput = Pick<
   MascotaReportada,
   | "foto_url"
+  | "foto_url_2"
+  | "foto_url_3"
   | "estado"
   | "tipo_reporte"
   | "nombre_mascota"
@@ -277,9 +280,11 @@ export async function composeMascotaStoryPoster(
   ctx.fillStyle = "#FFFBEB";
   ctx.fillRect(0, 0, width, height);
 
-  if (data.foto_url) {
+  const fotoPrincipal = getMascotaPrimaryFotoUrl(data);
+
+  if (fotoPrincipal) {
     try {
-      const img = await loadCrossOriginImage(data.foto_url);
+      const img = await loadCrossOriginImage(fotoPrincipal);
       drawCoverImage(ctx, img, 0, 0, width, photoHeight);
     } catch {
       drawPhotoPlaceholder(ctx, width, photoHeight);
@@ -403,12 +408,13 @@ export async function composeMascotaShareImage(
   data: MascotaPosterInput,
   options: ComposeMascotaShareImageOptions = {},
 ): Promise<Blob> {
-  if (!data.foto_url) {
+  const fotoPrincipal = getMascotaPrimaryFotoUrl(data);
+  if (!fotoPrincipal) {
     throw new Error("La mascota no tiene foto");
   }
 
   const { forInstagram = false } = options;
-  const img = await loadCrossOriginImage(data.foto_url);
+  const img = await loadCrossOriginImage(fotoPrincipal);
   const width = img.naturalWidth;
   const imageHeight = img.naturalHeight;
   const footerHeight = Math.max(56, Math.round(width * 0.1));
@@ -585,7 +591,9 @@ export async function shareMascotaPhotoWithFallbacks(
 ): Promise<"shared-image" | "shared-text" | "downloaded" | "cancelled"> {
   let blob: Blob | null = null;
 
-  if (mascota.foto_url) {
+  const fotoPrincipal = getMascotaPrimaryFotoUrl(mascota);
+
+  if (fotoPrincipal) {
     try {
       blob = await composeMascotaShareImage(mascota);
     } catch {

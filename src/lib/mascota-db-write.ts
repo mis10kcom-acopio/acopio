@@ -85,6 +85,10 @@ function isMissingWhatsappColumnError(message: string): boolean {
   return message.includes("contacto_whatsapp");
 }
 
+function isMissingExtraFotoColumnError(message: string): boolean {
+  return message.includes("foto_url_2") || message.includes("foto_url_3");
+}
+
 function buildInsertRow(
   basePayload: MascotaInsertPayload,
   estadoRow: { estado: string; tipo_reporte: TipoReporte },
@@ -173,6 +177,9 @@ type MascotaUpdateFields = {
   ubicacion_zona?: string;
   contacto_telefono?: string;
   contacto_whatsapp?: string | null;
+  foto_url?: string | null;
+  foto_url_2?: string | null;
+  foto_url_3?: string | null;
 };
 
 function pickMascotaUpdateFields(
@@ -185,6 +192,9 @@ function pickMascotaUpdateFields(
   if ("ubicacion_zona" in fields) picked.ubicacion_zona = fields.ubicacion_zona as string;
   if ("contacto_telefono" in fields) picked.contacto_telefono = fields.contacto_telefono as string;
   if ("contacto_whatsapp" in fields) picked.contacto_whatsapp = fields.contacto_whatsapp as string | null;
+  if ("foto_url" in fields) picked.foto_url = fields.foto_url as string | null;
+  if ("foto_url_2" in fields) picked.foto_url_2 = fields.foto_url_2 as string | null;
+  if ("foto_url_3" in fields) picked.foto_url_3 = fields.foto_url_3 as string | null;
   return picked;
 }
 
@@ -198,12 +208,15 @@ type MascotasReportadasUpdateRow = {
   contacto_telefono?: string;
   contacto_whatsapp?: string | null;
   foto_url?: string | null;
+  foto_url_2?: string | null;
+  foto_url_3?: string | null;
 };
 
 function buildUpdateRow(
   fields: MascotaUpdateFields,
   estadoRow: { estado: string; tipo_reporte: TipoReporte },
   includeWhatsapp: boolean,
+  includeExtraFotos: boolean,
 ): MascotasReportadasUpdateRow {
   const row: MascotasReportadasUpdateRow = {
     tipo_reporte: estadoRow.tipo_reporte,
@@ -216,6 +229,9 @@ function buildUpdateRow(
   if (fields.ubicacion_zona !== undefined) row.ubicacion_zona = fields.ubicacion_zona;
   if (fields.contacto_telefono !== undefined) row.contacto_telefono = fields.contacto_telefono;
   if (includeWhatsapp && fields.contacto_whatsapp !== undefined) row.contacto_whatsapp = fields.contacto_whatsapp;
+  if (fields.foto_url !== undefined) row.foto_url = fields.foto_url;
+  if (includeExtraFotos && fields.foto_url_2 !== undefined) row.foto_url_2 = fields.foto_url_2;
+  if (includeExtraFotos && fields.foto_url_3 !== undefined) row.foto_url_3 = fields.foto_url_3;
 
   return row;
 }
@@ -235,23 +251,38 @@ export async function updateMascotaReportada(
   let lastResult: MascotaTokenUpdateResult | null = null;
 
   for (const estadoRow of schemaAttempts) {
-    for (const includeWhatsapp of [true, false]) {
-      const row = buildUpdateRow(safeFields, estadoRow, includeWhatsapp);
-      const result = await supabase
-        .from("mascotas_reportadas")
-        .update(row)
-        .eq("id", id)
-        .select("token_edicion")
-        .maybeSingle();
+    for (const includeExtraFotos of [true, false]) {
+      for (const includeWhatsapp of [true, false]) {
+        const row = buildUpdateRow(
+          safeFields,
+          estadoRow,
+          includeWhatsapp,
+          includeExtraFotos,
+        );
+        const result = await supabase
+          .from("mascotas_reportadas")
+          .update(row)
+          .eq("id", id)
+          .select("token_edicion")
+          .maybeSingle();
 
-      if (!result.error) return result;
+        if (!result.error) return result;
 
-      lastResult = result;
+        lastResult = result;
 
-      if (isMissingWhatsappColumnError(result.error.message) && includeWhatsapp) continue;
-      if (!isMascotaEstadoConstraintError(result.error.message)) return result;
+        if (isMissingWhatsappColumnError(result.error.message) && includeWhatsapp) {
+          continue;
+        }
+        if (
+          isMissingExtraFotoColumnError(result.error.message) &&
+          includeExtraFotos
+        ) {
+          continue;
+        }
+        if (!isMascotaEstadoConstraintError(result.error.message)) return result;
 
-      break;
+        break;
+      }
     }
   }
 

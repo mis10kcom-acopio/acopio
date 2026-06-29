@@ -20,7 +20,7 @@ import {
   updateMascotaEstadoOnly,
   updateMascotaReportada,
 } from "@/lib/mascota-db-write";
-import { resolveOptionalFotoUrl } from "@/lib/storage-upload";
+import { resolveMascotaFotoFieldUpdate, resolveOptionalFotoUrl } from "@/lib/storage-upload";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import type { ActionState } from "@/types/actions";
 import type {
@@ -29,6 +29,8 @@ import type {
   MascotaReportada,
   RedVoluntario,
 } from "@/types/database";
+
+const MASCOTAS_FOLDER = "mascotas";
 
 export type RegistroPorToken =
   | { tipo: "mascota"; registro: MascotaReportada }
@@ -341,6 +343,31 @@ export async function actualizarMascota(
 
     const estado = parseEstadoMascota(getRequiredSelect(formData, "estado"));
 
+    const fotoUrl = await resolveMascotaFotoFieldUpdate(
+      supabase,
+      formData,
+      "foto",
+      "eliminar_foto",
+      registro.foto_url,
+      MASCOTAS_FOLDER,
+    );
+    const fotoUrl2 = await resolveMascotaFotoFieldUpdate(
+      supabase,
+      formData,
+      "foto_2",
+      "eliminar_foto_2",
+      registro.foto_url_2 ?? null,
+      MASCOTAS_FOLDER,
+    );
+    const fotoUrl3 = await resolveMascotaFotoFieldUpdate(
+      supabase,
+      formData,
+      "foto_3",
+      "eliminar_foto_3",
+      registro.foto_url_3 ?? null,
+      MASCOTAS_FOLDER,
+    );
+
     const { data, error } = await updateMascotaReportada(
       supabase,
       registro.id,
@@ -351,6 +378,9 @@ export async function actualizarMascota(
         ubicacion_zona: getRequiredSanitizedText(formData, "ubicacion_zona"),
         contacto_telefono: getRequiredSanitizedPhone(formData, "contacto_telefono"),
         contacto_whatsapp: getOptionalSanitizedPhone(formData, "contacto_whatsapp"),
+        foto_url: fotoUrl,
+        foto_url_2: fotoUrl2,
+        foto_url_3: fotoUrl3,
       },
       estado,
     );

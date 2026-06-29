@@ -53,6 +53,8 @@ export function MascotaCartelModal({
   }, [
     open,
     mascota.foto_url,
+    mascota.foto_url_2,
+    mascota.foto_url_3,
     mascota.nombre_mascota,
     mascota.ubicacion_zona,
     mascota.contacto_telefono,

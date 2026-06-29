@@ -1,8 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 import { RelativePublishedTime } from "@/components/RelativePublishedTime";
 import { MascotaContactActions } from "@/components/MascotaShareButton";
+import { MascotaFotosCarousel } from "@/components/MascotaFotosCarousel";
 import { getMascotaEstadoConfig } from "@/lib/mascota-estado";
+import { getMascotaFotos } from "@/lib/mascota-fotos";
 
 import type { MascotaReportada } from "@/types/database";
 
@@ -14,6 +15,7 @@ export function MascotaDetailView({
   showBackLink?: boolean;
 }) {
   const estadoConfig = getMascotaEstadoConfig(mascota);
+  const fotos = getMascotaFotos(mascota);
 
   return (
     <article className="overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white shadow-lg">
@@ -29,19 +31,13 @@ export function MascotaDetailView({
       ) : null}
 
       <div className="relative">
-        {mascota.foto_url ? (
-          <Image
-            src={mascota.foto_url}
-            alt={mascota.nombre_mascota ?? "Mascota reportada"}
-            width={900}
-            height={900}
-            className="aspect-square w-full object-cover"
-            priority
-            sizes="(max-width: 768px) 100vw, 720px"
-          />
-        ) : (
-          <div className="aspect-square w-full bg-zinc-100" />
-        )}
+        <MascotaFotosCarousel
+          fotos={fotos}
+          alt={mascota.nombre_mascota ?? "Mascota reportada"}
+          imageClassName="aspect-square w-full object-cover"
+          sizes="(max-width: 768px) 100vw, 720px"
+          priority
+        />
         <span
           className={`absolute top-4 left-4 z-10 rounded-full px-4 py-2 text-base font-bold text-white shadow-lg ${estadoConfig.badgeClass}`}
         >

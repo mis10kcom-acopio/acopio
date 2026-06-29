@@ -11,6 +11,8 @@ import {
   type MascotaEstadoFilterId,
 } from "@/components/MascotaEstadoFilterPills";
 import { MascotaContactActions } from "@/components/MascotaShareButton";
+import { MascotaFotosCarousel } from "@/components/MascotaFotosCarousel";
+import { getMascotaFotos } from "@/lib/mascota-fotos";
 import {
   MASCOTAS_PER_PAGE_DESKTOP,
   MASCOTAS_PER_PAGE_MOBILE,
@@ -217,25 +219,20 @@ function ContactActions({
 
 function MascotaCard({ mascota }: { mascota: MascotaReportada }) {
   const estadoConfig = getMascotaEstadoConfig(mascota);
+  const fotos = getMascotaFotos(mascota);
 
   return (
     <article className="overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white shadow-md transition hover:border-zinc-300 hover:shadow-lg">
       <Link href={buildMascotaPublicPath(mascota.id)} className="block bg-white">
         <div className="relative">
-          {mascota.foto_url ? (
-            <Image
-              src={mascota.foto_url}
-              alt={mascota.nombre_mascota ?? "Mascota reportada"}
-              width={600}
-              height={600}
-              crossOrigin="anonymous"
-              className="aspect-square w-full rounded-t-2xl object-cover"
-              loading="lazy"
-              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
-            />
-          ) : (
-            <div className="aspect-square w-full rounded-t-2xl bg-zinc-100" />
-          )}
+          <MascotaFotosCarousel
+            fotos={fotos}
+            alt={mascota.nombre_mascota ?? "Mascota reportada"}
+            className="rounded-t-2xl"
+            imageClassName="aspect-square w-full rounded-t-2xl object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
+            stopLinkNavigation
+          />
           <span
             className={`absolute top-3 left-3 z-10 rounded-full px-3 py-1.5 text-base font-bold text-white shadow-lg ${estadoConfig.badgeClass}`}
           >

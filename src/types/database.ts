@@ -18,6 +18,8 @@ export interface MascotaReportada {
   contacto_telefono: string;
   contacto_whatsapp: string | null;
   foto_url: string | null;
+  foto_url_2?: string | null;
+  foto_url_3?: string | null;
   estado: EstadoMascota;
   token_edicion: string;
   creado_el: string;

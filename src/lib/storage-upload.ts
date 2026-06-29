@@ -48,6 +48,26 @@ export async function uploadImagenStorage(
   return data.publicUrl;
 }
 
+export async function resolveMascotaFotoFieldUpdate(
+  supabase: SupabaseClient,
+  formData: FormData,
+  fileField: string,
+  deleteField: string,
+  currentUrl: string | null,
+  folder: string,
+): Promise<string | null> {
+  const file = formData.get(fileField);
+  if (file instanceof File && file.size > 0) {
+    return uploadImagenStorage(supabase, file, folder);
+  }
+
+  if (formData.get(deleteField) === "1") {
+    return null;
+  }
+
+  return currentUrl;
+}
+
 export async function resolveOptionalFotoUrl(
   supabase: SupabaseClient,
   formData: FormData,

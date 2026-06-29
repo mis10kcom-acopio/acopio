@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { MascotaDetailView } from "@/components/MascotaDetailView";
 import { getMascotaEstadoConfig } from "@/lib/mascota-estado";
+import { getMascotaPrimaryFotoUrl } from "@/lib/mascota-fotos";
 import { buildMascotaPublicUrl } from "@/lib/mascota-url";
 import { getSupabase } from "@/lib/supabase";
 import type { MascotaReportada } from "@/types/database";
@@ -46,7 +47,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         title: `${nombre} — ${estado}`,
         description: mascota.caracteristicas.slice(0, 200),
         url: buildMascotaPublicUrl(id),
-        images: mascota.foto_url ? [{ url: mascota.foto_url }] : undefined,
+        images: getMascotaPrimaryFotoUrl(mascota)
+          ? [{ url: getMascotaPrimaryFotoUrl(mascota)! }]
+          : undefined,
       },
     };
   } catch {
