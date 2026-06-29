@@ -12,8 +12,10 @@ import {
   marcarVoluntarioNoDisponible,
 } from "@/actions/editar";
 import {
+  confirmCambioEstadoMascota,
   getMascotaEstado,
   MASCOTA_ESTADO_CONFIG,
+  parseEstadoMascota,
 } from "@/lib/mascota-estado";
 import {
   ActionForm,
@@ -90,6 +92,8 @@ export function EditarMascotaPanel({
   const esAdopcion = estadoActual === "ADOPCION";
 
   function handleCambiarAEnResguardo() {
+    if (!confirmCambioEstadoMascota("EN_RESGUARDO")) return;
+
     setStatusError(null);
     startTransition(async () => {
       const result = await cambiarMascotaAEnResguardo(identificador);
@@ -98,11 +102,25 @@ export function EditarMascotaPanel({
   }
 
   function handleMarcarEnCasa() {
+    if (!confirmCambioEstadoMascota("EN_CASA")) return;
+
     setStatusError(null);
     startTransition(async () => {
       const result = await marcarMascotaEnCasa(identificador);
       if (result?.error) setStatusError(result.error);
     });
+  }
+
+  function handleUpdateSubmit(event: React.FormEvent<HTMLFormElement>) {
+    const formData = new FormData(event.currentTarget);
+    const selectedEstado = formData.get("estado");
+
+    if (typeof selectedEstado !== "string") return;
+
+    const nuevoEstado = parseEstadoMascota(selectedEstado);
+    if (nuevoEstado !== estadoActual && !confirmCambioEstadoMascota(nuevoEstado)) {
+      event.preventDefault();
+    }
   }
 
   return (
@@ -112,7 +130,12 @@ export function EditarMascotaPanel({
 
       <section className="space-y-4">
         <SectionTitle>Editar datos del reporte</SectionTitle>
-        <ActionForm action={formAction}>
+        <form
+          action={formAction}
+          method="post"
+          className="space-y-5"
+          onSubmit={handleUpdateSubmit}
+        >
           <FormField
             label="Estado del reporte"
             name="estado"
@@ -167,7 +190,7 @@ export function EditarMascotaPanel({
           />
 
           <SubmitButton>Guardar cambios</SubmitButton>
-        </ActionForm>
+        </form>
       </section>
 
       <section className="space-y-3 border-t border-zinc-200 pt-6">

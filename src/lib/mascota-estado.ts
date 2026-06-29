@@ -83,3 +83,8 @@ export function isMascotaEstadoActivo(estado: EstadoMascota): boolean {
     estado === "PERDIDO" || estado === "EN_RESGUARDO" || estado === "ADOPCION"
   );
 }
+
+export function confirmCambioEstadoMascota(estado: EstadoMascota): boolean {
+  const label = MASCOTA_ESTADO_CONFIG[estado].label;
+  return window.confirm(`¿Estás seguro de cambiar el estado a ${label}?`);
+}
