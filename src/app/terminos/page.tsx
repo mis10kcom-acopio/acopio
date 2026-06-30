@@ -103,7 +103,38 @@ export default function TerminosPage() {
 
           <section>
             <h2 className="text-xl font-semibold text-zinc-900">
-              5. Uso Aceptable
+              6. No Verificación de Usuarios
+            </h2>
+            <p className="mt-3">
+              Huellas a Salvo no realiza ningún tipo de verificación de
+              identidad, antecedentes ni idoneidad de las personas registradas
+              en la plataforma, ya sean dueños de mascotas, voluntarios,
+              rescatistas, hogares temporales o centros de acopio. Cualquier
+              persona puede registrarse libremente para ayudar durante la
+              emergencia.
+            </p>
+            <p className="mt-3">
+              El hecho de que un usuario aparezca listado como &quot;Hogar
+              Temporal&quot;, &quot;Rescatista&quot; o cualquier otra categoría
+              no constituye una garantía, aval ni recomendación por parte de
+              Huellas a Salvo sobre su confiabilidad, capacidad o buenas
+              intenciones. Recomendamos a todos los usuarios tomar precauciones
+              razonables antes de entregar una mascota o coordinar un encuentro
+              presencial: verificar identidad, solicitar referencias, acordar
+              encuentros en lugares públicos y de ser posible acompañados, y
+              confiar en su propio criterio.
+            </p>
+            <p className="mt-3">
+              Huellas a Salvo actúa exclusivamente como canal de difusión de
+              información y no participa, supervisa ni se hace responsable de los
+              acuerdos, traslados o entregas de animales que se coordinen entre
+              los usuarios de la plataforma.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold text-zinc-900">
+              7. Uso Aceptable
             </h2>
             <p className="mt-3">
               Nos reservamos el derecho de eliminar cualquier reporte que

@@ -463,9 +463,41 @@ function ZoneSearchInput({
   );
 }
 
-function SectionHeader({ title }: { title: string }) {
+function SectionHeader({
+  title,
+  notice,
+}: {
+  title: string;
+  notice?: React.ReactNode;
+}) {
   return (
-    <h2 className="mb-5 text-2xl font-bold text-zinc-900">{title}</h2>
+    <div className="mb-5">
+      <h2 className="text-2xl font-bold text-zinc-900">{title}</h2>
+      {notice ? <div className="mt-2">{notice}</div> : null}
+    </div>
+  );
+}
+
+const RED_AYUDA_SECTION_TITLES: Record<RedAyudaTipoFilter, string> = {
+  HOGAR_TEMPORAL: "Hogares Temporales",
+  RESCATISTA: "Rescatistas",
+  TRANSPORTE: "Transporte",
+};
+
+const RED_AYUDA_SECTION_NOTICES: Record<RedAyudaTipoFilter, string> = {
+  HOGAR_TEMPORAL:
+    "Verifica identidad y referencias antes de entregar tu mascota. En huellasasalvo.org las personas se registran libremente, nosotros no las verificamos.",
+  RESCATISTA:
+    "Coordina encuentros en lugares públicos y verifica identidad. En huellasasalvo.org las personas se registran libremente, nosotros no las verificamos.",
+  TRANSPORTE:
+    "Confirma identidad antes de entregar tu mascota para traslado. En huellasasalvo.org las personas se registran libremente, nosotros no las verificamos.",
+};
+
+function RedAyudaSectionNotice({ filter }: { filter: RedAyudaTipoFilter }) {
+  return (
+    <p className="text-xs leading-snug text-zinc-500 sm:text-[13px]">
+      {RED_AYUDA_SECTION_NOTICES[filter]}
+    </p>
   );
 }
 
@@ -840,7 +872,26 @@ export function HomePageContent({ data }: { data: HomePageData }) {
 
         {activeSection === "red-ayuda" && (
           <section>
-            <SectionHeader title="Red de Ayuda — Hogares, Rescatistas y Transporte" />
+            <SectionHeader
+              title={
+                redAyudaTipoFilter
+                  ? RED_AYUDA_SECTION_TITLES[redAyudaTipoFilter]
+                  : "Red de Ayuda — Hogares, Rescatistas y Transporte"
+              }
+              notice={
+                redAyudaTipoFilter ? (
+                  <RedAyudaSectionNotice filter={redAyudaTipoFilter} />
+                ) : (
+                  <div className="space-y-1.5">
+                    {(Object.keys(RED_AYUDA_SECTION_NOTICES) as RedAyudaTipoFilter[]).map(
+                      (tipo) => (
+                        <RedAyudaSectionNotice key={tipo} filter={tipo} />
+                      ),
+                    )}
+                  </div>
+                )
+              }
+            />
             {redAyuda.length > 0 ? (
               <ZoneSearchInput
                 sticky
