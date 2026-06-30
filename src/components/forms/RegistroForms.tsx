@@ -8,10 +8,10 @@ import {
   ActionForm,
   FormError,
   FormField,
-  FormFileField,
   FormSuccess,
   SubmitButton,
 } from "@/components/forms/FormFields";
+import { FotoFileFieldWithPreview } from "@/components/forms/FotoFileFieldWithPreview";
 import { EspecieField } from "@/components/forms/EspecieField";
 import { ImplicitConsentNotice } from "@/components/forms/ImplicitConsentNotice";
 import { initialActionState } from "@/types/actions";
@@ -106,7 +106,7 @@ export function MascotaRegistroForm() {
         hint="Si es distinto al teléfono de llamadas. El botón de WhatsApp solo aparece si lo indicas."
       />
 
-      <FormFileField
+      <FotoFileFieldWithPreview
         label="Foto de la mascota"
         name="foto"
         accept="image/*"

@@ -1,91 +1,192 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { Loader2 } from "lucide-react";
+import { useRef, useState } from "react";
+import {
+  eliminarFotoMascotaEdicion,
+  subirFotoMascotaEdicion,
+} from "@/actions/editar";
+import type { MascotaFotoSlotColumn } from "@/lib/mascota-db-write";
 import type { MascotaReportada } from "@/types/database";
 
-function FotoEditSlot({
-  label,
-  addLabel,
-  currentUrl,
-  fileFieldName,
-  deleteFieldName,
-}: {
+const SLOT_CONFIG: {
+  slot: MascotaFotoSlotColumn;
   label: string;
   addLabel: string;
-  currentUrl: string | null;
-  fileFieldName: string;
-  deleteFieldName: string;
+  getUrl: (registro: MascotaReportada) => string | null;
+}[] = [
+  {
+    slot: "foto_url",
+    label: "Foto principal",
+    addLabel: "Agregar foto principal",
+    getUrl: (registro) => registro.foto_url,
+  },
+  {
+    slot: "foto_url_2",
+    label: "Foto 2",
+    addLabel: "Agregar foto 2",
+    getUrl: (registro) => registro.foto_url_2 ?? null,
+  },
+  {
+    slot: "foto_url_3",
+    label: "Foto 3",
+    addLabel: "Agregar foto 3",
+    getUrl: (registro) => registro.foto_url_3 ?? null,
+  },
+];
+
+function FotoEditSlot({
+  identificador,
+  label,
+  addLabel,
+  slot,
+  initialUrl,
+}: {
+  identificador: string;
+  label: string;
+  addLabel: string;
+  slot: MascotaFotoSlotColumn;
+  initialUrl: string | null;
 }) {
-  const [markedForDelete, setMarkedForDelete] = useState(false);
-  const showCurrent = Boolean(currentUrl) && !markedForDelete;
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [currentUrl, setCurrentUrl] = useState(initialUrl);
+  const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const busy = uploading || deleting;
+
+  async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    setError(null);
+    setUploading(true);
+
+    const formData = new FormData();
+    formData.append("file", file);
+    const result = await subirFotoMascotaEdicion(identificador, slot, formData);
+
+    setUploading(false);
+
+    if (result.ok) {
+      setCurrentUrl(result.url);
+    } else {
+      setError(result.error);
+    }
+  }
+
+  async function handleDelete() {
+    setError(null);
+    setDeleting(true);
+
+    const result = await eliminarFotoMascotaEdicion(identificador, slot);
+
+    setDeleting(false);
+
+    if (result.ok) {
+      setCurrentUrl(null);
+    } else {
+      setError(result.error);
+    }
+  }
 
   return (
     <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
       <p className="text-sm font-semibold text-zinc-800">{label}</p>
 
-      {showCurrent ? (
+      {currentUrl ? (
         <div className="mt-3 space-y-3">
           <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
             <Image
-              src={currentUrl!}
+              src={currentUrl}
               alt={label}
               width={320}
               height={320}
               className="aspect-square w-full max-w-[12rem] object-cover"
             />
           </div>
-          <button
-            type="button"
-            onClick={() => setMarkedForDelete(true)}
-            className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100"
-          >
-            Eliminar foto
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => inputRef.current?.click()}
+              className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                  Subiendo…
+                </>
+              ) : (
+                "Cambiar foto"
+              )}
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={handleDelete}
+              className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {deleting ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                  Eliminando…
+                </span>
+              ) : (
+                "Eliminar"
+              )}
+            </button>
+          </div>
         </div>
       ) : (
-        <p className="mt-2 text-sm text-zinc-500">
-          {currentUrl && markedForDelete
-            ? "La foto se eliminará al guardar."
-            : "Sin foto cargada."}
-        </p>
+        <p className="mt-2 text-sm text-zinc-500">Sin foto cargada.</p>
       )}
 
-      <div className="mt-3">
-        <label
-          htmlFor={fileFieldName}
-          className="inline-flex cursor-pointer rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
-        >
-          {showCurrent ? `Cambiar ${label.toLowerCase()}` : addLabel}
-        </label>
-        <input
-          id={fileFieldName}
-          name={fileFieldName}
-          type="file"
-          accept="image/*"
-          className="mt-2 block w-full text-sm text-zinc-600 file:mr-3 file:rounded-md file:border-0 file:bg-amber-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-amber-900"
-        />
-      </div>
-
-      {markedForDelete ? (
-        <>
-          <input type="hidden" name={deleteFieldName} value="1" />
+      {!currentUrl ? (
+        <div className="mt-3">
           <button
             type="button"
-            onClick={() => setMarkedForDelete(false)}
-            className="mt-2 text-sm font-medium text-amber-800 underline"
+            disabled={busy}
+            onClick={() => inputRef.current?.click()}
+            className="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Deshacer eliminación
+            {uploading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                Subiendo…
+              </>
+            ) : (
+              addLabel
+            )}
           </button>
-        </>
+        </div>
+      ) : null}
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="sr-only"
+        onChange={handleFileChange}
+        disabled={busy}
+      />
+
+      {error ? (
+        <p className="mt-2 text-sm font-medium text-red-600" role="alert">
+          {error}
+        </p>
       ) : null}
     </div>
   );
 }
 
 export function MascotaFotosEditSection({
+  identificador,
   registro,
 }: {
+  identificador: string;
   registro: MascotaReportada;
 }) {
   return (
@@ -96,31 +197,22 @@ export function MascotaFotosEditSection({
         </h3>
         <p className="mt-1 text-sm text-zinc-600">
           Puedes tener hasta 3 fotos. La principal aparece primero en el listado.
+          Las fotos se guardan al seleccionarlas; no hace falta pulsar &quot;Guardar
+          cambios&quot;.
         </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <FotoEditSlot
-          label="Foto principal"
-          addLabel="Agregar foto principal"
-          currentUrl={registro.foto_url}
-          fileFieldName="foto"
-          deleteFieldName="eliminar_foto"
-        />
-        <FotoEditSlot
-          label="Foto 2"
-          addLabel="Agregar foto 2"
-          currentUrl={registro.foto_url_2 ?? null}
-          fileFieldName="foto_2"
-          deleteFieldName="eliminar_foto_2"
-        />
-        <FotoEditSlot
-          label="Foto 3"
-          addLabel="Agregar foto 3"
-          currentUrl={registro.foto_url_3 ?? null}
-          fileFieldName="foto_3"
-          deleteFieldName="eliminar_foto_3"
-        />
+        {SLOT_CONFIG.map(({ slot, label, addLabel, getUrl }) => (
+          <FotoEditSlot
+            key={slot}
+            identificador={identificador}
+            label={label}
+            addLabel={addLabel}
+            slot={slot}
+            initialUrl={getUrl(registro)}
+          />
+        ))}
       </div>
     </section>
   );

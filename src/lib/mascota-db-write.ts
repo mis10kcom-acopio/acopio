@@ -296,3 +296,30 @@ export async function updateMascotaEstadoOnly(
 ): Promise<MascotaTokenUpdateResult> {
   return updateMascotaReportada(supabase, id, {}, estadoLogico);
 }
+
+export type MascotaFotoSlotColumn = "foto_url" | "foto_url_2" | "foto_url_3";
+
+export async function updateMascotaFotoSlot(
+  supabase: SupabaseClient,
+  id: string,
+  slot: MascotaFotoSlotColumn,
+  url: string | null,
+): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from("mascotas_reportadas")
+    .update({ [slot]: url })
+    .eq("id", id);
+
+  if (
+    error &&
+    isMissingExtraFotoColumnError(error.message) &&
+    slot !== "foto_url"
+  ) {
+    return {
+      error:
+        "Las fotos adicionales no están disponibles en la base de datos. Contacta al administrador.",
+    };
+  }
+
+  return { error: error?.message ?? null };
+}

@@ -106,11 +106,10 @@ export function EditarMascotaPanel({
         <form
           action={formAction}
           method="post"
-          encType="multipart/form-data"
           className="space-y-5"
           onSubmit={handleUpdateSubmit}
         >
-          <MascotaFotosEditSection registro={registro} />
+          <MascotaFotosEditSection identificador={identificador} registro={registro} />
 
           <FormField
             label="Estado del reporte"

@@ -18,9 +18,11 @@ import {
 } from "@/lib/mascota-estado";
 import {
   updateMascotaEstadoOnly,
+  updateMascotaFotoSlot,
   updateMascotaReportada,
+  type MascotaFotoSlotColumn,
 } from "@/lib/mascota-db-write";
-import { resolveMascotaFotoFieldUpdate, resolveOptionalFotoUrl } from "@/lib/storage-upload";
+import { resolveOptionalFotoUrl, uploadImagenStorage } from "@/lib/storage-upload";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import type { ActionState } from "@/types/actions";
 import type {
@@ -120,6 +122,97 @@ async function buscarAcopioPorIdentificador(
     "acopio_mascotas",
     identificador,
   );
+}
+
+export type MascotaFotoSlotActionResult =
+  | { ok: true; url: string | null }
+  | { ok: false; error: string };
+
+function mascotaFotoUploadErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    if (
+      error.message.includes("5 MB") ||
+      error.message.includes("debe ser una imagen")
+    ) {
+      return error.message;
+    }
+  }
+  return "No se pudo subir la foto, intenta de nuevo.";
+}
+
+export async function subirFotoMascotaEdicion(
+  identificador: string,
+  slot: MascotaFotoSlotColumn,
+  formData: FormData,
+): Promise<MascotaFotoSlotActionResult> {
+  try {
+    const supabase = getSupabaseAdmin();
+    const registro = await buscarMascotaPorIdentificador(identificador);
+
+    if (!registro) {
+      return { ok: false, error: "Enlace no válido o registro no encontrado." };
+    }
+
+    const file = formData.get("file");
+    if (!(file instanceof File) || file.size === 0) {
+      return { ok: false, error: "Selecciona una imagen válida." };
+    }
+
+    const url = await uploadImagenStorage(supabase, file, MASCOTAS_FOLDER);
+    const { error } = await updateMascotaFotoSlot(
+      supabase,
+      registro.id,
+      slot,
+      url,
+    );
+
+    if (error) {
+      return { ok: false, error: error };
+    }
+
+    revalidatePath("/");
+    revalidatePath(`/editar/${registro.token_edicion}`);
+    return { ok: true, url };
+  } catch (error) {
+    return { ok: false, error: mascotaFotoUploadErrorMessage(error) };
+  }
+}
+
+export async function eliminarFotoMascotaEdicion(
+  identificador: string,
+  slot: MascotaFotoSlotColumn,
+): Promise<MascotaFotoSlotActionResult> {
+  try {
+    const supabase = getSupabaseAdmin();
+    const registro = await buscarMascotaPorIdentificador(identificador);
+
+    if (!registro) {
+      return { ok: false, error: "Enlace no válido o registro no encontrado." };
+    }
+
+    const { error } = await updateMascotaFotoSlot(
+      supabase,
+      registro.id,
+      slot,
+      null,
+    );
+
+    if (error) {
+      return { ok: false, error: error };
+    }
+
+    revalidatePath("/");
+    revalidatePath(`/editar/${registro.token_edicion}`);
+    return { ok: true, url: null };
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "No se pudo eliminar la foto, intenta de nuevo.",
+    };
+  }
 }
 
 export async function cambiarMascotaAEnResguardo(
@@ -343,31 +436,6 @@ export async function actualizarMascota(
 
     const estado = parseEstadoMascota(getRequiredSelect(formData, "estado"));
 
-    const fotoUrl = await resolveMascotaFotoFieldUpdate(
-      supabase,
-      formData,
-      "foto",
-      "eliminar_foto",
-      registro.foto_url,
-      MASCOTAS_FOLDER,
-    );
-    const fotoUrl2 = await resolveMascotaFotoFieldUpdate(
-      supabase,
-      formData,
-      "foto_2",
-      "eliminar_foto_2",
-      registro.foto_url_2 ?? null,
-      MASCOTAS_FOLDER,
-    );
-    const fotoUrl3 = await resolveMascotaFotoFieldUpdate(
-      supabase,
-      formData,
-      "foto_3",
-      "eliminar_foto_3",
-      registro.foto_url_3 ?? null,
-      MASCOTAS_FOLDER,
-    );
-
     const { data, error } = await updateMascotaReportada(
       supabase,
       registro.id,
@@ -378,9 +446,6 @@ export async function actualizarMascota(
         ubicacion_zona: getRequiredSanitizedText(formData, "ubicacion_zona"),
         contacto_telefono: getRequiredSanitizedPhone(formData, "contacto_telefono"),
         contacto_whatsapp: getOptionalSanitizedPhone(formData, "contacto_whatsapp"),
-        foto_url: fotoUrl,
-        foto_url_2: fotoUrl2,
-        foto_url_3: fotoUrl3,
       },
       estado,
     );
