@@ -3,30 +3,66 @@ import { NextResponse } from "next/server";
 
 export const maxDuration = 300;
 
-const CLAUDE_MODEL = "claude-sonnet-4-6";
 const SITE_BASE_URL = "https://huellasasalvo.org";
 
-const VISION_PROMPT = `Compara estas dos mascotas y determina si podrían ser el mismo animal.
-Analiza: color de pelaje, tamaño aproximado, marcas distintivas, tipo de animal.
-Si alguna imagen no carga o no es válida, responde con match: false.
-Responde SOLO con JSON sin markdown: {"match": true/false, "confianza": "alta/media/baja", "razon": "explicación breve en español"}`;
+const ZONE_STOPWORDS = new Set([
+  "sector",
+  "calle",
+  "av",
+  "av.",
+  "avenida",
+  "residencia",
+  "edificio",
+  "de",
+  "del",
+  "la",
+  "el",
+  "en",
+  "y",
+  "los",
+  "las",
+]);
+
+const DESCRIPTION_STOPWORDS = new Set([
+  "de",
+  "con",
+  "el",
+  "la",
+  "es",
+  "un",
+  "una",
+  "en",
+  "y",
+  "a",
+  "por",
+  "su",
+  "se",
+  "al",
+  "del",
+  "lo",
+  "le",
+  "que",
+  "muy",
+  "mas",
+  "más",
+]);
 
 type MascotaRow = {
   id: string;
   nombre_mascota: string | null;
-  especie?: string | null;
   caracteristicas: string;
   ubicacion_zona: string;
   contacto_telefono: string;
-  foto_url: string | null;
   estado: string;
   tipo_reporte?: string;
 };
 
-type ClaudeMatchResult = {
+type TextMatchResult = {
   match: boolean;
-  confianza: "alta" | "media" | "baja" | string;
-  razon: string;
+  confianza: "alta" | "media";
+  palabrasEnComun: string[];
+  zoneMatch: boolean;
+  descriptionMatch: boolean;
 };
 
 type SupabaseWebhookPayload = {
@@ -47,6 +83,83 @@ function getSupabase(): SupabaseClient {
   return createClient(url, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
+}
+
+function normalizeText(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function tokenize(text: string): string[] {
+  return normalizeText(text)
+    .split(/[\s,./\-()]+/)
+    .map((word) => word.trim())
+    .filter((word) => word.length >= 2);
+}
+
+function getSignificantWords(text: string, stopwords: Set<string>): string[] {
+  return tokenize(text).filter((word) => !stopwords.has(word));
+}
+
+function getFirstTwoSignificantWords(text: string, stopwords: Set<string>): string[] {
+  return getSignificantWords(text, stopwords).slice(0, 2);
+}
+
+function getCommonWords(wordsA: string[], wordsB: string[]): string[] {
+  const setB = new Set(wordsB);
+  return [...new Set(wordsA.filter((word) => setB.has(word)))];
+}
+
+function getZoneMatch(a: MascotaRow, b: MascotaRow): { match: boolean; common: string[] } {
+  const wordsA = getFirstTwoSignificantWords(a.ubicacion_zona, ZONE_STOPWORDS);
+  const wordsB = getFirstTwoSignificantWords(b.ubicacion_zona, ZONE_STOPWORDS);
+  const allZoneWordsA = getSignificantWords(a.ubicacion_zona, ZONE_STOPWORDS);
+  const allZoneWordsB = getSignificantWords(b.ubicacion_zona, ZONE_STOPWORDS);
+  const common = getCommonWords(
+    [...new Set([...wordsA, ...allZoneWordsA])],
+    [...new Set([...wordsB, ...allZoneWordsB])],
+  );
+
+  return { match: common.length > 0, common };
+}
+
+function getDescriptionMatch(
+  a: MascotaRow,
+  b: MascotaRow,
+): { match: boolean; common: string[] } {
+  const wordsA = getSignificantWords(a.caracteristicas, DESCRIPTION_STOPWORDS);
+  const wordsB = getSignificantWords(b.caracteristicas, DESCRIPTION_STOPWORDS);
+  const common = getCommonWords(wordsA, wordsB);
+
+  return { match: common.length >= 2, common };
+}
+
+function compareMascotasByText(a: MascotaRow, b: MascotaRow): TextMatchResult {
+  const zone = getZoneMatch(a, b);
+  const description = getDescriptionMatch(a, b);
+
+  if (!zone.match && !description.match) {
+    return {
+      match: false,
+      confianza: "media",
+      palabrasEnComun: [],
+      zoneMatch: false,
+      descriptionMatch: false,
+    };
+  }
+
+  const palabrasEnComun = [...new Set([...zone.common, ...description.common])];
+  const confianza = zone.match && description.match ? "alta" : "media";
+
+  return {
+    match: true,
+    confianza,
+    palabrasEnComun,
+    zoneMatch: zone.match,
+    descriptionMatch: description.match,
+  };
 }
 
 function getEstadoLabel(mascota: MascotaRow): string {
@@ -77,107 +190,6 @@ function parseWebhookMascotaId(body: SupabaseWebhookPayload): string | null {
   return null;
 }
 
-function parseClaudeJson(text: string): ClaudeMatchResult | null {
-  const trimmed = text.trim();
-  const withoutFence = trimmed
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/\s*```$/i, "")
-    .trim();
-
-  try {
-    const parsed = JSON.parse(withoutFence) as Partial<ClaudeMatchResult>;
-    if (typeof parsed.match !== "boolean") return null;
-    return {
-      match: parsed.match,
-      confianza: typeof parsed.confianza === "string" ? parsed.confianza : "baja",
-      razon: typeof parsed.razon === "string" ? parsed.razon : "Sin explicación.",
-    };
-  } catch {
-    return null;
-  }
-}
-
-async function callClaude(
-  content: Array<Record<string, unknown>>,
-): Promise<ClaudeMatchResult | null> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    console.error("[match-detector] Falta ANTHROPIC_API_KEY");
-    return null;
-  }
-
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: CLAUDE_MODEL,
-      max_tokens: 512,
-      messages: [{ role: "user", content }],
-    }),
-  });
-
-  if (!response.ok) {
-    console.error("[match-detector] Error Claude:", await response.text());
-    return null;
-  }
-
-  const data = (await response.json()) as {
-    content?: Array<{ type?: string; text?: string }>;
-  };
-
-  const textBlock = data.content?.find((block) => block.type === "text");
-  if (!textBlock?.text) return null;
-
-  return parseClaudeJson(textBlock.text);
-}
-
-function buildTextComparisonPrompt(a: MascotaRow, b: MascotaRow): string {
-  return `Compara estos dos reportes de mascotas y determina si podrían referirse al mismo animal.
-Analiza: nombre, especie, características físicas, zona y cualquier detalle distintivo.
-
-MASCOTA A:
-Nombre: ${a.nombre_mascota ?? "Sin nombre"}
-Especie: ${a.especie ?? "No indicada"}
-Zona: ${a.ubicacion_zona}
-Características: ${a.caracteristicas}
-
-MASCOTA B:
-Nombre: ${b.nombre_mascota ?? "Sin nombre"}
-Especie: ${b.especie ?? "No indicada"}
-Zona: ${b.ubicacion_zona}
-Características: ${b.caracteristicas}
-
-Responde SOLO con JSON sin markdown: {"match": true/false, "confianza": "alta/media/baja", "razon": "explicación breve en español"}`;
-}
-
-async function compareMascotas(
-  a: MascotaRow,
-  b: MascotaRow,
-): Promise<ClaudeMatchResult | null> {
-  const aHasPhoto = Boolean(a.foto_url);
-  const bHasPhoto = Boolean(b.foto_url);
-
-  if (aHasPhoto && bHasPhoto) {
-    return callClaude([
-      {
-        type: "image",
-        source: { type: "url", url: a.foto_url! },
-      },
-      {
-        type: "image",
-        source: { type: "url", url: b.foto_url! },
-      },
-      { type: "text", text: VISION_PROMPT },
-    ]);
-  }
-
-  return callClaude([{ type: "text", text: buildTextComparisonPrompt(a, b) }]);
-}
-
 async function sendTelegramMessage(text: string): Promise<void> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
@@ -205,7 +217,7 @@ function formatMatchMessage(
   a: MascotaRow,
   b: MascotaRow,
   confianza: string,
-  razon: string,
+  palabrasEnComun: string[],
 ): string {
   const formatMascota = (mascota: MascotaRow) =>
     `Nombre: ${mascota.nombre_mascota ?? "Sin nombre"}
@@ -215,7 +227,7 @@ Descripción: ${mascota.caracteristicas}
 Teléfono: ${mascota.contacto_telefono}
 Ver reporte: ${SITE_BASE_URL}/mascota/${mascota.id}`;
 
-  return `🐾 POSIBLE MATCH DETECTADO
+  return `🐾 POSIBLE MATCH DETECTADO (análisis por texto)
 
 MASCOTA A:
 ${formatMascota(a)}
@@ -224,7 +236,7 @@ MASCOTA B:
 ${formatMascota(b)}
 
 Confianza: ${confianza}
-Razón: ${razon}`;
+Palabras en común: ${palabrasEnComun.join(", ") || "—"}`;
 }
 
 async function getNotifiedMatchIds(
@@ -270,12 +282,6 @@ async function registerNotifiedPair(
   }
 }
 
-function shouldNotify(result: ClaudeMatchResult): boolean {
-  if (!result.match) return false;
-  const confianza = result.confianza.toLowerCase();
-  return confianza === "alta" || confianza === "media";
-}
-
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as SupabaseWebhookPayload;
@@ -295,7 +301,7 @@ export async function POST(request: Request) {
     const { data: triggerMascota, error: triggerError } = await supabase
       .from("mascotas_reportadas")
       .select(
-        "id, nombre_mascota, especie, caracteristicas, ubicacion_zona, contacto_telefono, foto_url, estado, tipo_reporte",
+        "id, nombre_mascota, caracteristicas, ubicacion_zona, contacto_telefono, estado, tipo_reporte",
       )
       .eq("id", mascotaId)
       .maybeSingle();
@@ -311,7 +317,7 @@ export async function POST(request: Request) {
     const { data: allMascotas, error: listError } = await supabase
       .from("mascotas_reportadas")
       .select(
-        "id, nombre_mascota, especie, caracteristicas, ubicacion_zona, contacto_telefono, foto_url, estado, tipo_reporte",
+        "id, nombre_mascota, caracteristicas, ubicacion_zona, contacto_telefono, estado, tipo_reporte",
       )
       .neq("id", mascotaId);
 
@@ -329,9 +335,9 @@ export async function POST(request: Request) {
 
     for (const candidate of candidates) {
       try {
-        const result = await compareMascotas(triggerMascota, candidate);
+        const result = compareMascotasByText(triggerMascota, candidate);
 
-        if (!result || !shouldNotify(result)) {
+        if (!result.match) {
           continue;
         }
 
@@ -340,7 +346,7 @@ export async function POST(request: Request) {
             triggerMascota,
             candidate,
             result.confianza,
-            result.razon,
+            result.palabrasEnComun,
           ),
         );
 
