@@ -110,6 +110,20 @@ export async function registrarMascota(
       return { error, success: null };
     }
 
+    void (async () => {
+      const { data } = await supabase
+        .from("mascotas_reportadas")
+        .select("id")
+        .eq("token_edicion", token)
+        .maybeSingle();
+      if (!data?.id) return;
+      fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/match-detector`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ record: { id: data.id } }),
+      }).catch(() => {});
+    })().catch(() => {});
+
     await recordSuccessfulSubmission();
 
     const telefono =

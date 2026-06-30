@@ -245,6 +245,12 @@ export async function cambiarMascotaAEnResguardo(
       return { error: "No se pudo actualizar el reporte.", success: null };
     }
 
+    fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/match-detector`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ record: { id: registro.id } }),
+    }).catch(() => {});
+
     return await revalidateAndRedirect(
       data.token_edicion,
       "Reporte actualizado a En Resguardo.",
@@ -291,6 +297,12 @@ export async function marcarMascotaEnCasa(
     if (!data) {
       return { error: "No se pudo actualizar el reporte.", success: null };
     }
+
+    fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/match-detector`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ record: { id: registro.id } }),
+    }).catch(() => {});
 
     return await revalidateAndRedirect(
       data.token_edicion,
@@ -456,6 +468,12 @@ export async function actualizarMascota(
     if (!data) {
       return { error: "No se pudo actualizar el reporte.", success: null };
     }
+
+    fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/match-detector`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ record: { id: registro.id } }),
+    }).catch(() => {});
 
     return await revalidateAndRedirect(
       data.token_edicion,
