@@ -478,6 +478,24 @@ function SectionHeader({
   );
 }
 
+function ImportantSectionNotice({ text }: { text: string }) {
+  return (
+    <p className="text-xs leading-snug text-zinc-500 sm:text-[13px]">
+      <span className="font-bold text-red-600">IMPORTANTE:</span>{" "}
+      {text}
+    </p>
+  );
+}
+
+const SECTION_NOTICES = {
+  mascotas:
+    "Los reportes son publicados por los propios usuarios. Verifica siempre la identidad antes de coordinar un encuentro. En huellasasalvo.org las personas se registran libremente, nosotros no las verificamos.",
+  veterinarios:
+    "Las clínicas y veterinarios se registran por iniciativa propia. Te recomendamos confirmar disponibilidad y ubicación antes de trasladar tu mascota. En huellasasalvo.org las personas se registran libremente, nosotros no las verificamos.",
+  acopio:
+    "Los centros de acopio son registrados por sus responsables. Confirma el stock y la dirección antes de hacer un traslado. En huellasasalvo.org las personas se registran libremente, nosotros no las verificamos.",
+} as const;
+
 const RED_AYUDA_SECTION_TITLES: Record<RedAyudaTipoFilter, string> = {
   HOGAR_TEMPORAL: "Hogares Temporales",
   RESCATISTA: "Rescatistas",
@@ -494,12 +512,7 @@ const RED_AYUDA_SECTION_NOTICES: Record<RedAyudaTipoFilter, string> = {
 };
 
 function RedAyudaSectionNotice({ filter }: { filter: RedAyudaTipoFilter }) {
-  return (
-    <p className="text-xs leading-snug text-zinc-500 sm:text-[13px]">
-      <span className="font-bold text-red-600">IMPORTANTE:</span>{" "}
-      {RED_AYUDA_SECTION_NOTICES[filter]}
-    </p>
-  );
+  return <ImportantSectionNotice text={RED_AYUDA_SECTION_NOTICES[filter]} />;
 }
 
 function filterByZona<T extends { ubicacion_zona: string }>(
@@ -812,7 +825,12 @@ export function HomePageContent({ data }: { data: HomePageData }) {
       >
         {activeSection === "mascotas" && (
           <section>
-            <SectionHeader title="Mascotas Perdidas, En Resguardo y Adopción" />
+            <SectionHeader
+              title="Mascotas Perdidas, En Resguardo y Adopción"
+              notice={
+                <ImportantSectionNotice text={SECTION_NOTICES.mascotas} />
+              }
+            />
             {data.mascotas.length > 0 ? (
               <ZoneSearchInput
                 sticky
@@ -934,7 +952,12 @@ export function HomePageContent({ data }: { data: HomePageData }) {
 
         {activeSection === "veterinarios" && (
           <section>
-            <SectionHeader title="Veterinarios y Clínicas Disponibles" />
+            <SectionHeader
+              title="Veterinarios y Clínicas Disponibles"
+              notice={
+                <ImportantSectionNotice text={SECTION_NOTICES.veterinarios} />
+              }
+            />
             {veterinarios.length > 0 ? (
               <ZoneSearchInput
                 sticky
@@ -960,7 +983,12 @@ export function HomePageContent({ data }: { data: HomePageData }) {
 
         {activeSection === "acopio" && (
           <section>
-            <SectionHeader title="Centros de Acopio de Insumos" />
+            <SectionHeader
+              title="Centros de Acopio de Insumos"
+              notice={
+                <ImportantSectionNotice text={SECTION_NOTICES.acopio} />
+              }
+            />
             {data.acopios.length > 0 ? (
               <ZoneSearchInput
                 sticky
