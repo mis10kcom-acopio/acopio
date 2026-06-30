@@ -103,6 +103,21 @@ export default function TerminosPage() {
 
           <section>
             <h2 className="text-xl font-semibold text-zinc-900">
+              5. Uso Aceptable
+            </h2>
+            <p className="mt-3">
+              Nos reservamos el derecho de eliminar cualquier reporte que
+              contenga información falsa, spam, o que intente utilizar la
+              plataforma para fines comerciales, fraudes o extorsiones.
+            </p>
+            <p className="mt-3">
+              Al utilizar Huellas a Salvo, confirmas que entiendes y aceptas
+              estas condiciones de uso solidario y de emergencia.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold text-zinc-900">
               6. No Verificación de Usuarios
             </h2>
             <p className="mt-3">
@@ -131,22 +146,6 @@ export default function TerminosPage() {
               los usuarios de la plataforma.
             </p>
           </section>
-
-          <section>
-            <h2 className="text-xl font-semibold text-zinc-900">
-              7. Uso Aceptable
-            </h2>
-            <p className="mt-3">
-              Nos reservamos el derecho de eliminar cualquier reporte que
-              contenga información falsa, spam, o que intente utilizar la
-              plataforma para fines comerciales, fraudes o extorsiones.
-            </p>
-          </section>
-
-          <p className="border-t border-zinc-200 pt-8 text-sm text-zinc-600">
-            Al utilizar Huellas a Salvo, confirmas que entiendes y aceptas estas
-            condiciones de uso solidario y de emergencia.
-          </p>
         </div>
       </article>
     </main>
