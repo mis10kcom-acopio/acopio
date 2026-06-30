@@ -496,6 +496,7 @@ const RED_AYUDA_SECTION_NOTICES: Record<RedAyudaTipoFilter, string> = {
 function RedAyudaSectionNotice({ filter }: { filter: RedAyudaTipoFilter }) {
   return (
     <p className="text-xs leading-snug text-zinc-500 sm:text-[13px]">
+      <span className="font-bold text-red-600">IMPORTANTE:</span>{" "}
       {RED_AYUDA_SECTION_NOTICES[filter]}
     </p>
   );
