@@ -11,6 +11,7 @@ import {
   SubmitButton,
 } from "@/components/forms/FormFields";
 import { ImplicitConsentNotice } from "@/components/forms/ImplicitConsentNotice";
+import { WhatsappOptionalField } from "@/components/forms/WhatsappOptionalField";
 import { initialActionState } from "@/types/actions";
 
 export default function RegistroVoluntarioPage() {
@@ -59,13 +60,7 @@ export default function RegistroVoluntarioPage() {
           hint="Para llamadas y SMS. Obligatorio."
         />
 
-        <FormField
-          label="Número de WhatsApp (Opcional)"
-          name="contacto_whatsapp"
-          type="tel"
-          placeholder="Ej: +584141234567"
-          hint="Si es distinto al teléfono de llamadas."
-        />
+        <WhatsappOptionalField />
 
         <FormField
           label="Información Adicional (Servicios, horarios, detalles...)"

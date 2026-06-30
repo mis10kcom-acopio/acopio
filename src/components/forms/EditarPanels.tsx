@@ -27,6 +27,7 @@ import {
 } from "@/components/forms/FormFields";
 import { EspecieField } from "@/components/forms/EspecieField";
 import { MascotaFotosEditSection } from "@/components/forms/MascotaFotosEditSection";
+import { WhatsappOptionalField } from "@/components/forms/WhatsappOptionalField";
 import { initialActionState } from "@/types/actions";
 import type {
   AcopioMascota,
@@ -316,13 +317,7 @@ export function EditarVoluntarioPanel({
             defaultValue={registro.contacto_telefono}
           />
 
-          <FormField
-            label="Número de WhatsApp (Opcional)"
-            name="contacto_whatsapp"
-            type="tel"
-            defaultValue={registro.contacto_whatsapp ?? ""}
-            placeholder="Ej: +584141234567"
-          />
+          <WhatsappOptionalField defaultValue={registro.contacto_whatsapp ?? ""} />
 
           <FormField
             label="Información Adicional (Servicios, horarios, detalles...)"
