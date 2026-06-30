@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 
+import { VENEZUELA_TIME_ZONE } from "@/lib/relative-time";
+
 function formatVenezuelaTime(date: Date): string {
   return new Intl.DateTimeFormat("es-VE", {
-    timeZone: "America/Caracas",
+    timeZone: VENEZUELA_TIME_ZONE,
     hour: "numeric",
     minute: "2-digit",
     hour12: true,

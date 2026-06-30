@@ -6,15 +6,12 @@ import {
   actualizarMascota,
   actualizarStockAcopio,
   actualizarVoluntario,
-  cambiarMascotaAEnResguardo,
-  marcarMascotaEnCasa,
   marcarVoluntarioDisponible,
   marcarVoluntarioNoDisponible,
 } from "@/actions/editar";
 import {
   confirmCambioEstadoMascota,
   getMascotaEstado,
-  MASCOTA_ESTADO_CONFIG,
   parseEstadoMascota,
 } from "@/lib/mascota-estado";
 import {
@@ -85,33 +82,7 @@ export function EditarMascotaPanel({
 }) {
   const updateAction = actualizarMascota.bind(null, identificador);
   const [formState, formAction] = useActionState(updateAction, initialActionState);
-  const [statusError, setStatusError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
   const estadoActual = getMascotaEstado(registro);
-  const enCasa = estadoActual === "EN_CASA";
-  const esPerdido = estadoActual === "PERDIDO";
-  const enResguardo = estadoActual === "EN_RESGUARDO";
-  const esAdopcion = estadoActual === "ADOPCION";
-
-  function handleCambiarAEnResguardo() {
-    if (!confirmCambioEstadoMascota("EN_RESGUARDO")) return;
-
-    setStatusError(null);
-    startTransition(async () => {
-      const result = await cambiarMascotaAEnResguardo(identificador);
-      if (result?.error) setStatusError(result.error);
-    });
-  }
-
-  function handleMarcarEnCasa() {
-    if (!confirmCambioEstadoMascota("EN_CASA")) return;
-
-    setStatusError(null);
-    startTransition(async () => {
-      const result = await marcarMascotaEnCasa(identificador);
-      if (result?.error) setStatusError(result.error);
-    });
-  }
 
   function handleUpdateSubmit(event: React.FormEvent<HTMLFormElement>) {
     const formData = new FormData(event.currentTarget);
@@ -128,7 +99,7 @@ export function EditarMascotaPanel({
   return (
     <div className="space-y-8">
       <FormSuccess message={successMessage} />
-      <FormError message={formState.error ?? statusError} />
+      <FormError message={formState.error} />
 
       <section className="space-y-4">
         <SectionTitle>Editar datos del reporte</SectionTitle>
@@ -196,42 +167,6 @@ export function EditarMascotaPanel({
 
           <SubmitButton>Guardar cambios</SubmitButton>
         </form>
-      </section>
-
-      <section className="space-y-3 border-t border-zinc-200 pt-6">
-        <SectionTitle>Acciones rápidas</SectionTitle>
-        <p className="text-sm text-zinc-600">
-          Estado actual:{" "}
-          <span className="font-semibold text-zinc-900">
-            {MASCOTA_ESTADO_CONFIG[estadoActual].label}
-          </span>
-        </p>
-
-        {!enCasa ? (
-          <div className="grid gap-3">
-            {esPerdido && (
-              <ActionButton
-                label={pending ? "Actualizando…" : "Marcar En Resguardo"}
-                onClick={handleCambiarAEnResguardo}
-                variant="warning"
-                disabled={pending}
-              />
-            )}
-            {(esPerdido || enResguardo || esAdopcion) && (
-              <ActionButton
-                label={pending ? "Actualizando…" : "Marcar En Casa"}
-                onClick={handleMarcarEnCasa}
-                variant="success"
-                disabled={pending}
-              />
-            )}
-          </div>
-        ) : (
-          <p className="text-center text-sm text-emerald-700">
-            Este reporte ya está En Casa. ¡Gracias por ayudar a reunir a la
-            mascota con su familia!
-          </p>
-        )}
       </section>
     </div>
   );
