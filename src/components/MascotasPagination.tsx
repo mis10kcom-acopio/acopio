@@ -1,6 +1,7 @@
 "use client";
 
-export const MASCOTAS_PER_PAGE = 50;
+/** 48 = 12 filas × 4 columnas en desktop (xl:grid-cols-4). */
+export const MASCOTAS_PER_PAGE = 48;
 
 export function MascotasLoadMore({
   visibleCount,

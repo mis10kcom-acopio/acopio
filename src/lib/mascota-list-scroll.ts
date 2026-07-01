@@ -21,7 +21,8 @@ function parseScrollState(raw: string | null): MascotaListScrollState | null {
       return { y, visibleCount: MASCOTAS_PER_PAGE };
     }
 
-    return { y, visibleCount };
+    const blocks = Math.max(1, Math.floor(visibleCount / MASCOTAS_PER_PAGE));
+    return { y, visibleCount: blocks * MASCOTAS_PER_PAGE };
   } catch {
     return null;
   }
