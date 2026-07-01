@@ -33,7 +33,7 @@ export function EspecieFilterPills({
             type="button"
             aria-pressed={active}
             onClick={() => handleToggle(option.id)}
-            className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+            className={`rounded-full border px-2.5 py-1 text-xs font-semibold transition md:px-4 md:py-2 md:text-sm ${
               active
                 ? "border-amber-600 bg-amber-600 text-white shadow-sm"
                 : "border-zinc-300 bg-white text-zinc-700 hover:border-amber-300 hover:bg-amber-50"

@@ -45,10 +45,10 @@ export function MascotaDetailView({
         </span>
       </div>
 
-      <div className="space-y-5 p-5 sm:p-6">
+      <div className="space-y-4 p-4 sm:space-y-5 sm:p-6">
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold text-zinc-900 sm:text-3xl">
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold text-zinc-900 sm:text-3xl">
               {mascota.nombre_mascota?.trim() || "Mascota reportada"}
             </h1>
           </div>
@@ -59,7 +59,7 @@ export function MascotaDetailView({
           <h2 className="text-xs font-bold uppercase tracking-wide text-zinc-500">
             Características
           </h2>
-          <p className="mt-2 text-base leading-relaxed text-zinc-700 whitespace-pre-wrap">
+          <p className="mt-1.5 text-sm leading-relaxed text-zinc-700 whitespace-pre-wrap sm:mt-2 sm:text-base">
             {mascota.caracteristicas}
           </p>
         </section>
@@ -68,12 +68,12 @@ export function MascotaDetailView({
           <h2 className="text-xs font-bold uppercase tracking-wide text-zinc-500">
             Zona / Municipio
           </h2>
-          <p className="mt-2 text-lg font-semibold text-zinc-900">
+          <p className="mt-1.5 text-base font-semibold text-zinc-900 sm:mt-2 sm:text-lg">
             {mascota.ubicacion_zona}
           </p>
         </section>
 
-        <MascotaContactActions mascota={mascota} layout="detail" />
+        <MascotaContactActions mascota={mascota} layout="card" />
       </div>
     </article>
   );

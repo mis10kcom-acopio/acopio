@@ -11,7 +11,7 @@ const CARD_ACTION_BTN =
   "inline-flex min-h-[2.5rem] w-full min-w-0 items-center justify-center rounded-lg px-2 py-2 text-center text-xs font-semibold leading-tight shadow-sm transition sm:min-h-[2.75rem] sm:px-3 sm:text-sm";
 
 const LIST_ACTION_BTN =
-  "inline-flex min-h-7 w-full min-w-0 items-center justify-center rounded-md px-1.5 py-1 text-center text-[10px] font-semibold leading-none shadow-sm transition";
+  "inline-flex min-h-6 shrink-0 items-center justify-center rounded px-2 py-0.5 text-[9px] font-semibold leading-none shadow-sm transition";
 
 const CARD_PHONE_DISPLAY =
   "flex min-h-[2.5rem] w-full min-w-0 items-center justify-center rounded-lg border-2 border-zinc-200 bg-zinc-50 px-2 py-2 text-center sm:min-h-[2.75rem] sm:px-3";
@@ -150,7 +150,7 @@ export function MascotaContactActions({
   if (isList) {
     return (
       <div
-        className="relative z-20 grid grid-cols-2 gap-1.5 pointer-events-auto [&>*]:min-w-0"
+        className="relative z-20 flex shrink-0 items-center justify-end gap-1 pointer-events-auto"
         onClick={(event) => event.stopPropagation()}
       >
         {mascota.contacto_whatsapp ? (
@@ -166,9 +166,7 @@ export function MascotaContactActions({
         <MascotaCartelButton
           mascota={mascota}
           layout="card"
-          className={`!min-h-7 !rounded-md !px-1.5 !py-1 !text-[10px] !font-semibold !leading-none ${
-            mascota.contacto_whatsapp ? "" : "col-span-2"
-          }`}
+          className="!min-h-6 !w-auto !rounded !px-2 !py-0.5 !text-[9px] !font-semibold !leading-none"
         />
       </div>
     );

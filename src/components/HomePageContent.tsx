@@ -246,48 +246,58 @@ function MascotaListItemMobile({ mascota }: { mascota: MascotaReportada }) {
   const detailHref = buildMascotaPublicPath(mascota.id);
   const displayName = mascota.nombre_mascota?.trim() || "Mascota reportada";
 
+  const photoContent = fotoPrincipal ? (
+    <Image
+      src={fotoPrincipal}
+      alt={displayName}
+      width={56}
+      height={56}
+      className="h-14 w-14 rounded-lg object-cover"
+      sizes="56px"
+    />
+  ) : (
+    <MascotaFotoPlaceholder
+      className="h-14 w-14 shrink-0 rounded-lg"
+      iconClassName="h-6 w-6"
+    />
+  );
+
   return (
-    <article className="relative flex max-h-20 gap-2.5 border-b border-zinc-200 bg-white py-2 md:hidden">
+    <article className="flex gap-2 border-b border-zinc-200 bg-white px-2 py-1.5 md:hidden">
       <Link
         href={detailHref}
-        className="absolute inset-0 z-0"
+        className="relative z-10 shrink-0 self-start"
         aria-label={`Ver reporte de ${displayName}`}
-      />
-      <div className="relative z-10 shrink-0 pointer-events-none">
-        {fotoPrincipal ? (
-          <Image
-            src={fotoPrincipal}
-            alt={displayName}
-            width={56}
-            height={56}
-            className="h-14 w-14 rounded-lg object-cover"
-            sizes="56px"
-          />
-        ) : (
-          <MascotaFotoPlaceholder
-            className="h-14 w-14 shrink-0 rounded-lg"
-            iconClassName="h-6 w-6"
-          />
-        )}
-      </div>
-      <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-center gap-0.5 overflow-hidden">
-        <div className="pointer-events-none flex min-w-0 items-center gap-1.5">
-          <h3 className="min-w-0 truncate text-sm font-bold leading-tight text-zinc-900">
-            {displayName}
-          </h3>
-          <span
-            className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none text-white ${estadoConfig.badgeClass}`}
-          >
-            {estadoConfig.label}
-          </span>
+      >
+        {photoContent}
+      </Link>
+
+      <div className="flex min-w-0 flex-1 items-stretch gap-1.5">
+        <Link
+          href={detailHref}
+          className="relative z-10 min-w-0 flex-1 space-y-0.5"
+        >
+          <div className="flex min-w-0 items-center gap-1.5">
+            <h3 className="min-w-0 truncate text-sm font-extrabold leading-tight text-zinc-950">
+              {displayName}
+            </h3>
+            <span
+              className={`shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold leading-none text-white ${estadoConfig.badgeClass}`}
+            >
+              {estadoConfig.label}
+            </span>
+          </div>
+          <p className="truncate text-[11px] leading-tight text-zinc-700">
+            {mascota.caracteristicas}
+          </p>
+          <p className="truncate text-[11px] leading-tight text-zinc-600">
+            <span aria-hidden>📍</span> {mascota.ubicacion_zona}
+          </p>
+        </Link>
+
+        <div className="flex shrink-0 flex-col justify-end pb-0.5">
+          <MascotaContactActions mascota={mascota} layout="list" />
         </div>
-        <p className="pointer-events-none truncate text-xs leading-tight text-zinc-600">
-          {mascota.caracteristicas}
-        </p>
-        <p className="pointer-events-none truncate text-xs leading-tight text-zinc-500">
-          <span aria-hidden>📍</span> {mascota.ubicacion_zona}
-        </p>
-        <MascotaContactActions mascota={mascota} layout="list" />
       </div>
     </article>
   );

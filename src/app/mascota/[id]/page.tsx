@@ -67,7 +67,7 @@ export default async function MascotaPublicPage({ params }: PageProps) {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-amber-50 to-zinc-50">
-      <div className="mx-auto max-w-2xl px-4 py-8 sm:py-10">
+      <div className="mx-auto max-w-2xl px-3 py-5 sm:px-4 sm:py-10">
         <MascotaDetailView mascota={mascota} />
       </div>
     </main>

@@ -72,7 +72,7 @@ export function ZonaFilterPills({
     <div ref={containerRef} className={`relative ${className}`}>
       {activeOption ? (
         <div
-          className={`inline-flex max-w-full items-stretch overflow-hidden rounded-full border shadow-sm ${
+          className={`inline-flex max-w-full items-stretch overflow-hidden rounded-lg border-2 shadow-sm ${
             open ? "border-slate-600" : "border-slate-700"
           } bg-slate-700 text-white`}
         >
@@ -81,7 +81,7 @@ export function ZonaFilterPills({
             aria-haspopup="listbox"
             aria-expanded={open}
             onClick={handleToggleOpen}
-            className="inline-flex min-w-0 items-center gap-1.5 px-4 py-2 text-sm font-semibold transition hover:bg-slate-600"
+            className="inline-flex min-w-0 items-center gap-1.5 px-2.5 py-1 text-xs font-semibold transition hover:bg-slate-600 md:px-4 md:py-2 md:text-sm"
           >
             <span className="truncate">📍 {activeOption.label}</span>
           </button>
@@ -89,7 +89,7 @@ export function ZonaFilterPills({
             type="button"
             aria-label="Quitar filtro de zona"
             onClick={handleClear}
-            className="shrink-0 border-l border-slate-500 px-3 py-2 text-base leading-none transition hover:bg-slate-600"
+            className="shrink-0 border-l border-slate-500 px-2.5 py-1 text-sm leading-none transition hover:bg-slate-600 md:px-3 md:py-2"
           >
             ✕
           </button>
@@ -100,7 +100,7 @@ export function ZonaFilterPills({
           aria-haspopup="listbox"
           aria-expanded={open}
           onClick={handleToggleOpen}
-          className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-slate-400 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-600 hover:bg-slate-50"
+          className="inline-flex max-w-full items-center gap-1.5 rounded-lg border-2 border-zinc-400 bg-[#F0EDE8] px-2.5 py-1 text-xs font-semibold text-slate-800 transition hover:border-zinc-500 hover:bg-[#E8E4DE] md:px-4 md:py-2 md:text-sm"
         >
           <span>📍 Filtrar por Zona</span>
           <span
