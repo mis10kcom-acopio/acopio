@@ -123,7 +123,7 @@ export function MascotaCartelModal({
 
         <div className="flex flex-1 flex-col items-center overflow-y-auto bg-zinc-50 px-4 py-5">
           {loading ? (
-            <div className="flex aspect-[9/16] w-full max-w-[280px] items-center justify-center rounded-xl bg-amber-50 text-sm font-medium text-amber-800">
+            <div className="flex aspect-[3/4] w-full max-w-[280px] items-center justify-center rounded-xl bg-amber-50 text-sm font-medium text-amber-800">
               Generando cartel…
             </div>
           ) : error ? (
@@ -134,14 +134,14 @@ export function MascotaCartelModal({
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={previewUrl}
-              alt="Vista previa del cartel para redes sociales"
-              className="aspect-[9/16] w-full max-w-[280px] rounded-xl border border-amber-200 bg-white object-contain shadow-md"
+              alt="Vista previa del cartel para compartir"
+              className="aspect-[3/4] w-full max-w-[280px] rounded-xl border border-amber-200 bg-white object-contain shadow-md"
             />
           ) : null}
 
           <p className="mt-4 text-center text-xs text-zinc-500">
-            Formato vertical 9:16 ideal para historias de Instagram y WhatsApp
-            Status
+            Formato tarjeta 3:4, igual que la ficha de detalle en móvil. Ideal
+            para compartir en redes o imprimir.
           </p>
         </div>
 
