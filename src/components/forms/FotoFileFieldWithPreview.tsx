@@ -2,7 +2,12 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { ACCEPTED_IMAGE_INPUT } from "@/lib/storage-upload";
+import {
+  ACCEPTED_IMAGE_INPUT,
+  FOTO_UPLOAD_HINT,
+  MAX_FOTO_SIZE_BYTES,
+  UPLOAD_IMAGE_ERROR_MESSAGE,
+} from "@/lib/storage-upload";
 
 const labelClassName = "mb-1.5 block text-sm font-semibold text-zinc-800";
 
@@ -11,7 +16,7 @@ export function FotoFileFieldWithPreview({
   name,
   accept = ACCEPTED_IMAGE_INPUT,
   capture,
-  hint,
+  hint = FOTO_UPLOAD_HINT,
   required = false,
 }: {
   label: string;
@@ -25,6 +30,7 @@ export function FotoFileFieldWithPreview({
   const objectUrlRef = useRef<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
     return () => {
@@ -45,9 +51,19 @@ export function FotoFileFieldWithPreview({
     if (!file) {
       setPreviewUrl(null);
       setFileName(null);
+      setValidationError(null);
       return;
     }
 
+    if (file.size > MAX_FOTO_SIZE_BYTES) {
+      event.target.value = "";
+      setPreviewUrl(null);
+      setFileName(null);
+      setValidationError(UPLOAD_IMAGE_ERROR_MESSAGE);
+      return;
+    }
+
+    setValidationError(null);
     const url = URL.createObjectURL(file);
     objectUrlRef.current = url;
     setPreviewUrl(url);
@@ -102,6 +118,12 @@ export function FotoFileFieldWithPreview({
       />
 
       {hint ? <p className="mt-2 text-xs text-zinc-500">{hint}</p> : null}
+
+      {validationError ? (
+        <p className="mt-2 text-sm font-medium text-red-600" role="alert">
+          {validationError}
+        </p>
+      ) : null}
     </div>
   );
 }

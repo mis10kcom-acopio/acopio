@@ -7,7 +7,7 @@ import {
   eliminarFotoMascotaEdicion,
   subirFotoMascotaEdicion,
 } from "@/actions/editar";
-import { ACCEPTED_IMAGE_INPUT } from "@/lib/storage-upload";
+import { ACCEPTED_IMAGE_INPUT, MAX_FOTO_SIZE_BYTES, UPLOAD_IMAGE_ERROR_MESSAGE } from "@/lib/storage-upload";
 import type { MascotaReportada } from "@/types/database";
 
 function FotoEditSlot({
@@ -28,6 +28,11 @@ function FotoEditSlot({
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
+
+    if (file.size > MAX_FOTO_SIZE_BYTES) {
+      setError(UPLOAD_IMAGE_ERROR_MESSAGE);
+      return;
+    }
 
     setError(null);
     setUploading(true);
@@ -164,7 +169,7 @@ export function MascotaFotosEditSection({
           Foto del reporte
         </h3>
         <p className="mt-1 text-sm text-zinc-600">
-          Una sola foto por reporte (JPG, PNG o WebP, máximo 5 MB). Se guarda al
+          Una sola foto por reporte (JPG, PNG o WebP, máx. 2 MB). Se guarda al
           seleccionarla; no hace falta pulsar &quot;Guardar cambios&quot;.
         </p>
       </div>

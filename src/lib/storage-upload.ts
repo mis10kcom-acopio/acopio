@@ -1,9 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-const MAX_FOTO_SIZE_BYTES = 5 * 1024 * 1024;
+export const MAX_FOTO_SIZE_BYTES = 2 * 1024 * 1024;
 const STORAGE_BUCKET = "mascotas";
 
 export const ACCEPTED_IMAGE_INPUT = "image/jpeg, image/png, image/webp";
+
+export const FOTO_UPLOAD_HINT = "Opcional. JPG, PNG o WebP (máx. 2 MB).";
 
 export const UPLOAD_IMAGE_ERROR_MESSAGE =
   "La imagen es muy pesada o el formato no es válido.";
