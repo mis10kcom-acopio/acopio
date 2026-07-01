@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ActivityTickerShell } from "@/components/ActivityTickerShell";
-import { ScrollChromeProvider } from "@/components/ScrollChromeProvider";
 import {
   FIXED_SUPPORT_BAR_PADDING,
   SupportFooter,
@@ -101,13 +100,11 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-zinc-50">
-        <ScrollChromeProvider>
-          <ActivityTickerShell />
-          <div className={`bg-gradient-to-b from-amber-50 to-zinc-50 ${FIXED_SUPPORT_BAR_PADDING}`}>
-            {children}
-          </div>
-          <SupportFooter />
-        </ScrollChromeProvider>
+        <ActivityTickerShell />
+        <div className={`bg-gradient-to-b from-amber-50 to-zinc-50 ${FIXED_SUPPORT_BAR_PADDING}`}>
+          {children}
+        </div>
+        <SupportFooter />
         <GoogleAnalytics gaId="G-ZT47MKQTXM" />
       </body>
     </html>
