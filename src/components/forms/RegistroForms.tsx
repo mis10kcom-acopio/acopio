@@ -66,7 +66,6 @@ export function MascotaRegistroForm() {
         <option value="PERDIDO">Perdido</option>
         <option value="EN_RESGUARDO">En Resguardo</option>
         <option value="EN_CASA">En Casa</option>
-        <option value="ADOPCION">Adopción</option>
       </FormField>
 
       <EspecieField />

@@ -12,6 +12,7 @@ import {
 import {
   confirmCambioEstadoMascota,
   getMascotaEstado,
+  getMascotaEstadoFormDisplay,
   parseEstadoMascota,
 } from "@/lib/mascota-estado";
 import {
@@ -117,12 +118,11 @@ export function EditarMascotaPanel({
             name="estado"
             as="select"
             required
-            defaultValue={estadoActual}
+            defaultValue={getMascotaEstadoFormDisplay(estadoActual)}
           >
             <option value="PERDIDO">Perdido</option>
             <option value="EN_RESGUARDO">En Resguardo</option>
             <option value="EN_CASA">En Casa</option>
-            <option value="ADOPCION">Adopción</option>
           </FormField>
 
           <EspecieField defaultValue={registro.especie} />

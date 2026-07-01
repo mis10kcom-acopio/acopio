@@ -4,7 +4,7 @@ import type { EstadoMascota } from "@/types/database";
 
 export type MascotaEstadoFilterId = Extract<
   EstadoMascota,
-  "PERDIDO" | "EN_RESGUARDO" | "ADOPCION"
+  "PERDIDO" | "EN_RESGUARDO"
 >;
 
 const ESTADO_FILTER_OPTIONS: {
@@ -13,7 +13,6 @@ const ESTADO_FILTER_OPTIONS: {
 }[] = [
   { id: "PERDIDO", label: "Perdidas" },
   { id: "EN_RESGUARDO", label: "En Resguardo" },
-  { id: "ADOPCION", label: "Adopción" },
 ];
 
 export function MascotaEstadoFilterPills({

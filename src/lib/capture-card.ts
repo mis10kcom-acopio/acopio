@@ -102,13 +102,18 @@ function drawRoundedRectPath(
   ctx.closePath();
 }
 
+function getDisplayEstadoConfig(estado: EstadoMascota) {
+  const displayEstado = estado === "ADOPCION" ? "EN_RESGUARDO" : estado;
+  return MASCOTA_ESTADO_CONFIG[displayEstado];
+}
+
 function drawStatusBadgePill(
   ctx: CanvasRenderingContext2D,
   estado: EstadoMascota,
   x: number,
   y: number,
 ): void {
-  const config = MASCOTA_ESTADO_CONFIG[estado];
+  const config = getDisplayEstadoConfig(estado);
   const label = config.label;
   const fontSize = 28;
   const paddingX = 20;
@@ -418,7 +423,7 @@ function drawCartelHeaderBand(
   estado: EstadoMascota,
 ): number {
   const height = 76;
-  const config = MASCOTA_ESTADO_CONFIG[estado];
+  const config = getDisplayEstadoConfig(estado);
 
   ctx.fillStyle = config.canvasColor;
   ctx.fillRect(0, 0, width, height);

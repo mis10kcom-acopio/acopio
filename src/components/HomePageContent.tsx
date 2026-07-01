@@ -32,7 +32,7 @@ import {
   Truck,
   Warehouse,
 } from "lucide-react";
-import { getMascotaEstado, getMascotaEstadoConfig, isMascotaEstadoActivo } from "@/lib/mascota-estado";
+import { getMascotaEstado, getMascotaEstadoConfig, isMascotaEstadoActivo, matchesMascotaEstadoFilter } from "@/lib/mascota-estado";
 import { buildMascotaPublicPath } from "@/lib/mascota-url";
 import { restoreMascotaListScroll, consumeMascotaListScrollState, saveMascotaListScrollForMobile } from "@/lib/mascota-list-scroll";
 import { filterMascotasByEspecie, type EspecieFilterId } from "@/lib/mascota-especie";
@@ -737,8 +737,8 @@ export function HomePageContent({ data }: { data: HomePageData }) {
 
   const mascotasForList = useMemo(() => {
     if (!mascotaEstadoFilter) return activeMascotas;
-    return activeMascotas.filter(
-      (mascota) => getMascotaEstado(mascota) === mascotaEstadoFilter,
+    return activeMascotas.filter((mascota) =>
+      matchesMascotaEstadoFilter(mascota, mascotaEstadoFilter),
     );
   }, [activeMascotas, mascotaEstadoFilter]);
 
@@ -836,11 +836,10 @@ export function HomePageContent({ data }: { data: HomePageData }) {
     () => ({
       perdidas: data.mascotas.filter((m) => getMascotaEstado(m) === "PERDIDO")
         .length,
-      enResguardo: data.mascotas.filter(
-        (m) => getMascotaEstado(m) === "EN_RESGUARDO",
-      ).length,
-      adopcion: data.mascotas.filter((m) => getMascotaEstado(m) === "ADOPCION")
-        .length,
+      enResguardo: data.mascotas.filter((m) => {
+        const estado = getMascotaEstado(m);
+        return estado === "EN_RESGUARDO" || estado === "ADOPCION";
+      }).length,
       enCasa: data.mascotas.filter((m) => getMascotaEstado(m) === "EN_CASA")
         .length,
     }),
@@ -898,8 +897,6 @@ export function HomePageContent({ data }: { data: HomePageData }) {
             <span className="text-yellow-600">
               {mascotaStats.enResguardo} En Resguardo
             </span>
-            {" | "}
-            <span className="text-blue-600">{mascotaStats.adopcion} Adopción</span>
             {" | "}
             <span className="text-emerald-600">{mascotaStats.enCasa} En Casa</span>
           </p>
@@ -986,7 +983,7 @@ export function HomePageContent({ data }: { data: HomePageData }) {
         {activeSection === "mascotas" && (
           <section>
             <SectionHeader
-              title="Mascotas Perdidas, En Resguardo y Adopción"
+              title="Mascotas Perdidas y En Resguardo"
               notice={
                 <ImportantSectionNotice text={SECTION_NOTICES.mascotas} />
               }

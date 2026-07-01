@@ -15,6 +15,7 @@ import {
 import {
   getMascotaEstado,
   parseEstadoMascota,
+  resolveMascotaEstadoOnUpdate,
 } from "@/lib/mascota-estado";
 import { notifyMatchDetectorAsync } from "@/lib/match-detector-notify";
 import {
@@ -444,7 +445,11 @@ export async function actualizarMascota(
       return { error: "Enlace no válido o registro no encontrado.", success: null };
     }
 
-    const estado = parseEstadoMascota(getRequiredSelect(formData, "estado"));
+    const estadoSeleccionado = parseEstadoMascota(getRequiredSelect(formData, "estado"));
+    const estado = resolveMascotaEstadoOnUpdate(
+      getMascotaEstado(registro),
+      estadoSeleccionado,
+    );
 
     const { data, error } = await updateMascotaReportada(
       supabase,

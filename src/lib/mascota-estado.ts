@@ -72,10 +72,43 @@ export function getMascotaEstado(
   return normalizeEstadoMascota(mascota.estado, mascota.tipo_reporte);
 }
 
+/** Mapeo visual: ADOPCION se muestra como EN_RESGUARDO sin alterar la BD. */
+export function getMascotaEstadoForDisplay(
+  mascota: Pick<MascotaReportada, "estado" | "tipo_reporte">,
+): EstadoMascota {
+  const estado = getMascotaEstado(mascota);
+  return estado === "ADOPCION" ? "EN_RESGUARDO" : estado;
+}
+
+export function getMascotaEstadoFormDisplay(estado: EstadoMascota): EstadoMascota {
+  return estado === "ADOPCION" ? "EN_RESGUARDO" : estado;
+}
+
+export function resolveMascotaEstadoOnUpdate(
+  currentEstado: EstadoMascota,
+  selectedEstado: EstadoMascota,
+): EstadoMascota {
+  if (currentEstado === "ADOPCION" && selectedEstado === "EN_RESGUARDO") {
+    return "ADOPCION";
+  }
+  return selectedEstado;
+}
+
+export function matchesMascotaEstadoFilter(
+  mascota: Pick<MascotaReportada, "estado" | "tipo_reporte">,
+  filter: "PERDIDO" | "EN_RESGUARDO",
+): boolean {
+  const estado = getMascotaEstado(mascota);
+  if (filter === "EN_RESGUARDO") {
+    return estado === "EN_RESGUARDO" || estado === "ADOPCION";
+  }
+  return estado === filter;
+}
+
 export function getMascotaEstadoConfig(
   mascota: Pick<MascotaReportada, "estado" | "tipo_reporte">,
 ) {
-  return MASCOTA_ESTADO_CONFIG[getMascotaEstado(mascota)];
+  return MASCOTA_ESTADO_CONFIG[getMascotaEstadoForDisplay(mascota)];
 }
 
 export function isMascotaEstadoActivo(estado: EstadoMascota): boolean {
