@@ -270,6 +270,12 @@ function MascotaCard({ mascota }: { mascota: MascotaReportada }) {
   );
 }
 
+function getRedAyudaDisplayName(fullName: string): string {
+  const trimmed = fullName.trim();
+  if (!trimmed) return trimmed;
+  return trimmed.split(/\s+/)[0] ?? trimmed;
+}
+
 function VoluntarioCard({ voluntario }: { voluntario: RedVoluntario }) {
   const tipoLabels: Record<RedVoluntario["tipo_ayuda"], string> = {
     VETERINARIO: "Veterinario / Clínica",
@@ -289,6 +295,9 @@ function VoluntarioCard({ voluntario }: { voluntario: RedVoluntario }) {
   };
 
   const esVeterinario = voluntario.tipo_ayuda === "VETERINARIO";
+  const displayName = esVeterinario
+    ? voluntario.nombre_o_clinica
+    : getRedAyudaDisplayName(voluntario.nombre_o_clinica);
 
   return (
     <article className="rounded-2xl border-2 border-zinc-200 bg-white p-5 shadow-md">
@@ -297,7 +306,7 @@ function VoluntarioCard({ voluntario }: { voluntario: RedVoluntario }) {
           {voluntario.foto_url ? (
             <Image
               src={voluntario.foto_url}
-              alt={`Logo de ${voluntario.nombre_o_clinica}`}
+              alt={`Logo de ${displayName}`}
               width={72}
               height={72}
               crossOrigin="anonymous"
@@ -315,7 +324,7 @@ function VoluntarioCard({ voluntario }: { voluntario: RedVoluntario }) {
             </div>
             <div className="flex items-start justify-between gap-3">
               <h3 className="min-w-0 text-xl font-bold text-zinc-900">
-                {voluntario.nombre_o_clinica}
+                {displayName}
               </h3>
               <RelativePublishedTime date={voluntario.creado_el} />
             </div>
