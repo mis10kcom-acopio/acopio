@@ -164,8 +164,6 @@ export function MascotaContactActions({
           />
         </div>
 
-        <MascotaShareTextLink mascotaId={mascota.id} />
-
         {mascota.contacto_telefono ? (
           <div className={CARD_PHONE_DISPLAY}>
             <span className="font-medium tabular-nums text-[19.8px] text-zinc-800 sm:text-[16.8px]">
@@ -173,6 +171,8 @@ export function MascotaContactActions({
             </span>
           </div>
         ) : null}
+
+        <MascotaShareTextLink mascotaId={mascota.id} />
       </div>
     );
   }
