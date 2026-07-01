@@ -40,6 +40,7 @@ import {
 } from "@/lib/mascota-zona";
 import { filterMascotasBySearch } from "@/lib/mascota-search";
 import { ZonaFilterPills } from "@/components/ZonaFilterPills";
+import { useScrollChrome } from "@/components/ScrollChromeProvider";
 import { buildTelUrl, buildWhatsAppUrl } from "@/lib/whatsapp";
 import type {
   AcopioMascota,
@@ -533,6 +534,8 @@ function ZoneSearchInput({
   sticky?: boolean;
   footer?: React.ReactNode;
 }) {
+  const { filtersRevealed } = useScrollChrome();
+
   const field = (
     <>
       <Search
@@ -553,7 +556,9 @@ function ZoneSearchInput({
   if (sticky) {
     return (
       <div
-        className={`sticky top-9 z-40 -mx-4 border-b border-amber-200/60 bg-amber-50 px-4 py-2 shadow-sm ${wrapperClassName}`}
+        className={`sticky top-9 z-40 -mx-4 border-b border-amber-200/60 bg-[#FFFBF2] px-4 py-2 shadow-sm transition-transform duration-300 ease ${wrapperClassName} ${
+          filtersRevealed ? "translate-y-0" : "-translate-y-full"
+        }`}
       >
         <div className="relative">{field}</div>
         {footer}

@@ -1,20 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useScrollHideBar } from "@/lib/use-scroll-hide-bar";
+import { useScrollChrome } from "@/components/ScrollChromeProvider";
 import { SUPPORT_WHATSAPP_URL } from "@/lib/support-footer-constants";
 
 export function FixedSupportBar() {
-  const visible = useScrollHideBar();
+  const { filtersRevealed } = useScrollChrome();
+  const footerRevealed = !filtersRevealed;
 
   return (
     <div
-      className={`fixed bottom-0 left-0 right-0 z-50 border-t border-zinc-200 bg-zinc-50 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] transition-transform duration-300 ease-in-out ${
-        visible ? "translate-y-0" : "translate-y-full"
+      className={`fixed bottom-0 left-0 right-0 z-50 border-t border-zinc-200 bg-zinc-50 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] transition-transform duration-300 ease ${
+        footerRevealed ? "translate-y-0" : "translate-y-full"
       }`}
       role="contentinfo"
       aria-label="Soporte por WhatsApp"
-      aria-hidden={!visible}
+      aria-hidden={!footerRevealed}
     >
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-center gap-2 text-center">
         <div className="flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-3">
@@ -26,7 +27,7 @@ export function FixedSupportBar() {
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-600 transition hover:text-[#25D366]"
-            tabIndex={visible ? 0 : -1}
+            tabIndex={footerRevealed ? 0 : -1}
           >
             <svg
               className="h-4 w-4 shrink-0 text-[#25D366]"
@@ -42,7 +43,7 @@ export function FixedSupportBar() {
         <Link
           href="/terminos"
           className="text-xs text-gray-400 transition hover:text-gray-600"
-          tabIndex={visible ? 0 : -1}
+          tabIndex={footerRevealed ? 0 : -1}
         >
           Términos y Privacidad
         </Link>
