@@ -105,7 +105,8 @@ function drawRoundedRectPath(
 function drawStatusBadgePill(
   ctx: CanvasRenderingContext2D,
   estado: EstadoMascota,
-  margin: number,
+  x: number,
+  y: number,
 ): void {
   const config = MASCOTA_ESTADO_CONFIG[estado];
   const label = config.label;
@@ -119,13 +120,13 @@ function drawStatusBadgePill(
   const badgeHeight = fontSize + paddingY * 2;
 
   ctx.fillStyle = config.canvasColor;
-  drawRoundedRectPath(ctx, margin, margin, badgeWidth, badgeHeight, badgeHeight / 2);
+  drawRoundedRectPath(ctx, x, y, badgeWidth, badgeHeight, badgeHeight / 2);
   ctx.fill();
 
   ctx.fillStyle = "#FFFFFF";
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
-  ctx.fillText(label, margin + paddingX, margin + badgeHeight / 2);
+  ctx.fillText(label, x + paddingX, y + badgeHeight / 2);
   ctx.textBaseline = "top";
 }
 
@@ -135,7 +136,7 @@ function drawStatusBanner(
   estado: EstadoMascota,
 ): void {
   const margin = Math.max(24, Math.round(canvasWidth * 0.04));
-  drawStatusBadgePill(ctx, estado, margin);
+  drawStatusBadgePill(ctx, estado, margin, margin);
 }
 
 function drawSectionLabel(
@@ -159,23 +160,25 @@ function drawPhoneBox(
   canvasWidth: number,
   y: number,
   height: number,
+  options: { fontSize?: number; fontWeight?: number } = {},
 ): void {
   const paddingX = 48;
   const boxWidth = canvasWidth - paddingX * 2;
   const radius = 16;
+  const fontSize = options.fontSize ?? 34;
+  const fontWeight = options.fontWeight ?? 500;
 
   ctx.fillStyle = "#FAFAFA";
   drawRoundedRectPath(ctx, paddingX, y, boxWidth, height, radius);
   ctx.fill();
 
-  ctx.strokeStyle = "#E4E4E7";
+  ctx.strokeStyle = "#D4D4D8";
   ctx.lineWidth = 3;
   drawRoundedRectPath(ctx, paddingX, y, boxWidth, height, radius);
   ctx.stroke();
 
-  const fontSize = 34;
-  ctx.font = `500 ${fontSize}px system-ui, -apple-system, sans-serif`;
-  ctx.fillStyle = "#27272A";
+  ctx.font = `${fontWeight} ${fontSize}px system-ui, -apple-system, sans-serif`;
+  ctx.fillStyle = "#18181B";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(phone.trim() || "—", canvasWidth / 2, y + height / 2);
@@ -357,8 +360,225 @@ function truncateTextToLines(
   return lines.join("\n");
 }
 
-/** Cartel vertical 3:4 alineado con la vista detalle móvil. */
-export async function composeMascotaStoryPoster(
+const CARTEL_HEADLINE: Record<EstadoMascota, string> = {
+  PERDIDO: "SE BUSCA",
+  EN_RESGUARDO: "EN RESGUARDO",
+  EN_CASA: "EN CASA",
+  ADOPCION: "BUSCA HOGAR",
+};
+
+const CARTEL_PHONE_LABEL: Record<EstadoMascota, string> = {
+  PERDIDO: "Si lo viste, llama:",
+  EN_RESGUARDO: "Si es tu mascota, llama:",
+  EN_CASA: "Contacto:",
+  ADOPCION: "¿Interesado? Llama:",
+};
+
+function wrapTextCentered(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  centerX: number,
+  y: number,
+  maxWidth: number,
+  lineHeight: number,
+  maxBottom?: number,
+): number {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  let line = "";
+  let currentY = y;
+
+  for (const word of words) {
+    const testLine = line ? `${line} ${word}` : word;
+    if (ctx.measureText(testLine).width > maxWidth && line) {
+      if (maxBottom !== undefined && currentY + lineHeight > maxBottom) {
+        break;
+      }
+      ctx.fillText(line, centerX - ctx.measureText(line).width / 2, currentY);
+      line = word;
+      currentY += lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+
+  if (line && (maxBottom === undefined || currentY + lineHeight <= maxBottom)) {
+    ctx.fillText(line, centerX - ctx.measureText(line).width / 2, currentY);
+    currentY += lineHeight;
+  }
+
+  return currentY;
+}
+
+function drawCartelHeaderBand(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  estado: EstadoMascota,
+): number {
+  const height = 76;
+  const config = MASCOTA_ESTADO_CONFIG[estado];
+
+  ctx.fillStyle = config.canvasColor;
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.fillStyle = "rgba(0,0,0,0.14)";
+  ctx.fillRect(0, height - 4, width, 4);
+
+  ctx.font = "900 44px system-ui, -apple-system, sans-serif";
+  ctx.fillStyle = "#FFFFFF";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(CARTEL_HEADLINE[estado], width / 2, height / 2 - 1);
+  ctx.textBaseline = "top";
+
+  return height;
+}
+
+async function drawFramedPhotoSection(
+  ctx: CanvasRenderingContext2D,
+  data: MascotaPosterInput,
+  width: number,
+  top: number,
+  sectionHeight: number,
+  estado: EstadoMascota,
+): Promise<number> {
+  const inset = 36;
+  const x = inset;
+  const y = top + 12;
+  const frameWidth = width - inset * 2;
+  const frameHeight = sectionHeight - 24;
+  const radius = 22;
+
+  ctx.save();
+  ctx.fillStyle = "rgba(24,24,27,0.1)";
+  drawRoundedRectPath(ctx, x + 5, y + 8, frameWidth, frameHeight, radius);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  drawRoundedRectPath(ctx, x, y, frameWidth, frameHeight, radius);
+  ctx.clip();
+
+  const fotoPrincipal = getMascotaPrimaryFotoUrl(data);
+  if (fotoPrincipal) {
+    try {
+      const img = await loadCrossOriginImage(fotoPrincipal);
+      drawCoverImage(ctx, img, x, y, frameWidth, frameHeight);
+    } catch {
+      ctx.fillStyle = "#FEF3C7";
+      ctx.fillRect(x, y, frameWidth, frameHeight);
+      ctx.font = "bold 96px system-ui, -apple-system, sans-serif";
+      ctx.fillStyle = "#D97706";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("🐾", x + frameWidth / 2, y + frameHeight / 2);
+      ctx.textBaseline = "top";
+    }
+  } else {
+    ctx.fillStyle = "#FEF3C7";
+    ctx.fillRect(x, y, frameWidth, frameHeight);
+    ctx.font = "bold 96px system-ui, -apple-system, sans-serif";
+    ctx.fillStyle = "#D97706";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("🐾", x + frameWidth / 2, y + frameHeight / 2);
+    ctx.textBaseline = "top";
+  }
+
+  ctx.restore();
+
+  ctx.strokeStyle = "#D6D3D1";
+  ctx.lineWidth = 4;
+  drawRoundedRectPath(ctx, x, y, frameWidth, frameHeight, radius);
+  ctx.stroke();
+
+  drawStatusBadgePill(ctx, estado, x + 18, y + 18);
+
+  return y + frameHeight;
+}
+
+function measureWrappedHeight(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+  lineHeight: number,
+  maxLines?: number,
+): number {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return lineHeight;
+
+  let line = "";
+  let lineCount = 1;
+
+  for (const word of words) {
+    const testLine = line ? `${line} ${word}` : word;
+    if (ctx.measureText(testLine).width > maxWidth && line) {
+      line = word;
+      lineCount += 1;
+      if (maxLines !== undefined && lineCount >= maxLines) break;
+    } else {
+      line = testLine;
+    }
+  }
+
+  return lineCount * lineHeight;
+}
+
+function drawZoneHighlightBox(
+  ctx: CanvasRenderingContext2D,
+  zone: string,
+  width: number,
+  paddingX: number,
+  y: number,
+  contentWidth: number,
+): number {
+  const innerPad = 22;
+  const labelSize = 18;
+  const zoneSize = 38;
+  const zoneLineHeight = zoneSize * 1.25;
+  const innerWidth = contentWidth - innerPad * 2;
+
+  ctx.font = `bold ${zoneSize}px system-ui, -apple-system, sans-serif`;
+  const zoneHeight = measureWrappedHeight(
+    ctx,
+    zone,
+    innerWidth,
+    zoneLineHeight,
+    3,
+  );
+  const boxHeight = innerPad + labelSize + 14 + zoneHeight + innerPad;
+
+  ctx.fillStyle = "#FEF3C7";
+  drawRoundedRectPath(ctx, paddingX, y, contentWidth, boxHeight, 18);
+  ctx.fill();
+
+  ctx.strokeStyle = "#F59E0B";
+  ctx.lineWidth = 3;
+  drawRoundedRectPath(ctx, paddingX, y, contentWidth, boxHeight, 18);
+  ctx.stroke();
+
+  ctx.font = `bold ${labelSize}px system-ui, -apple-system, sans-serif`;
+  ctx.fillStyle = "#92400E";
+  ctx.textAlign = "center";
+  ctx.fillText("ZONA / MUNICIPIO", width / 2, y + innerPad);
+
+  ctx.font = `bold ${zoneSize}px system-ui, -apple-system, sans-serif`;
+  ctx.fillStyle = "#18181B";
+  wrapTextCentered(
+    ctx,
+    zone,
+    width / 2,
+    y + innerPad + labelSize + 14,
+    innerWidth,
+    zoneLineHeight,
+    y + boxHeight - innerPad,
+  );
+  ctx.textAlign = "left";
+
+  return y + boxHeight;
+}
+
+/** Cartel vertical 3:4 — diseño clásico (detalle móvil). */
+export async function composeMascotaStoryPosterClassic(
   data: MascotaPosterInput,
 ): Promise<Blob> {
   const width = STORY_POSTER_WIDTH;
@@ -394,7 +614,7 @@ export async function composeMascotaStoryPoster(
   }
 
   const estado = getMascotaEstado(data);
-  drawStatusBadgePill(ctx, estado, 32);
+  drawStatusBadgePill(ctx, estado, 32, 32);
 
   const footerTop = height - footerHeight;
   const phoneBoxHeight = 72;
@@ -455,6 +675,112 @@ export async function composeMascotaStoryPoster(
   await drawCartelFooter(ctx, width, footerTop, footerHeight);
 
   return canvasToJpegBlob(canvas);
+}
+
+/** Cartel vertical 3:4 — diseño búsqueda con jerarquía reforzada. */
+export async function composeMascotaStoryPosterV2(
+  data: MascotaPosterInput,
+): Promise<Blob> {
+  const width = STORY_POSTER_WIDTH;
+  const height = STORY_POSTER_HEIGHT;
+  const paddingX = 48;
+  const contentWidth = width - paddingX * 2;
+  const footerHeight = 130;
+  const photoSectionHeight = 430;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    throw new Error("Canvas no disponible");
+  }
+
+  const estado = getMascotaEstado(data);
+  const displayName = data.nombre_mascota?.trim() || "Mascota reportada";
+
+  ctx.fillStyle = STORY_CARTEL_BG;
+  ctx.fillRect(0, 0, width, height);
+
+  const headerBottom = drawCartelHeaderBand(ctx, width, estado);
+  const photoBottom = await drawFramedPhotoSection(
+    ctx,
+    data,
+    width,
+    headerBottom,
+    photoSectionHeight,
+    estado,
+  );
+
+  const footerTop = height - footerHeight;
+  const phoneBoxHeight = 84;
+  const phoneLabelSize = 22;
+  const phoneBlockHeight = phoneLabelSize + 12 + phoneBoxHeight;
+  const phoneBlockY = footerTop - 28 - phoneBlockHeight;
+
+  let y = photoBottom + 28;
+
+  const nameSize = 56;
+  ctx.font = `900 ${nameSize}px system-ui, -apple-system, sans-serif`;
+  ctx.fillStyle = "#18181B";
+  ctx.textAlign = "center";
+  y =
+    wrapTextCentered(
+      ctx,
+      displayName,
+      width / 2,
+      y,
+      contentWidth,
+      nameSize * 1.12,
+    ) + 22;
+
+  y = drawZoneHighlightBox(
+    ctx,
+    data.ubicacion_zona,
+    width,
+    paddingX,
+    y,
+    contentWidth,
+  );
+  y += 22;
+
+  y = drawSectionLabel(ctx, "CARACTERÍSTICAS", paddingX, y);
+
+  const charSize = 26;
+  const charLineHeight = charSize * 1.45;
+  ctx.font = `${charSize}px system-ui, -apple-system, sans-serif`;
+  ctx.fillStyle = "#52525B";
+  wrapText(
+    ctx,
+    data.caracteristicas,
+    paddingX,
+    y,
+    contentWidth,
+    charLineHeight,
+    phoneBlockY - 16,
+  );
+
+  ctx.font = `bold ${phoneLabelSize}px system-ui, -apple-system, sans-serif`;
+  ctx.fillStyle = "#3F3F46";
+  ctx.textAlign = "center";
+  ctx.fillText(CARTEL_PHONE_LABEL[estado], width / 2, phoneBlockY);
+  ctx.textAlign = "left";
+
+  drawPhoneBox(ctx, data.contacto_telefono, width, phoneBlockY + phoneLabelSize + 12, phoneBoxHeight, {
+    fontSize: 40,
+    fontWeight: 700,
+  });
+  await drawCartelFooter(ctx, width, footerTop, footerHeight);
+
+  return canvasToJpegBlob(canvas);
+}
+
+/** Cartel descargable activo (v2 búsqueda). */
+export async function composeMascotaStoryPoster(
+  data: MascotaPosterInput,
+): Promise<Blob> {
+  return composeMascotaStoryPosterV2(data);
 }
 
 export function downloadMascotaStoryPoster(blob: Blob): void {
