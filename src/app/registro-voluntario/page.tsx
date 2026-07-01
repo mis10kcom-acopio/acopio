@@ -11,7 +11,8 @@ import {
   SubmitButton,
 } from "@/components/forms/FormFields";
 import { ImplicitConsentNotice } from "@/components/forms/ImplicitConsentNotice";
-import { WhatsappOptionalField } from "@/components/forms/WhatsappOptionalField";
+import { OptionalPhoneField } from "@/components/forms/OptionalPhoneField";
+import { WhatsappField } from "@/components/forms/WhatsappField";
 import { initialActionState } from "@/types/actions";
 
 export default function RegistroVoluntarioPage() {
@@ -51,16 +52,9 @@ export default function RegistroVoluntarioPage() {
           placeholder="Ej: Barquisimeto, Petare…"
         />
 
-        <FormField
-          label="Teléfono de contacto"
-          name="contacto_telefono"
-          type="tel"
-          required
-          placeholder="04141234567"
-          hint="Para llamadas y SMS. Obligatorio."
-        />
+        <OptionalPhoneField />
 
-        <WhatsappOptionalField />
+        <WhatsappField />
 
         <FormField
           label="Información Adicional (Servicios, horarios, detalles...)"

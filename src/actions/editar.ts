@@ -5,12 +5,12 @@ import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
 import { buscarRegistroPorIdentificador } from "@/lib/editar-identificador";
 import {
+  getOptionalContactPhone,
   getOptionalSanitizedEspecie,
-  getOptionalSanitizedPhone,
   getOptionalSanitizedText,
-  getRequiredSanitizedPhone,
   getRequiredSanitizedText,
   getRequiredSelect,
+  getRequiredWhatsappPhone,
 } from "@/lib/form-data-security";
 import {
   getMascotaEstado,
@@ -456,8 +456,8 @@ export async function actualizarMascota(
         especie: getOptionalSanitizedEspecie(formData, "especie"),
         caracteristicas: getRequiredSanitizedText(formData, "caracteristicas"),
         ubicacion_zona: getRequiredSanitizedText(formData, "ubicacion_zona"),
-        contacto_telefono: getRequiredSanitizedPhone(formData, "contacto_telefono"),
-        contacto_whatsapp: getOptionalSanitizedPhone(formData, "contacto_whatsapp"),
+        contacto_telefono: getOptionalContactPhone(formData),
+        contacto_whatsapp: getRequiredWhatsappPhone(formData),
       },
       estado,
     );
@@ -509,8 +509,8 @@ export async function actualizarVoluntario(
       .update({
         nombre_o_clinica: getRequiredSanitizedText(formData, "nombre_o_clinica"),
         ubicacion_zona: getRequiredSanitizedText(formData, "ubicacion_zona"),
-        contacto_telefono: getRequiredSanitizedPhone(formData, "contacto_telefono"),
-        contacto_whatsapp: getOptionalSanitizedPhone(formData, "contacto_whatsapp"),
+        contacto_telefono: getOptionalContactPhone(formData),
+        contacto_whatsapp: getRequiredWhatsappPhone(formData),
         informacion_adicional: getOptionalSanitizedText(
           formData,
           "informacion_adicional",
@@ -557,8 +557,8 @@ export async function actualizarAcopio(
         nombre_centro: getRequiredSanitizedText(formData, "nombre_centro"),
         ubicacion_zona: getRequiredSanitizedText(formData, "ubicacion_zona"),
         direccion_exacta: getRequiredSanitizedText(formData, "direccion_exacta"),
-        contacto_telefono: getRequiredSanitizedPhone(formData, "contacto_telefono"),
-        contacto_whatsapp: getOptionalSanitizedPhone(formData, "contacto_whatsapp"),
+        contacto_telefono: getOptionalContactPhone(formData),
+        contacto_whatsapp: getRequiredWhatsappPhone(formData),
         necesidades_urgentes: getRequiredSanitizedText(
           formData,
           "necesidades_urgentes",

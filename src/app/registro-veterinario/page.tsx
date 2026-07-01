@@ -11,6 +11,8 @@ import {
   SubmitButton,
 } from "@/components/forms/FormFields";
 import { ImplicitConsentNotice } from "@/components/forms/ImplicitConsentNotice";
+import { OptionalPhoneField } from "@/components/forms/OptionalPhoneField";
+import { WhatsappField } from "@/components/forms/WhatsappField";
 import { initialActionState } from "@/types/actions";
 
 export default function RegistroVeterinarioPage() {
@@ -41,22 +43,9 @@ export default function RegistroVeterinarioPage() {
           placeholder="Ej: Caracas, Valencia, Maracaibo…"
         />
 
-        <FormField
-          label="Teléfono de contacto"
-          name="contacto_telefono"
-          type="tel"
-          required
-          placeholder="04141234567"
-          hint="Para llamadas y SMS. Obligatorio."
-        />
+        <OptionalPhoneField />
 
-        <FormField
-          label="Número de WhatsApp (Opcional)"
-          name="contacto_whatsapp"
-          type="tel"
-          placeholder="Ej: +584141234567"
-          hint="Si es distinto al teléfono de llamadas."
-        />
+        <WhatsappField />
 
         <FormField
           label="Información Adicional (Servicios, horarios, detalles...)"

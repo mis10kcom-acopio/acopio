@@ -24,7 +24,8 @@ import {
 } from "@/components/forms/FormFields";
 import { EspecieField } from "@/components/forms/EspecieField";
 import { MascotaFotosEditSection } from "@/components/forms/MascotaFotosEditSection";
-import { WhatsappOptionalField } from "@/components/forms/WhatsappOptionalField";
+import { OptionalPhoneField } from "@/components/forms/OptionalPhoneField";
+import { WhatsappField } from "@/components/forms/WhatsappField";
 import { initialActionState } from "@/types/actions";
 import type {
   AcopioMascota,
@@ -148,21 +149,9 @@ export function EditarMascotaPanel({
             defaultValue={registro.ubicacion_zona}
           />
 
-          <FormField
-            label="Teléfono de contacto"
-            name="contacto_telefono"
-            type="tel"
-            required
-            defaultValue={registro.contacto_telefono}
-          />
+          <OptionalPhoneField defaultValue={registro.contacto_telefono} />
 
-          <FormField
-            label="Número de WhatsApp (Opcional)"
-            name="contacto_whatsapp"
-            type="tel"
-            defaultValue={registro.contacto_whatsapp ?? ""}
-            placeholder="Ej: +584141234567"
-          />
+          <WhatsappField defaultStoredValue={registro.contacto_whatsapp ?? ""} />
 
           <SubmitButton>Guardar cambios</SubmitButton>
         </form>
@@ -243,15 +232,9 @@ export function EditarVoluntarioPanel({
             defaultValue={registro.ubicacion_zona}
           />
 
-          <FormField
-            label="Teléfono de contacto"
-            name="contacto_telefono"
-            type="tel"
-            required
-            defaultValue={registro.contacto_telefono}
-          />
+          <OptionalPhoneField defaultValue={registro.contacto_telefono} />
 
-          <WhatsappOptionalField defaultValue={registro.contacto_whatsapp ?? ""} />
+          <WhatsappField defaultStoredValue={registro.contacto_whatsapp ?? ""} />
 
           <FormField
             label="Información Adicional (Servicios, horarios, detalles...)"
@@ -373,21 +356,9 @@ export function EditarAcopioPanel({
             defaultValue={registro.direccion_exacta}
           />
 
-          <FormField
-            label="Teléfono de contacto"
-            name="contacto_telefono"
-            type="tel"
-            required
-            defaultValue={registro.contacto_telefono}
-          />
+          <OptionalPhoneField defaultValue={registro.contacto_telefono} />
 
-          <FormField
-            label="Número de WhatsApp (Opcional)"
-            name="contacto_whatsapp"
-            type="tel"
-            defaultValue={registro.contacto_whatsapp ?? ""}
-            placeholder="Ej: +584141234567"
-          />
+          <WhatsappField defaultStoredValue={registro.contacto_whatsapp ?? ""} />
 
           <FormField
             label="Necesidades urgentes"

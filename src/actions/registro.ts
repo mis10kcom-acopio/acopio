@@ -4,12 +4,12 @@ import { randomUUID } from "crypto";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { redirect } from "next/navigation";
 import {
+  getOptionalContactPhone,
   getOptionalSanitizedEspecie,
-  getOptionalSanitizedPhone,
   getOptionalSanitizedText,
-  getRequiredSanitizedPhone,
   getRequiredSanitizedText,
   getRequiredSelect,
+  getRequiredWhatsappPhone,
 } from "@/lib/form-data-security";
 import {
   assertSubmissionRateLimit,
@@ -98,8 +98,8 @@ export async function registrarMascota(
       especie: getOptionalSanitizedEspecie(formData, "especie"),
       caracteristicas: getRequiredSanitizedText(formData, "caracteristicas"),
       ubicacion_zona: getRequiredSanitizedText(formData, "ubicacion_zona"),
-      contacto_telefono: getRequiredSanitizedPhone(formData, "contacto_telefono"),
-      contacto_whatsapp: getOptionalSanitizedPhone(formData, "contacto_whatsapp"),
+      contacto_telefono: getOptionalContactPhone(formData),
+      contacto_whatsapp: getRequiredWhatsappPhone(formData),
       foto_url: fotoUrl,
       token_edicion: token,
     };
@@ -126,8 +126,7 @@ export async function registrarMascota(
 
     await recordSuccessfulSubmission();
 
-    const telefono =
-      payload.contacto_whatsapp ?? payload.contacto_telefono;
+    const telefono = payload.contacto_whatsapp;
     const baseUrl = await getSiteBaseUrl();
 
     return {
@@ -158,14 +157,8 @@ export async function registrarVoluntario(
       VOLUNTARIOS_FOLDER,
     );
 
-    const contactoTelefono = getRequiredSanitizedPhone(
-      formData,
-      "contacto_telefono",
-    );
-    const contactoWhatsapp = getOptionalSanitizedPhone(
-      formData,
-      "contacto_whatsapp",
-    );
+    const contactoTelefono = getOptionalContactPhone(formData);
+    const contactoWhatsapp = getRequiredWhatsappPhone(formData);
 
     const { error } = await supabase.from("red_voluntarios").insert({
       tipo_ayuda: parseTipoAyudaVoluntario(getRequiredSelect(formData, "tipo_ayuda")),
@@ -187,7 +180,7 @@ export async function registrarVoluntario(
     }
 
     await recordSuccessfulSubmission();
-    redirectExito(token, contactoWhatsapp ?? contactoTelefono);
+    redirectExito(token, contactoWhatsapp);
   } catch (error) {
     if (isRedirectError(error)) throw error;
     return handleActionError(error);
@@ -210,14 +203,8 @@ export async function registrarVeterinario(
       VOLUNTARIOS_FOLDER,
     );
 
-    const contactoTelefono = getRequiredSanitizedPhone(
-      formData,
-      "contacto_telefono",
-    );
-    const contactoWhatsapp = getOptionalSanitizedPhone(
-      formData,
-      "contacto_whatsapp",
-    );
+    const contactoTelefono = getOptionalContactPhone(formData);
+    const contactoWhatsapp = getRequiredWhatsappPhone(formData);
 
     const { error } = await supabase.from("red_voluntarios").insert({
       tipo_ayuda: "VETERINARIO",
@@ -239,7 +226,7 @@ export async function registrarVeterinario(
     }
 
     await recordSuccessfulSubmission();
-    redirectExito(token, contactoWhatsapp ?? contactoTelefono);
+    redirectExito(token, contactoWhatsapp);
   } catch (error) {
     if (isRedirectError(error)) throw error;
     return handleActionError(error);
@@ -257,14 +244,8 @@ export async function registrarAcopio(
     const supabase = getSupabaseAdmin();
     const token = randomUUID();
 
-    const contactoTelefono = getRequiredSanitizedPhone(
-      formData,
-      "contacto_telefono",
-    );
-    const contactoWhatsapp = getOptionalSanitizedPhone(
-      formData,
-      "contacto_whatsapp",
-    );
+    const contactoTelefono = getOptionalContactPhone(formData);
+    const contactoWhatsapp = getRequiredWhatsappPhone(formData);
 
     const { error } = await supabase.from("acopio_mascotas").insert({
       nombre_centro: getRequiredSanitizedText(formData, "nombre_centro"),
@@ -285,7 +266,7 @@ export async function registrarAcopio(
     }
 
     await recordSuccessfulSubmission();
-    redirectExito(token, contactoWhatsapp ?? contactoTelefono);
+    redirectExito(token, contactoWhatsapp);
   } catch (error) {
     if (isRedirectError(error)) throw error;
     return handleActionError(error);

@@ -11,8 +11,10 @@ import {
   FormSuccess,
   SubmitButton,
 } from "@/components/forms/FormFields";
-import { FotoFileFieldWithPreview } from "@/components/forms/FotoFileFieldWithPreview";
+import { OptionalPhoneField } from "@/components/forms/OptionalPhoneField";
+import { WhatsappField } from "@/components/forms/WhatsappField";
 import { EspecieField } from "@/components/forms/EspecieField";
+import { FotoFileFieldWithPreview } from "@/components/forms/FotoFileFieldWithPreview";
 import { ImplicitConsentNotice } from "@/components/forms/ImplicitConsentNotice";
 import { initialActionState } from "@/types/actions";
 
@@ -89,22 +91,9 @@ export function MascotaRegistroForm() {
         placeholder="Ej: Chacao, Los Teques, Maracaibo…"
       />
 
-      <FormField
-        label="Teléfono de contacto"
-        name="contacto_telefono"
-        type="tel"
-        required
-        placeholder="04141234567"
-        hint="Para llamadas y SMS. Obligatorio."
-      />
+      <OptionalPhoneField />
 
-      <FormField
-        label="Número de WhatsApp (Opcional)"
-        name="contacto_whatsapp"
-        type="tel"
-        placeholder="Ej: +584141234567"
-        hint="Si es distinto al teléfono de llamadas. El botón de WhatsApp solo aparece si lo indicas."
-      />
+      <WhatsappField />
 
       <FotoFileFieldWithPreview
         label="Foto de la mascota"
@@ -150,22 +139,9 @@ export function AcopioRegistroForm() {
         placeholder="Calle, referencia, punto de encuentro…"
       />
 
-      <FormField
-        label="Teléfono de contacto"
-        name="contacto_telefono"
-        type="tel"
-        required
-        placeholder="04141234567"
-        hint="Para llamadas y SMS. Obligatorio."
-      />
+      <OptionalPhoneField />
 
-      <FormField
-        label="Número de WhatsApp (Opcional)"
-        name="contacto_whatsapp"
-        type="tel"
-        placeholder="Ej: +584141234567"
-        hint="Si es distinto al teléfono de llamadas."
-      />
+      <WhatsappField />
 
       <FormField
         label="Necesidades urgentes"
