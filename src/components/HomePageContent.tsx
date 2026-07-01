@@ -16,11 +16,10 @@ import { MascotaFotosCarousel } from "@/components/MascotaFotosCarousel";
 import { getMascotaFotos } from "@/lib/mascota-fotos";
 import {
   MASCOTAS_PER_PAGE,
-  MascotasPagination,
+  MascotasLoadMore,
 } from "@/components/MascotasPagination";
 import { MascotaSortFilterPills } from "@/components/MascotaSortFilterPills";
 import { sortMascotasByPublishedDate } from "@/lib/mascota-sort";
-import { scrollToElement } from "@/lib/use-scroll-hide-bar";
 import { RelativePublishedTime } from "@/components/RelativePublishedTime";
 import { VenezuelaLocalClock } from "@/components/VenezuelaLocalClock";
 import {
@@ -245,7 +244,7 @@ function MascotaListItemMobile({ mascota }: { mascota: MascotaReportada }) {
   const fotoPrincipal = fotos[0] ?? null;
   const detailHref = buildMascotaPublicPath(mascota.id);
   const displayName = mascota.nombre_mascota?.trim() || "Mascota reportada";
-  const photoSize = 67;
+  const photoSize = 80;
 
   const photoContent = fotoPrincipal ? (
     <Image
@@ -253,13 +252,13 @@ function MascotaListItemMobile({ mascota }: { mascota: MascotaReportada }) {
       alt={displayName}
       width={photoSize}
       height={photoSize}
-      className="h-[67px] w-[67px] rounded-lg object-cover"
+      className="h-[80px] w-[80px] rounded-lg object-cover"
       sizes={`${photoSize}px`}
     />
   ) : (
     <MascotaFotoPlaceholder
-      className="h-[67px] w-[67px] shrink-0 rounded-lg"
-      iconClassName="h-7 w-7"
+      className="h-[80px] w-[80px] shrink-0 rounded-lg"
+      iconClassName="h-8 w-8"
     />
   );
 
@@ -654,11 +653,10 @@ export function HomePageContent({ data }: { data: HomePageData }) {
   const [acopioStockFilters, setAcopioStockFilters] = useState<EstadoStock[]>(
     [],
   );
-  const [mascotaPage, setMascotaPage] = useState(1);
+  const [mascotasVisibleCount, setMascotasVisibleCount] =
+    useState(MASCOTAS_PER_PAGE);
   const mascotasCardsRef = useRef<HTMLDivElement>(null);
   const sectionContentRef = useRef<HTMLDivElement>(null);
-  const shouldScrollToCardsRef = useRef(false);
-  const mascotasPerPage = MASCOTAS_PER_PAGE;
 
   const redAyuda = useMemo(
     () =>
@@ -717,27 +715,19 @@ export function HomePageContent({ data }: { data: HomePageData }) {
     return filterMascotasByEspecie(bySearch, especieFilter);
   }, [resolvedMascotas, searchQuery, especieFilter]);
 
-  const totalMascotaPages = Math.max(
-    1,
-    Math.ceil(sortedMascotas.length / mascotasPerPage),
+  const visibleMascotas = useMemo(
+    () => sortedMascotas.slice(0, mascotasVisibleCount),
+    [sortedMascotas, mascotasVisibleCount],
   );
 
-  const safeMascotaPage = Math.min(mascotaPage, totalMascotaPages);
-
-  const paginatedMascotas = useMemo(() => {
-    const start = (safeMascotaPage - 1) * mascotasPerPage;
-    return sortedMascotas.slice(start, start + mascotasPerPage);
-  }, [sortedMascotas, safeMascotaPage, mascotasPerPage]);
-
   useEffect(() => {
-    setMascotaPage(1);
+    setMascotasVisibleCount(MASCOTAS_PER_PAGE);
   }, [
     searchQuery,
     especieFilter,
     mascotaEstadoFilter,
     zonaFilter,
     mascotaSortOrder,
-    mascotasPerPage,
   ]);
 
   useEffect(() => {
@@ -746,11 +736,11 @@ export function HomePageContent({ data }: { data: HomePageData }) {
     setZonaFilter(null);
   }, [zonaFilter, zonaFilterOptions]);
 
-  useEffect(() => {
-    if (!shouldScrollToCardsRef.current) return;
-    shouldScrollToCardsRef.current = false;
-    scrollToElement(mascotasCardsRef.current, 96);
-  }, [safeMascotaPage]);
+  function handleLoadMoreMascotas() {
+    setMascotasVisibleCount((current) =>
+      Math.min(current + MASCOTAS_PER_PAGE, sortedMascotas.length),
+    );
+  }
 
   function scrollToActiveSection() {
     window.setTimeout(() => {
@@ -759,14 +749,6 @@ export function HomePageContent({ data }: { data: HomePageData }) {
         block: "start",
       });
     }, 100);
-  }
-
-  function handleMascotaPageChange(nextPage: number) {
-    if (nextPage < 1 || nextPage > totalMascotaPages || nextPage === safeMascotaPage) {
-      return;
-    }
-    shouldScrollToCardsRef.current = true;
-    setMascotaPage(nextPage);
   }
 
   const filteredRedAyuda = useMemo(() => {
@@ -998,15 +980,15 @@ export function HomePageContent({ data }: { data: HomePageData }) {
                   id="mascotas-cards"
                 >
                   <div className="mt-5 flex flex-col border-y border-zinc-200 bg-white md:grid md:grid-cols-2 md:gap-5 md:border-y-0 md:bg-transparent xl:grid-cols-4">
-                    {paginatedMascotas.map((mascota) => (
+                    {visibleMascotas.map((mascota) => (
                       <MascotaCard key={mascota.id} mascota={mascota} />
                     ))}
                   </div>
                 </div>
-                <MascotasPagination
-                  page={safeMascotaPage}
-                  totalPages={totalMascotaPages}
-                  onPageChange={handleMascotaPageChange}
+                <MascotasLoadMore
+                  visibleCount={visibleMascotas.length}
+                  totalCount={sortedMascotas.length}
+                  onLoadMore={handleLoadMoreMascotas}
                 />
                 <MascotasEnCasaSlider mascotas={enCasaForSlider} />
               </>

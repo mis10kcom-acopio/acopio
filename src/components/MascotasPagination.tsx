@@ -1,52 +1,30 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+export const MASCOTAS_PER_PAGE = 50;
 
-export function MascotasPagination({
-  page,
-  totalPages,
-  onPageChange,
+export function MascotasLoadMore({
+  visibleCount,
+  totalCount,
+  onLoadMore,
 }: {
-  page: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
+  visibleCount: number;
+  totalCount: number;
+  onLoadMore: () => void;
 }) {
-  if (totalPages <= 1) {
+  if (visibleCount >= totalCount) {
     return null;
   }
 
   return (
-    <nav
-      className="mt-6 flex items-center justify-center gap-3 sm:gap-4"
-      aria-label="Paginación de mascotas"
-    >
+    <div className="mt-6 flex justify-center">
       <button
         type="button"
-        onClick={() => onPageChange(page - 1)}
-        disabled={page <= 1}
-        className="inline-flex items-center gap-1 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
-        aria-label="Página anterior"
+        onClick={onLoadMore}
+        className="rounded-xl border-2 border-amber-300 bg-amber-50 px-6 py-3 text-sm font-bold text-amber-900 transition hover:bg-amber-100 sm:text-base"
+        aria-label={`Ver más mascotas. Mostrando ${visibleCount} de ${totalCount}`}
       >
-        <ChevronLeft className="h-4 w-4" aria-hidden />
-        <span className="hidden sm:inline">Anterior</span>
+        Ver más
       </button>
-
-      <span className="min-w-[7rem] text-center text-sm font-semibold text-zinc-700">
-        Página {page} de {totalPages}
-      </span>
-
-      <button
-        type="button"
-        onClick={() => onPageChange(page + 1)}
-        disabled={page >= totalPages}
-        className="inline-flex items-center gap-1 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
-        aria-label="Página siguiente"
-      >
-        <span className="hidden sm:inline">Siguiente</span>
-        <ChevronRight className="h-4 w-4" aria-hidden />
-      </button>
-    </nav>
+    </div>
   );
 }
-
-export const MASCOTAS_PER_PAGE = 50;
