@@ -245,20 +245,21 @@ function MascotaListItemMobile({ mascota }: { mascota: MascotaReportada }) {
   const fotoPrincipal = fotos[0] ?? null;
   const detailHref = buildMascotaPublicPath(mascota.id);
   const displayName = mascota.nombre_mascota?.trim() || "Mascota reportada";
+  const photoSize = 67;
 
   const photoContent = fotoPrincipal ? (
     <Image
       src={fotoPrincipal}
       alt={displayName}
-      width={56}
-      height={56}
-      className="h-14 w-14 rounded-lg object-cover"
-      sizes="56px"
+      width={photoSize}
+      height={photoSize}
+      className="h-[67px] w-[67px] rounded-lg object-cover"
+      sizes={`${photoSize}px`}
     />
   ) : (
     <MascotaFotoPlaceholder
-      className="h-14 w-14 shrink-0 rounded-lg"
-      iconClassName="h-6 w-6"
+      className="h-[67px] w-[67px] shrink-0 rounded-lg"
+      iconClassName="h-7 w-7"
     />
   );
 
