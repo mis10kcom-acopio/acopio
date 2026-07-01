@@ -4,8 +4,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ActivityTickerShell } from "@/components/ActivityTickerShell";
 import {
   FIXED_SUPPORT_BAR_PADDING,
-  SupportFooter,
+  StaticSupportFooter,
 } from "@/components/SupportFooter";
+import { FixedSupportBar } from "@/components/FixedSupportBar";
 import {
   DEFAULT_OG_IMAGE,
   SITE_NAME,
@@ -99,12 +100,13 @@ export default async function RootLayout({
       lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-zinc-50">
+      <body className="flex min-h-screen flex-col bg-zinc-50 antialiased">
         <ActivityTickerShell />
-        <div className={`bg-gradient-to-b from-amber-50 to-zinc-50 ${FIXED_SUPPORT_BAR_PADDING}`}>
-          {children}
+        <div className="flex flex-1 flex-col bg-gradient-to-b from-amber-50 to-zinc-50">
+          <div className={`flex-1 ${FIXED_SUPPORT_BAR_PADDING}`}>{children}</div>
+          <StaticSupportFooter />
         </div>
-        <SupportFooter />
+        <FixedSupportBar />
         <GoogleAnalytics gaId="G-ZT47MKQTXM" />
       </body>
     </html>
