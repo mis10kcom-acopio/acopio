@@ -52,8 +52,9 @@ export function HomeHeader() {
             Huellas a Salvo
           </h1>
           <p className="mt-2 max-w-2xl text-base leading-snug text-zinc-600 sm:text-lg">
-            Plataforma de emergencia en Venezuela para reportar mascotas
-            perdidas, ubicar ayuda veterinaria y organizar centros de acopio.
+            Plataforma de apoyo animal en Venezuela sin fines de lucro. Reporta
+            aquí mascotas perdidas o encontradas, ayuda veterinaria, centros de
+            acopio, hogar temporal, voluntarios.
           </p>
           <p className="mt-2 flex items-center justify-center gap-2 text-xs text-gray-500 sm:text-sm">
             <span
