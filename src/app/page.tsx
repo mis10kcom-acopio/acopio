@@ -1,5 +1,6 @@
 import { HomeHeader } from "@/components/HomeHeader";
 import { HomePageContent } from "@/components/HomePageContent";
+import { normalizeMascotaAvistamientoCount } from "@/lib/avistamientos";
 import { getSupabase } from "@/lib/supabase";
 import type { HomePageData } from "@/types/database";
 
@@ -11,7 +12,7 @@ async function fetchHomeData(): Promise<HomePageData> {
   const [mascotasResult, voluntariosResult, acopiosResult] = await Promise.all([
     supabase
       .from("mascotas_reportadas")
-      .select("*")
+      .select("*, avistamientos(count)")
       .order("creado_el", { ascending: false }),
     supabase
       .from("red_voluntarios")
@@ -39,7 +40,9 @@ async function fetchHomeData(): Promise<HomePageData> {
   }
 
   return {
-    mascotas: mascotasResult.data ?? [],
+    mascotas: (mascotasResult.data ?? []).map((row) =>
+      normalizeMascotaAvistamientoCount(row),
+    ),
     voluntarios: voluntariosResult.data ?? [],
     acopios: acopiosResult.data ?? [],
   };

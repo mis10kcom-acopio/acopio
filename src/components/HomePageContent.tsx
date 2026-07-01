@@ -10,6 +10,7 @@ import {
   MascotaEstadoFilterPills,
   type MascotaEstadoFilterId,
 } from "@/components/MascotaEstadoFilterPills";
+import { MascotaAvistamientoCountBadge } from "@/components/MascotaAvistamientoCountBadge";
 import { MascotaContactActions } from "@/components/MascotaShareButton";
 import { MascotaFotoPlaceholder } from "@/components/MascotaFotoPlaceholder";
 import { MascotaFotosCarousel } from "@/components/MascotaFotosCarousel";
@@ -307,6 +308,11 @@ function MascotaListItemMobile({
           <p className="truncate text-[11px] leading-tight text-zinc-600">
             <span aria-hidden>📍</span> {mascota.ubicacion_zona}
           </p>
+          <MascotaAvistamientoCountBadge
+            count={mascota.avistamientos_count}
+            size="compact"
+            className="mt-0.5"
+          />
         </Link>
 
         <div className="flex shrink-0 flex-col justify-end pb-0.5">
@@ -361,6 +367,7 @@ function MascotaCardDesktop({ mascota }: { mascota: MascotaReportada }) {
               {mascota.ubicacion_zona}
             </p>
           </div>
+          <MascotaAvistamientoCountBadge count={mascota.avistamientos_count} />
         </div>
       </Link>
       <div className="px-5 pb-5">
@@ -1006,16 +1013,27 @@ export function HomePageContent({ data }: { data: HomePageData }) {
                         className="lg:justify-end"
                       />
                     </div>
-                    <div className="flex flex-wrap items-start gap-2">
-                      <ZonaFilterPills
-                        options={zonaFilterOptions}
-                        value={zonaFilter}
-                        onChange={setZonaFilter}
-                      />
-                      <MascotaSortFilterPills
-                        value={mascotaSortOrder}
-                        onChange={setMascotaSortOrder}
-                      />
+                    <div className="flex flex-col gap-2 lg:flex-row lg:flex-wrap lg:items-start lg:justify-between">
+                      <div className="flex flex-wrap items-start gap-2">
+                        <ZonaFilterPills
+                          options={zonaFilterOptions}
+                          value={zonaFilter}
+                          onChange={setZonaFilter}
+                        />
+                        <MascotaSortFilterPills
+                          value={mascotaSortOrder}
+                          onChange={setMascotaSortOrder}
+                        />
+                      </div>
+                      <p className="flex items-start gap-1.5 text-sm italic text-zinc-600 lg:max-w-md lg:pt-1">
+                        <span aria-hidden className="shrink-0">
+                          ℹ️
+                        </span>
+                        <span>
+                          Si los has visto haz un comentario en la tarjeta de la
+                          mascota haciendo clic sobre ella
+                        </span>
+                      </p>
                     </div>
                   </div>
                 }

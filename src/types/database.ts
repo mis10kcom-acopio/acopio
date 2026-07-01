@@ -33,6 +33,7 @@ export interface MascotaReportada {
   estado: EstadoMascota;
   token_edicion: string;
   creado_el: string;
+  avistamientos_count?: number;
 }
 export interface RedVoluntario {
   id: string;
