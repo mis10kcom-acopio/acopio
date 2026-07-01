@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { MascotaDetailView } from "@/components/MascotaDetailView";
 import { getMascotaEstadoConfig } from "@/lib/mascota-estado";
 import { getMascotaPrimaryFotoUrl } from "@/lib/mascota-fotos";
+import { fetchAvistamientosByMascotaId } from "@/lib/avistamientos";
 import { buildMascotaPublicUrl } from "@/lib/mascota-url";
 import { getSupabase } from "@/lib/supabase";
 import type { MascotaReportada } from "@/types/database";
@@ -59,7 +60,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function MascotaPublicPage({ params }: PageProps) {
   const { id } = await params;
-  const mascota = await fetchMascotaById(id);
+  const [mascota, avistamientos] = await Promise.all([
+    fetchMascotaById(id),
+    fetchAvistamientosByMascotaId(id).catch(() => []),
+  ]);
 
   if (!mascota) {
     notFound();
@@ -68,7 +72,7 @@ export default async function MascotaPublicPage({ params }: PageProps) {
   return (
     <main className="min-h-screen bg-gradient-to-b from-amber-50 to-zinc-50">
       <div className="mx-auto max-w-2xl px-3 py-5 sm:px-4 sm:py-10">
-        <MascotaDetailView mascota={mascota} />
+        <MascotaDetailView mascota={mascota} avistamientos={avistamientos} />
       </div>
     </main>
   );

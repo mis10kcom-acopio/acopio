@@ -1,18 +1,21 @@
 import Link from "next/link";
 import { RelativePublishedTime } from "@/components/RelativePublishedTime";
 import { MascotaDetailCloseButton } from "@/components/MascotaDetailCloseButton";
+import { MascotaAvistamientosSection } from "@/components/MascotaAvistamientosSection";
 import { MascotaContactActions } from "@/components/MascotaShareButton";
 import { MascotaFotosCarousel } from "@/components/MascotaFotosCarousel";
 import { getMascotaEstadoConfig } from "@/lib/mascota-estado";
 import { getMascotaFotos } from "@/lib/mascota-fotos";
 
-import type { MascotaReportada } from "@/types/database";
+import type { Avistamiento, MascotaReportada } from "@/types/database";
 
 export function MascotaDetailView({
   mascota,
+  avistamientos = [],
   showBackLink = true,
 }: {
   mascota: MascotaReportada;
+  avistamientos?: Avistamiento[];
   showBackLink?: boolean;
 }) {
   const estadoConfig = getMascotaEstadoConfig(mascota);
@@ -77,6 +80,11 @@ export function MascotaDetailView({
         </section>
 
         <MascotaContactActions mascota={mascota} layout="card" />
+
+        <MascotaAvistamientosSection
+          mascotaId={mascota.id}
+          initialAvistamientos={avistamientos}
+        />
       </div>
     </article>
   );

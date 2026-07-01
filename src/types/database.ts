@@ -8,6 +8,16 @@ export type EstadoMascota = "PERDIDO" | "EN_RESGUARDO" | "EN_CASA" | "ADOPCION";
 export type TipoAyuda = "VETERINARIO" | "HOGAR_TEMPORAL" | "RESCATISTA" | "TRANSPORTE";
 export type DisponibilidadVoluntario = "DISPONIBLE" | "LLENO/NO_DISPONIBLE";
 export type EstadoStock = "CRITICO" | "MODERADO" | "ABASTECIDO";
+
+export interface Avistamiento {
+  id: string;
+  mascota_id: string;
+  nombre_usuario: string | null;
+  comentario: string;
+  zona_avistamiento: string | null;
+  creado_el: string;
+}
+
 export interface MascotaReportada {
   id: string;
   tipo_reporte: TipoReporte;
