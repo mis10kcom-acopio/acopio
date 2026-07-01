@@ -38,13 +38,13 @@ export function WhatsappField({
         Número de WhatsApp
         <span className="text-red-500"> *</span>
       </label>
-      <div className="mt-1 flex gap-2">
+      <div className="mt-1 grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-stretch gap-2">
         <select
           id="contacto_whatsapp_codigo"
           name="contacto_whatsapp_codigo"
           required
           defaultValue={dialCode || DEFAULT_WHATSAPP_DIAL_CODE}
-          className={`${inputClassName} w-auto min-w-[9.5rem] shrink-0`}
+          className={`${inputClassName} min-w-0 text-sm sm:text-base`}
           aria-label="Código de país de WhatsApp"
         >
           {WHATSAPP_COUNTRY_OPTIONS.map((option) => (
@@ -69,7 +69,7 @@ export function WhatsappField({
           minLength={7}
           maxLength={15}
           onInput={handleNumberInput}
-          className={`${inputClassName} min-w-0 flex-1`}
+          className={`${inputClassName} min-w-0`}
         />
       </div>
       {hint ? <p className="mt-1 text-xs text-zinc-500">{hint}</p> : null}

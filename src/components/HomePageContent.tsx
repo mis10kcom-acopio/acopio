@@ -186,10 +186,31 @@ function Badge({
 function ContactActions({
   telefono,
   whatsapp,
+  whatsappOnly = false,
 }: {
   telefono: string;
   whatsapp: string | null;
+  whatsappOnly?: boolean;
 }) {
+  const whatsappButtonClassName =
+    "inline-flex min-h-[2.75rem] w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-base font-bold text-white shadow-sm transition hover:bg-[#1da851] sm:w-auto";
+
+  if (whatsappOnly) {
+    const contactTarget = whatsapp ?? telefono;
+    if (!contactTarget) return null;
+
+    return (
+      <a
+        href={buildWhatsAppUrl(contactTarget)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={whatsappButtonClassName}
+      >
+        WhatsApp
+      </a>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
       <div>
@@ -208,7 +229,7 @@ function ContactActions({
           href={buildWhatsAppUrl(whatsapp)}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex min-h-[2.75rem] items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-2.5 text-base font-bold text-white shadow-sm transition hover:bg-[#1da851]"
+          className={whatsappButtonClassName}
         >
           WhatsApp
         </a>
@@ -342,6 +363,7 @@ function VoluntarioCard({ voluntario }: { voluntario: RedVoluntario }) {
           <ContactActions
             telefono={voluntario.contacto_telefono}
             whatsapp={voluntario.contacto_whatsapp}
+            whatsappOnly={!esVeterinario}
           />
           {voluntario.informacion_adicional ? (
             <div className="rounded-xl bg-amber-50/80 px-4 py-3">
