@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { MascotasEnCasaSlider } from "@/components/MascotasEnCasaSlider";
 import { EspecieFilterPills } from "@/components/EspecieFilterPills";
 import { AcopioStockFilterPills } from "@/components/AcopioStockFilterPills";
@@ -11,6 +11,7 @@ import {
   type MascotaEstadoFilterId,
 } from "@/components/MascotaEstadoFilterPills";
 import { MascotaContactActions } from "@/components/MascotaShareButton";
+import { MascotaFotoPlaceholder } from "@/components/MascotaFotoPlaceholder";
 import { MascotaFotosCarousel } from "@/components/MascotaFotosCarousel";
 import { getMascotaFotos } from "@/lib/mascota-fotos";
 import {
@@ -238,12 +239,66 @@ function ContactActions({
   );
 }
 
-function MascotaCard({ mascota }: { mascota: MascotaReportada }) {
+function MascotaListItemMobile({ mascota }: { mascota: MascotaReportada }) {
+  const estadoConfig = getMascotaEstadoConfig(mascota);
+  const fotos = getMascotaFotos(mascota);
+  const fotoPrincipal = fotos[0] ?? null;
+  const detailHref = buildMascotaPublicPath(mascota.id);
+  const displayName = mascota.nombre_mascota?.trim() || "Mascota reportada";
+
+  return (
+    <article className="relative flex max-h-20 gap-2.5 border-b border-zinc-200 bg-white py-2 md:hidden">
+      <Link
+        href={detailHref}
+        className="absolute inset-0 z-0"
+        aria-label={`Ver reporte de ${displayName}`}
+      />
+      <div className="relative z-10 shrink-0 pointer-events-none">
+        {fotoPrincipal ? (
+          <Image
+            src={fotoPrincipal}
+            alt={displayName}
+            width={56}
+            height={56}
+            className="h-14 w-14 rounded-lg object-cover"
+            sizes="56px"
+          />
+        ) : (
+          <MascotaFotoPlaceholder
+            className="h-14 w-14 shrink-0 rounded-lg"
+            iconClassName="h-6 w-6"
+          />
+        )}
+      </div>
+      <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-center gap-0.5 overflow-hidden">
+        <div className="pointer-events-none flex min-w-0 items-center gap-1.5">
+          <h3 className="min-w-0 truncate text-sm font-bold leading-tight text-zinc-900">
+            {displayName}
+          </h3>
+          <span
+            className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none text-white ${estadoConfig.badgeClass}`}
+          >
+            {estadoConfig.label}
+          </span>
+        </div>
+        <p className="pointer-events-none truncate text-xs leading-tight text-zinc-600">
+          {mascota.caracteristicas}
+        </p>
+        <p className="pointer-events-none truncate text-xs leading-tight text-zinc-500">
+          <span aria-hidden>📍</span> {mascota.ubicacion_zona}
+        </p>
+        <MascotaContactActions mascota={mascota} layout="list" />
+      </div>
+    </article>
+  );
+}
+
+function MascotaCardDesktop({ mascota }: { mascota: MascotaReportada }) {
   const estadoConfig = getMascotaEstadoConfig(mascota);
   const fotos = getMascotaFotos(mascota);
 
   return (
-    <article className="overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white shadow-md transition hover:border-zinc-300 hover:shadow-lg">
+    <article className="hidden overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white shadow-md transition hover:border-zinc-300 hover:shadow-lg md:block">
       <Link href={buildMascotaPublicPath(mascota.id)} className="block bg-white">
         <div className="relative">
           <MascotaFotosCarousel
@@ -288,6 +343,15 @@ function MascotaCard({ mascota }: { mascota: MascotaReportada }) {
         <MascotaContactActions mascota={mascota} />
       </div>
     </article>
+  );
+}
+
+function MascotaCard({ mascota }: { mascota: MascotaReportada }) {
+  return (
+    <Fragment>
+      <MascotaListItemMobile mascota={mascota} />
+      <MascotaCardDesktop mascota={mascota} />
+    </Fragment>
   );
 }
 
@@ -903,7 +967,7 @@ export function HomePageContent({ data }: { data: HomePageData }) {
                   className="scroll-mt-24"
                   id="mascotas-cards"
                 >
-                  <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="mt-5 flex flex-col border-y border-zinc-200 bg-white md:grid md:grid-cols-2 md:gap-5 md:border-y-0 md:bg-transparent xl:grid-cols-4">
                     {paginatedMascotas.map((mascota) => (
                       <MascotaCard key={mascota.id} mascota={mascota} />
                     ))}

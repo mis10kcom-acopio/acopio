@@ -10,6 +10,9 @@ import type { MascotaReportada } from "@/types/database";
 const CARD_ACTION_BTN =
   "inline-flex min-h-[2.5rem] w-full min-w-0 items-center justify-center rounded-lg px-2 py-2 text-center text-xs font-semibold leading-tight shadow-sm transition sm:min-h-[2.75rem] sm:px-3 sm:text-sm";
 
+const LIST_ACTION_BTN =
+  "inline-flex min-h-7 w-full min-w-0 items-center justify-center rounded-md px-1.5 py-1 text-center text-[10px] font-semibold leading-none shadow-sm transition";
+
 const CARD_PHONE_DISPLAY =
   "flex min-h-[2.5rem] w-full min-w-0 items-center justify-center rounded-lg border-2 border-zinc-200 bg-zinc-50 px-2 py-2 text-center sm:min-h-[2.75rem] sm:px-3";
 
@@ -137,10 +140,39 @@ export function MascotaContactActions({
   layout = "card",
 }: {
   mascota: MascotaReportada;
-  layout?: "card" | "detail";
+  layout?: "card" | "detail" | "list";
 }) {
   const isDetail = layout === "detail";
+  const isList = layout === "list";
   const actionBtn = isDetail ? DETAIL_ACTION_BTN : CARD_ACTION_BTN;
+  const compactBtn = LIST_ACTION_BTN;
+
+  if (isList) {
+    return (
+      <div
+        className="relative z-20 grid grid-cols-2 gap-1.5 pointer-events-auto [&>*]:min-w-0"
+        onClick={(event) => event.stopPropagation()}
+      >
+        {mascota.contacto_whatsapp ? (
+          <a
+            href={buildWhatsAppUrl(mascota.contacto_whatsapp)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`${compactBtn} bg-[#25D366] text-white hover:bg-[#1da851]`}
+          >
+            WhatsApp
+          </a>
+        ) : null}
+        <MascotaCartelButton
+          mascota={mascota}
+          layout="card"
+          className={`!min-h-7 !rounded-md !px-1.5 !py-1 !text-[10px] !font-semibold !leading-none ${
+            mascota.contacto_whatsapp ? "" : "col-span-2"
+          }`}
+        />
+      </div>
+    );
+  }
 
   if (!isDetail) {
     return (
