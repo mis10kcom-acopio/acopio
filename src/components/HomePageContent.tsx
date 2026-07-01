@@ -15,11 +15,11 @@ import { MascotaFotoPlaceholder } from "@/components/MascotaFotoPlaceholder";
 import { MascotaFotosCarousel } from "@/components/MascotaFotosCarousel";
 import { getMascotaFotos } from "@/lib/mascota-fotos";
 import {
-  MASCOTAS_PER_PAGE_DESKTOP,
-  MASCOTAS_PER_PAGE_MOBILE,
+  MASCOTAS_PER_PAGE,
   MascotasPagination,
 } from "@/components/MascotasPagination";
-import { useIsXlUp } from "@/lib/use-media-query";
+import { MascotaSortFilterPills } from "@/components/MascotaSortFilterPills";
+import { sortMascotasByPublishedDate } from "@/lib/mascota-sort";
 import { scrollToElement } from "@/lib/use-scroll-hide-bar";
 import { RelativePublishedTime } from "@/components/RelativePublishedTime";
 import { VenezuelaLocalClock } from "@/components/VenezuelaLocalClock";
@@ -40,7 +40,6 @@ import {
   filterMascotasByZonaGroup,
 } from "@/lib/mascota-zona";
 import { filterMascotasBySearch } from "@/lib/mascota-search";
-import { applyMascotaListRotation } from "@/lib/mascota-rotation";
 import { ZonaFilterPills } from "@/components/ZonaFilterPills";
 import { buildTelUrl, buildWhatsAppUrl } from "@/lib/whatsapp";
 import type {
@@ -279,7 +278,7 @@ function MascotaListItemMobile({ mascota }: { mascota: MascotaReportada }) {
           href={detailHref}
           className="relative z-10 min-w-0 flex-1 space-y-0.5"
         >
-          <div className="flex min-w-0 items-center gap-1.5">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5">
             <h3 className="min-w-0 truncate text-sm font-extrabold leading-tight text-zinc-950">
               {displayName}
             </h3>
@@ -288,6 +287,7 @@ function MascotaListItemMobile({ mascota }: { mascota: MascotaReportada }) {
             >
               {estadoConfig.label}
             </span>
+            <RelativePublishedTime date={mascota.creado_el} />
           </div>
           <p className="truncate text-[11px] leading-tight text-zinc-700">
             {mascota.caracteristicas}
@@ -646,6 +646,9 @@ export function HomePageContent({ data }: { data: HomePageData }) {
   const [mascotaEstadoFilter, setMascotaEstadoFilter] =
     useState<MascotaEstadoFilterId | null>(null);
   const [zonaFilter, setZonaFilter] = useState<string | null>(null);
+  const [mascotaSortOrder, setMascotaSortOrder] = useState<
+    "newest" | "oldest"
+  >("newest");
   const [redAyudaTipoFilter, setRedAyudaTipoFilter] =
     useState<RedAyudaTipoFilter | null>(null);
   const [acopioStockFilters, setAcopioStockFilters] = useState<EstadoStock[]>(
@@ -655,10 +658,7 @@ export function HomePageContent({ data }: { data: HomePageData }) {
   const mascotasCardsRef = useRef<HTMLDivElement>(null);
   const sectionContentRef = useRef<HTMLDivElement>(null);
   const shouldScrollToCardsRef = useRef(false);
-  const isXlUp = useIsXlUp();
-  const mascotasPerPage = isXlUp
-    ? MASCOTAS_PER_PAGE_DESKTOP
-    : MASCOTAS_PER_PAGE_MOBILE;
+  const mascotasPerPage = MASCOTAS_PER_PAGE;
 
   const redAyuda = useMemo(
     () =>
@@ -707,9 +707,9 @@ export function HomePageContent({ data }: { data: HomePageData }) {
     return filterMascotasByEspecie(bySearch, especieFilter);
   }, [mascotasForList, zonaFilter, searchQuery, especieFilter]);
 
-  const displayMascotas = useMemo(
-    () => applyMascotaListRotation(filteredMascotas),
-    [filteredMascotas],
+  const sortedMascotas = useMemo(
+    () => sortMascotasByPublishedDate(filteredMascotas, mascotaSortOrder),
+    [filteredMascotas, mascotaSortOrder],
   );
 
   const enCasaForSlider = useMemo(() => {
@@ -719,19 +719,26 @@ export function HomePageContent({ data }: { data: HomePageData }) {
 
   const totalMascotaPages = Math.max(
     1,
-    Math.ceil(displayMascotas.length / mascotasPerPage),
+    Math.ceil(sortedMascotas.length / mascotasPerPage),
   );
 
   const safeMascotaPage = Math.min(mascotaPage, totalMascotaPages);
 
   const paginatedMascotas = useMemo(() => {
     const start = (safeMascotaPage - 1) * mascotasPerPage;
-    return displayMascotas.slice(start, start + mascotasPerPage);
-  }, [displayMascotas, safeMascotaPage, mascotasPerPage]);
+    return sortedMascotas.slice(start, start + mascotasPerPage);
+  }, [sortedMascotas, safeMascotaPage, mascotasPerPage]);
 
   useEffect(() => {
     setMascotaPage(1);
-  }, [searchQuery, especieFilter, mascotaEstadoFilter, zonaFilter, mascotasPerPage]);
+  }, [
+    searchQuery,
+    especieFilter,
+    mascotaEstadoFilter,
+    zonaFilter,
+    mascotaSortOrder,
+    mascotasPerPage,
+  ]);
 
   useEffect(() => {
     if (!zonaFilter) return;
@@ -968,6 +975,10 @@ export function HomePageContent({ data }: { data: HomePageData }) {
                       options={zonaFilterOptions}
                       value={zonaFilter}
                       onChange={setZonaFilter}
+                    />
+                    <MascotaSortFilterPills
+                      value={mascotaSortOrder}
+                      onChange={setMascotaSortOrder}
                     />
                   </div>
                 }

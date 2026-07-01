@@ -49,5 +49,4 @@ export function MascotasPagination({
   );
 }
 
-export const MASCOTAS_PER_PAGE_MOBILE = 20;
-export const MASCOTAS_PER_PAGE_DESKTOP = 16;
+export const MASCOTAS_PER_PAGE = 50;
