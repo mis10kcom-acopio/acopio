@@ -40,7 +40,6 @@ import {
 } from "@/lib/mascota-zona";
 import { filterMascotasBySearch } from "@/lib/mascota-search";
 import { ZonaFilterPills } from "@/components/ZonaFilterPills";
-import { useScrollHideOnMobile } from "@/lib/use-scroll-hide-bar";
 import { buildTelUrl, buildWhatsAppUrl } from "@/lib/whatsapp";
 import type {
   AcopioMascota,
@@ -524,7 +523,7 @@ function ZoneSearchInput({
   ariaLabel,
   wrapperClassName = "mb-5",
   sticky = false,
-  mobileScrollHide = false,
+  mobileStickyTop = false,
   footer,
 }: {
   value: string;
@@ -533,11 +532,9 @@ function ZoneSearchInput({
   ariaLabel: string;
   wrapperClassName?: string;
   sticky?: boolean;
-  mobileScrollHide?: boolean;
+  mobileStickyTop?: boolean;
   footer?: React.ReactNode;
 }) {
-  const mobileFiltersVisible = useScrollHideOnMobile(sticky && mobileScrollHide);
-
   const field = (
     <>
       <Search
@@ -559,10 +556,8 @@ function ZoneSearchInput({
     return (
       <div
         className={`sticky z-40 -mx-4 border-b border-amber-200/60 px-4 py-2 shadow-sm ${wrapperClassName} ${
-          mobileScrollHide
-            ? `top-0 bg-[#FFFBF2] transition-transform duration-300 ease md:top-9 md:translate-y-0 md:bg-amber-50 md:transition-none ${
-                mobileFiltersVisible ? "translate-y-0" : "-translate-y-full"
-              }`
+          mobileStickyTop
+            ? "top-0 bg-[#FFFBF2] md:top-9 md:bg-amber-50"
             : "top-9 bg-amber-50"
         }`}
       >
@@ -946,7 +941,7 @@ export function HomePageContent({ data }: { data: HomePageData }) {
             {data.mascotas.length > 0 ? (
               <ZoneSearchInput
                 sticky
-                mobileScrollHide
+                mobileStickyTop
                 value={searchQuery}
                 onChange={setSearchQuery}
                 placeholder="🔍 Buscar por nombre, zona, características..."
