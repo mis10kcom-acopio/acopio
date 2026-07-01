@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { ACCEPTED_IMAGE_INPUT } from "@/lib/storage-upload";
 
 const labelClassName = "mb-1.5 block text-sm font-semibold text-zinc-800";
 
 export function FotoFileFieldWithPreview({
   label,
   name,
-  accept = "image/*",
+  accept = ACCEPTED_IMAGE_INPUT,
   capture,
   hint,
   required = false,

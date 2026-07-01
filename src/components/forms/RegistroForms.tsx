@@ -16,6 +16,7 @@ import { WhatsappField } from "@/components/forms/WhatsappField";
 import { EspecieField } from "@/components/forms/EspecieField";
 import { FotoFileFieldWithPreview } from "@/components/forms/FotoFileFieldWithPreview";
 import { ImplicitConsentNotice } from "@/components/forms/ImplicitConsentNotice";
+import { ACCEPTED_IMAGE_INPUT } from "@/lib/storage-upload";
 import { initialActionState } from "@/types/actions";
 
 export function MascotaRegistroForm() {
@@ -98,8 +99,8 @@ export function MascotaRegistroForm() {
       <FotoFileFieldWithPreview
         label="Foto de la mascota"
         name="foto"
-        accept="image/*"
-        hint="Opcional. Toma una foto con la cámara o elige una de tu galería."
+        accept={ACCEPTED_IMAGE_INPUT}
+        hint="Opcional. JPG, PNG o WebP (máx. 5 MB). Toma una foto con la cámara o elige una de tu galería."
       />
 
       <ImplicitConsentNotice />

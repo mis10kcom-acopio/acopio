@@ -391,18 +391,28 @@ async function sendTelegramMessage(text: string): Promise<void> {
     return;
   }
 
-  const response = await fetch(
-    `https://api.telegram.org/bot${token}/sendMessage`,
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ chat_id: chatId, text }),
-    },
-  );
+  try {
+    const response = await fetch(
+      `https://api.telegram.org/bot${token}/sendMessage`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ chat_id: chatId, text }),
+      },
+    );
 
-  if (!response.ok) {
-    console.error("[match-detector] Error Telegram:", await response.text());
+    if (!response.ok) {
+      console.error("[match-detector] Error Telegram:", await response.text());
+    }
+  } catch (error) {
+    console.error("[match-detector] Error enviando Telegram:", error);
   }
+}
+
+function sendTelegramMessageFireAndForget(text: string): void {
+  void sendTelegramMessage(text).catch((error) => {
+    console.error("[match-detector] Telegram fire-and-forget:", error);
+  });
 }
 
 function formatMatchMessage(
@@ -533,7 +543,7 @@ export async function POST(request: Request) {
           continue;
         }
 
-        await sendTelegramMessage(
+        sendTelegramMessageFireAndForget(
           formatMatchMessage(
             triggerMascota,
             candidate,
@@ -542,7 +552,14 @@ export async function POST(request: Request) {
           ),
         );
 
-        await registerNotifiedPair(supabase, triggerMascota.id, candidate.id);
+        void registerNotifiedPair(supabase, triggerMascota.id, candidate.id).catch(
+          (registerError) => {
+            console.error(
+              "[match-detector] Error registrando par notificado:",
+              registerError,
+            );
+          },
+        );
         matchesFound += 1;
       } catch (candidateError) {
         console.error(

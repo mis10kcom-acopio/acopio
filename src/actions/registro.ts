@@ -20,10 +20,14 @@ import {
   insertMascotaReportada,
   type MascotaInsertPayload,
 } from "@/lib/mascota-db-write";
+import {
+  notifyMatchDetectorAsync,
+} from "@/lib/match-detector-notify";
 import { parseEstadoMascota } from "@/lib/mascota-estado";
 import { buildEditUrl, getSiteBaseUrl } from "@/lib/site";
 import {
   resolveOptionalFotoUrl,
+  UPLOAD_IMAGE_ERROR_MESSAGE,
   uploadImagenStorage,
 } from "@/lib/storage-upload";
 import type { ActionState } from "@/types/actions";
@@ -88,7 +92,7 @@ export async function registrarMascota(
         const uploadMessage =
           uploadError instanceof Error
             ? uploadError.message
-            : "No se pudo subir la foto.";
+            : UPLOAD_IMAGE_ERROR_MESSAGE;
         return { error: uploadMessage, success: null };
       }
     }
@@ -116,12 +120,9 @@ export async function registrarMascota(
         .select("id")
         .eq("token_edicion", token)
         .maybeSingle();
-      if (!data?.id) return;
-      fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/match-detector`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ record: { id: data.id } }),
-      }).catch(() => {});
+      if (data?.id) {
+        notifyMatchDetectorAsync(data.id);
+      }
     })().catch(() => {});
 
     await recordSuccessfulSubmission();

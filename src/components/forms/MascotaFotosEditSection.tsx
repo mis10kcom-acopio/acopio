@@ -7,46 +7,14 @@ import {
   eliminarFotoMascotaEdicion,
   subirFotoMascotaEdicion,
 } from "@/actions/editar";
-import type { MascotaFotoSlotColumn } from "@/lib/mascota-db-write";
+import { ACCEPTED_IMAGE_INPUT } from "@/lib/storage-upload";
 import type { MascotaReportada } from "@/types/database";
-
-const SLOT_CONFIG: {
-  slot: MascotaFotoSlotColumn;
-  label: string;
-  addLabel: string;
-  getUrl: (registro: MascotaReportada) => string | null;
-}[] = [
-  {
-    slot: "foto_url",
-    label: "Foto principal",
-    addLabel: "Agregar foto principal",
-    getUrl: (registro) => registro.foto_url,
-  },
-  {
-    slot: "foto_url_2",
-    label: "Foto 2",
-    addLabel: "Agregar foto 2",
-    getUrl: (registro) => registro.foto_url_2 ?? null,
-  },
-  {
-    slot: "foto_url_3",
-    label: "Foto 3",
-    addLabel: "Agregar foto 3",
-    getUrl: (registro) => registro.foto_url_3 ?? null,
-  },
-];
 
 function FotoEditSlot({
   identificador,
-  label,
-  addLabel,
-  slot,
   initialUrl,
 }: {
   identificador: string;
-  label: string;
-  addLabel: string;
-  slot: MascotaFotoSlotColumn;
   initialUrl: string | null;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -66,7 +34,7 @@ function FotoEditSlot({
 
     const formData = new FormData();
     formData.append("file", file);
-    const result = await subirFotoMascotaEdicion(identificador, slot, formData);
+    const result = await subirFotoMascotaEdicion(identificador, formData);
 
     setUploading(false);
 
@@ -81,7 +49,7 @@ function FotoEditSlot({
     setError(null);
     setDeleting(true);
 
-    const result = await eliminarFotoMascotaEdicion(identificador, slot);
+    const result = await eliminarFotoMascotaEdicion(identificador);
 
     setDeleting(false);
 
@@ -94,14 +62,14 @@ function FotoEditSlot({
 
   return (
     <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
-      <p className="text-sm font-semibold text-zinc-800">{label}</p>
+      <p className="text-sm font-semibold text-zinc-800">Foto del reporte</p>
 
       {currentUrl ? (
         <div className="mt-3 space-y-3">
           <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
             <Image
               src={currentUrl}
-              alt={label}
+              alt="Foto del reporte"
               width={320}
               height={320}
               className="aspect-square w-full max-w-[12rem] object-cover"
@@ -158,7 +126,7 @@ function FotoEditSlot({
                 Subiendo…
               </>
             ) : (
-              addLabel
+              "Agregar foto"
             )}
           </button>
         </div>
@@ -167,7 +135,7 @@ function FotoEditSlot({
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept={ACCEPTED_IMAGE_INPUT}
         className="sr-only"
         onChange={handleFileChange}
         disabled={busy}
@@ -193,27 +161,18 @@ export function MascotaFotosEditSection({
     <section className="space-y-4 rounded-xl border border-zinc-200 bg-white p-4">
       <div>
         <h3 className="text-base font-bold uppercase tracking-wide text-zinc-500">
-          Fotos del reporte
+          Foto del reporte
         </h3>
         <p className="mt-1 text-sm text-zinc-600">
-          Puedes tener hasta 3 fotos. La principal aparece primero en el listado.
-          Las fotos se guardan al seleccionarlas; no hace falta pulsar &quot;Guardar
-          cambios&quot;.
+          Una sola foto por reporte (JPG, PNG o WebP, máximo 5 MB). Se guarda al
+          seleccionarla; no hace falta pulsar &quot;Guardar cambios&quot;.
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        {SLOT_CONFIG.map(({ slot, label, addLabel, getUrl }) => (
-          <FotoEditSlot
-            key={slot}
-            identificador={identificador}
-            label={label}
-            addLabel={addLabel}
-            slot={slot}
-            initialUrl={getUrl(registro)}
-          />
-        ))}
-      </div>
+      <FotoEditSlot
+        identificador={identificador}
+        initialUrl={registro.foto_url}
+      />
     </section>
   );
 }

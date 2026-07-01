@@ -16,13 +16,17 @@ import {
   getMascotaEstado,
   parseEstadoMascota,
 } from "@/lib/mascota-estado";
+import { notifyMatchDetectorAsync } from "@/lib/match-detector-notify";
 import {
   updateMascotaEstadoOnly,
   updateMascotaFotoSlot,
   updateMascotaReportada,
-  type MascotaFotoSlotColumn,
 } from "@/lib/mascota-db-write";
-import { resolveOptionalFotoUrl, uploadImagenStorage } from "@/lib/storage-upload";
+import {
+  resolveOptionalFotoUrl,
+  UPLOAD_IMAGE_ERROR_MESSAGE,
+  uploadImagenStorage,
+} from "@/lib/storage-upload";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import type { ActionState } from "@/types/actions";
 import type {
@@ -129,20 +133,14 @@ export type MascotaFotoSlotActionResult =
   | { ok: false; error: string };
 
 function mascotaFotoUploadErrorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    if (
-      error.message.includes("5 MB") ||
-      error.message.includes("debe ser una imagen")
-    ) {
-      return error.message;
-    }
+  if (error instanceof Error && error.message === UPLOAD_IMAGE_ERROR_MESSAGE) {
+    return error.message;
   }
-  return "No se pudo subir la foto, intenta de nuevo.";
+  return UPLOAD_IMAGE_ERROR_MESSAGE;
 }
 
 export async function subirFotoMascotaEdicion(
   identificador: string,
-  slot: MascotaFotoSlotColumn,
   formData: FormData,
 ): Promise<MascotaFotoSlotActionResult> {
   try {
@@ -158,11 +156,20 @@ export async function subirFotoMascotaEdicion(
       return { ok: false, error: "Selecciona una imagen válida." };
     }
 
-    const url = await uploadImagenStorage(supabase, file, MASCOTAS_FOLDER);
+    let url: string;
+    try {
+      url = await uploadImagenStorage(supabase, file, MASCOTAS_FOLDER);
+    } catch (uploadError) {
+      return {
+        ok: false,
+        error: mascotaFotoUploadErrorMessage(uploadError),
+      };
+    }
+
     const { error } = await updateMascotaFotoSlot(
       supabase,
       registro.id,
-      slot,
+      "foto_url",
       url,
     );
 
@@ -180,7 +187,6 @@ export async function subirFotoMascotaEdicion(
 
 export async function eliminarFotoMascotaEdicion(
   identificador: string,
-  slot: MascotaFotoSlotColumn,
 ): Promise<MascotaFotoSlotActionResult> {
   try {
     const supabase = getSupabaseAdmin();
@@ -193,7 +199,7 @@ export async function eliminarFotoMascotaEdicion(
     const { error } = await updateMascotaFotoSlot(
       supabase,
       registro.id,
-      slot,
+      "foto_url",
       null,
     );
 
@@ -245,11 +251,7 @@ export async function cambiarMascotaAEnResguardo(
       return { error: "No se pudo actualizar el reporte.", success: null };
     }
 
-    fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/match-detector`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ record: { id: registro.id } }),
-    }).catch(() => {});
+    notifyMatchDetectorAsync(registro.id);
 
     return await revalidateAndRedirect(
       data.token_edicion,
@@ -298,11 +300,7 @@ export async function marcarMascotaEnCasa(
       return { error: "No se pudo actualizar el reporte.", success: null };
     }
 
-    fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/match-detector`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ record: { id: registro.id } }),
-    }).catch(() => {});
+    notifyMatchDetectorAsync(registro.id);
 
     return await revalidateAndRedirect(
       data.token_edicion,
@@ -469,11 +467,7 @@ export async function actualizarMascota(
       return { error: "No se pudo actualizar el reporte.", success: null };
     }
 
-    fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/match-detector`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ record: { id: registro.id } }),
-    }).catch(() => {});
+    notifyMatchDetectorAsync(registro.id);
 
     return await revalidateAndRedirect(
       data.token_edicion,
