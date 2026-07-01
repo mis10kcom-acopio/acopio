@@ -146,13 +146,7 @@ export function MascotaCartelModal({
           ) : null}
 
           <p className="mt-4 text-center text-xs text-zinc-500">
-            Cartel de búsqueda 3:4 listo para compartir o imprimir.{" "}
-            <a
-              href="/cartel-preview"
-              className="font-medium text-amber-700 underline-offset-2 hover:underline"
-            >
-              Ver comparativa de diseños
-            </a>
+            Cartel de búsqueda 3:4 listo para compartir o imprimir.
           </p>
         </div>
 

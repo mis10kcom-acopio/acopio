@@ -40,6 +40,7 @@ import {
   filterMascotasByZonaGroup,
 } from "@/lib/mascota-zona";
 import { filterMascotasBySearch } from "@/lib/mascota-search";
+import { applyMascotaListRotation } from "@/lib/mascota-rotation";
 import { ZonaFilterPills } from "@/components/ZonaFilterPills";
 import { buildTelUrl, buildWhatsAppUrl } from "@/lib/whatsapp";
 import type {
@@ -706,6 +707,11 @@ export function HomePageContent({ data }: { data: HomePageData }) {
     return filterMascotasByEspecie(bySearch, especieFilter);
   }, [mascotasForList, zonaFilter, searchQuery, especieFilter]);
 
+  const displayMascotas = useMemo(
+    () => applyMascotaListRotation(filteredMascotas),
+    [filteredMascotas],
+  );
+
   const enCasaForSlider = useMemo(() => {
     const bySearch = filterMascotasBySearch(resolvedMascotas, searchQuery);
     return filterMascotasByEspecie(bySearch, especieFilter);
@@ -713,15 +719,15 @@ export function HomePageContent({ data }: { data: HomePageData }) {
 
   const totalMascotaPages = Math.max(
     1,
-    Math.ceil(filteredMascotas.length / mascotasPerPage),
+    Math.ceil(displayMascotas.length / mascotasPerPage),
   );
 
   const safeMascotaPage = Math.min(mascotaPage, totalMascotaPages);
 
   const paginatedMascotas = useMemo(() => {
     const start = (safeMascotaPage - 1) * mascotasPerPage;
-    return filteredMascotas.slice(start, start + mascotasPerPage);
-  }, [filteredMascotas, safeMascotaPage, mascotasPerPage]);
+    return displayMascotas.slice(start, start + mascotasPerPage);
+  }, [displayMascotas, safeMascotaPage, mascotasPerPage]);
 
   useEffect(() => {
     setMascotaPage(1);
