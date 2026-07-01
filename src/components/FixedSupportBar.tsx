@@ -9,7 +9,7 @@ export function FixedSupportBar() {
 
   return (
     <div
-      className={`fixed bottom-0 left-0 right-0 z-50 border-t border-zinc-200 bg-zinc-50 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] transition-transform duration-300 ease-in-out md:translate-y-0 ${
+      className={`fixed bottom-0 left-0 right-0 z-50 border-t border-zinc-200 bg-zinc-50 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] transition-transform duration-300 ease-in-out ${
         visible ? "translate-y-0" : "translate-y-full"
       }`}
       role="contentinfo"

@@ -971,15 +971,17 @@ export function HomePageContent({ data }: { data: HomePageData }) {
                         className="lg:justify-end"
                       />
                     </div>
-                    <ZonaFilterPills
-                      options={zonaFilterOptions}
-                      value={zonaFilter}
-                      onChange={setZonaFilter}
-                    />
-                    <MascotaSortFilterPills
-                      value={mascotaSortOrder}
-                      onChange={setMascotaSortOrder}
-                    />
+                    <div className="flex flex-wrap items-start gap-2">
+                      <ZonaFilterPills
+                        options={zonaFilterOptions}
+                        value={zonaFilter}
+                        onChange={setZonaFilter}
+                      />
+                      <MascotaSortFilterPills
+                        value={mascotaSortOrder}
+                        onChange={setMascotaSortOrder}
+                      />
+                    </div>
                   </div>
                 }
               />
