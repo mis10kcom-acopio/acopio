@@ -387,13 +387,16 @@ function wrapTextCentered(
   let line = "";
   let currentY = y;
 
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+
   for (const word of words) {
     const testLine = line ? `${line} ${word}` : word;
     if (ctx.measureText(testLine).width > maxWidth && line) {
       if (maxBottom !== undefined && currentY + lineHeight > maxBottom) {
         break;
       }
-      ctx.fillText(line, centerX - ctx.measureText(line).width / 2, currentY);
+      ctx.fillText(line, centerX, currentY);
       line = word;
       currentY += lineHeight;
     } else {
@@ -402,7 +405,7 @@ function wrapTextCentered(
   }
 
   if (line && (maxBottom === undefined || currentY + lineHeight <= maxBottom)) {
-    ctx.fillText(line, centerX - ctx.measureText(line).width / 2, currentY);
+    ctx.fillText(line, centerX, currentY);
     currentY += lineHeight;
   }
 
@@ -557,18 +560,20 @@ function drawZoneHighlightBox(
   drawRoundedRectPath(ctx, paddingX, y, contentWidth, boxHeight, 18);
   ctx.stroke();
 
+  const boxCenterX = paddingX + contentWidth / 2;
+
   ctx.font = `bold ${labelSize}px system-ui, -apple-system, sans-serif`;
   ctx.fillStyle = "#92400E";
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
-  ctx.fillText("ZONA", width / 2, y + innerPad);
+  ctx.fillText("ZONA", boxCenterX, y + innerPad);
 
   ctx.font = `bold ${zoneSize}px system-ui, -apple-system, sans-serif`;
   ctx.fillStyle = "#18181B";
   wrapTextCentered(
     ctx,
     zone,
-    width / 2,
+    boxCenterX,
     y + innerPad + labelSize + 14,
     innerWidth,
     zoneLineHeight,
