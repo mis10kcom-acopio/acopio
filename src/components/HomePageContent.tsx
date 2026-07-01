@@ -34,7 +34,7 @@ import {
 } from "lucide-react";
 import { getMascotaEstado, getMascotaEstadoConfig, isMascotaEstadoActivo, matchesMascotaEstadoFilter } from "@/lib/mascota-estado";
 import { buildMascotaPublicPath } from "@/lib/mascota-url";
-import { restoreMascotaListScroll, consumeMascotaListScrollState, saveMascotaListScrollForMobile } from "@/lib/mascota-list-scroll";
+import { restoreMascotaListScroll, consumeMascotaListScrollState, saveMascotaListScrollState } from "@/lib/mascota-list-scroll";
 import { filterMascotasByEspecie, type EspecieFilterId } from "@/lib/mascota-especie";
 import {
   buildZonaFilterOptions,
@@ -323,13 +323,23 @@ function MascotaListItemMobile({
   );
 }
 
-function MascotaCardDesktop({ mascota }: { mascota: MascotaReportada }) {
+function MascotaCardDesktop({
+  mascota,
+  onOpenDetail,
+}: {
+  mascota: MascotaReportada;
+  onOpenDetail: () => void;
+}) {
   const estadoConfig = getMascotaEstadoConfig(mascota);
   const fotos = getMascotaFotos(mascota);
 
   return (
     <article className="hidden overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white shadow-md transition hover:border-zinc-300 hover:shadow-lg md:block">
-      <Link href={buildMascotaPublicPath(mascota.id)} className="block bg-white">
+      <Link
+        href={buildMascotaPublicPath(mascota.id)}
+        onClick={onOpenDetail}
+        className="block bg-white"
+      >
         <div className="relative">
           <MascotaFotosCarousel
             fotos={fotos}
@@ -387,7 +397,7 @@ function MascotaCard({
   return (
     <Fragment>
       <MascotaListItemMobile mascota={mascota} onOpenDetail={onOpenDetail} />
-      <MascotaCardDesktop mascota={mascota} />
+      <MascotaCardDesktop mascota={mascota} onOpenDetail={onOpenDetail} />
     </Fragment>
   );
 }
@@ -798,7 +808,7 @@ export function HomePageContent({ data }: { data: HomePageData }) {
   }
 
   function handleOpenMascotaDetail() {
-    saveMascotaListScrollForMobile(mascotasVisibleCount);
+    saveMascotaListScrollState(mascotasVisibleCount);
   }
 
   function scrollToActiveSection() {

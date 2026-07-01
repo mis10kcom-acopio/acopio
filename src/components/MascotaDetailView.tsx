@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { RelativePublishedTime } from "@/components/RelativePublishedTime";
 import { MascotaDetailCloseButton } from "@/components/MascotaDetailCloseButton";
 import { MascotaAvistamientosSection } from "@/components/MascotaAvistamientosSection";
@@ -12,11 +11,9 @@ import type { Avistamiento, MascotaReportada } from "@/types/database";
 export function MascotaDetailView({
   mascota,
   avistamientos = [],
-  showBackLink = true,
 }: {
   mascota: MascotaReportada;
   avistamientos?: Avistamiento[];
-  showBackLink?: boolean;
 }) {
   const estadoConfig = getMascotaEstadoConfig(mascota);
   const fotos = getMascotaFotos(mascota);
@@ -24,17 +21,6 @@ export function MascotaDetailView({
   return (
     <article className="relative overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white shadow-lg">
       <MascotaDetailCloseButton />
-
-      {showBackLink ? (
-        <div className="hidden border-b border-zinc-100 px-5 py-4 md:block">
-          <Link
-            href="/"
-            className="text-sm font-medium text-amber-800 transition hover:text-amber-900"
-          >
-            ← Volver al listado
-          </Link>
-        </div>
-      ) : null}
 
       <div className="relative">
         <MascotaFotosCarousel

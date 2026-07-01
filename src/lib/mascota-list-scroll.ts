@@ -1,7 +1,6 @@
 import { MASCOTAS_PER_PAGE } from "@/components/MascotasPagination";
 
 const MASCOTA_LIST_SCROLL_STATE_KEY = "huellas:mascota-list-scroll-state";
-const MD_MIN_WIDTH = 768;
 
 type MascotaListScrollState = {
   y: number;
@@ -28,9 +27,8 @@ function parseScrollState(raw: string | null): MascotaListScrollState | null {
   }
 }
 
-export function saveMascotaListScrollForMobile(visibleCount: number) {
+export function saveMascotaListScrollState(visibleCount: number) {
   if (typeof window === "undefined") return;
-  if (window.innerWidth >= MD_MIN_WIDTH) return;
 
   const state: MascotaListScrollState = {
     y: window.scrollY,
@@ -38,6 +36,11 @@ export function saveMascotaListScrollForMobile(visibleCount: number) {
   };
 
   sessionStorage.setItem(MASCOTA_LIST_SCROLL_STATE_KEY, JSON.stringify(state));
+}
+
+/** @deprecated Usar saveMascotaListScrollState */
+export function saveMascotaListScrollForMobile(visibleCount: number) {
+  saveMascotaListScrollState(visibleCount);
 }
 
 export function consumeMascotaListScrollState(): MascotaListScrollState | null {
