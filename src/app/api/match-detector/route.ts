@@ -5,51 +5,127 @@ export const maxDuration = 300;
 
 const SITE_BASE_URL = "https://huellasasalvo.org";
 
-const ZONE_STOPWORDS = new Set([
+type EspecieCategoria = "perro" | "gato" | "otro";
+
+const GENERIC_STOPWORDS = new Set([
+  "de",
+  "el",
+  "la",
+  "los",
+  "las",
+  "un",
+  "una",
+  "con",
+  "en",
+  "al",
+  "del",
   "sector",
   "calle",
   "av",
   "av.",
   "avenida",
+  "res",
   "residencia",
   "edificio",
-  "de",
-  "del",
-  "la",
-  "el",
-  "en",
-  "y",
-  "los",
-  "las",
-]);
-
-const DESCRIPTION_STOPWORDS = new Set([
-  "de",
-  "con",
-  "el",
-  "la",
-  "es",
-  "un",
-  "una",
-  "en",
+  "edif",
+  "urb",
+  "urbanizacion",
+  "cerca",
+  "frente",
   "y",
   "a",
   "por",
   "su",
   "se",
-  "al",
-  "del",
   "lo",
   "le",
   "que",
+]);
+
+const DESCRIPTION_EXTRA_STOPWORDS = new Set([
+  "es",
+  "tiene",
   "muy",
+  "poco",
   "mas",
   "más",
+]);
+
+const CONDITIONAL_DESCRIPTION_STOPWORDS = new Set([
+  "grande",
+  "grandes",
+  "pequeno",
+  "pequena",
+  "pequenos",
+  "pequenas",
+]);
+
+const PERRO_KEYWORDS = [
+  "perro",
+  "can",
+  "cachorro",
+  "poodle",
+  "labrador",
+  "pastor",
+  "bulldog",
+  "chihuahua",
+  "yorkshire",
+  "beagle",
+  "husky",
+  "dalmata",
+  "pug",
+  "golden",
+  "retriever",
+  "boxer",
+  "schnauzer",
+  "maltes",
+  "salchicha",
+  "teckel",
+  "pitbull",
+  "rottweiler",
+];
+
+const GATO_KEYWORDS = [
+  "gato",
+  "felino",
+  "gatito",
+  "siames",
+  "persa",
+  "angora",
+  "minino",
+];
+
+const OTRO_ESPECIFICO_KEYWORDS = [
+  "loro",
+  "cotorra",
+  "periquito",
+  "guacamaya",
+  "guacamayo",
+  "ave",
+  "pajaro",
+  "conejo",
+  "hamster",
+  "tortuga",
+  "cobaya",
+  "huron",
+  "iguana",
+  "serpiente",
+  "caballo",
+  "cerdo",
+  "capibara",
+];
+
+const ZONE_STOPWORDS = GENERIC_STOPWORDS;
+
+const DESCRIPTION_STOPWORDS = new Set([
+  ...GENERIC_STOPWORDS,
+  ...DESCRIPTION_EXTRA_STOPWORDS,
 ]);
 
 type MascotaRow = {
   id: string;
   nombre_mascota: string | null;
+  especie?: string | null;
   caracteristicas: string;
   ubicacion_zona: string;
   contacto_telefono: string;
@@ -57,12 +133,15 @@ type MascotaRow = {
   tipo_reporte?: string;
 };
 
+type ResolvedEspecie = {
+  categoria: EspecieCategoria | null;
+  otroEspecifico: string | null;
+};
+
 type TextMatchResult = {
   match: boolean;
   confianza: "alta" | "media";
   palabrasEnComun: string[];
-  zoneMatch: boolean;
-  descriptionMatch: boolean;
 };
 
 type SupabaseWebhookPayload = {
@@ -103,62 +182,175 @@ function getSignificantWords(text: string, stopwords: Set<string>): string[] {
   return tokenize(text).filter((word) => !stopwords.has(word));
 }
 
-function getFirstTwoSignificantWords(text: string, stopwords: Set<string>): string[] {
-  return getSignificantWords(text, stopwords).slice(0, 2);
-}
-
 function getCommonWords(wordsA: string[], wordsB: string[]): string[] {
   const setB = new Set(wordsB);
   return [...new Set(wordsA.filter((word) => setB.has(word)))];
 }
 
+function findKeywordInText(text: string, keywords: string[]): string | null {
+  const normalized = normalizeText(text);
+  for (const keyword of keywords) {
+    if (normalized.includes(keyword)) {
+      return keyword;
+    }
+  }
+  return null;
+}
+
+function detectEspecieFromField(
+  especie: string | null | undefined,
+): EspecieCategoria | null {
+  if (!especie?.trim()) return null;
+
+  const normalized = normalizeText(especie.trim());
+
+  if (
+    normalized.includes("perro") ||
+    normalized === "can" ||
+    PERRO_KEYWORDS.some((kw) => normalized.includes(kw))
+  ) {
+    return "perro";
+  }
+
+  if (
+    normalized.includes("gato") ||
+    normalized.includes("felino") ||
+    GATO_KEYWORDS.some((kw) => normalized.includes(kw))
+  ) {
+    return "gato";
+  }
+
+  return "otro";
+}
+
+function detectEspecieFromCaracteristicas(text: string): ResolvedEspecie {
+  const perroKeyword = findKeywordInText(text, PERRO_KEYWORDS);
+  if (perroKeyword) {
+    return { categoria: "perro", otroEspecifico: null };
+  }
+
+  const gatoKeyword = findKeywordInText(text, GATO_KEYWORDS);
+  if (gatoKeyword) {
+    return { categoria: "gato", otroEspecifico: null };
+  }
+
+  const otroKeyword = findKeywordInText(text, OTRO_ESPECIFICO_KEYWORDS);
+  if (otroKeyword) {
+    return { categoria: "otro", otroEspecifico: otroKeyword };
+  }
+
+  return { categoria: null, otroEspecifico: null };
+}
+
+function resolveEspecie(mascota: MascotaRow): ResolvedEspecie {
+  const fromField = detectEspecieFromField(mascota.especie);
+  if (fromField) {
+    if (fromField === "otro") {
+      const fromChars = detectEspecieFromCaracteristicas(mascota.caracteristicas);
+      return {
+        categoria: "otro",
+        otroEspecifico: fromChars.otroEspecifico,
+      };
+    }
+    return { categoria: fromField, otroEspecifico: null };
+  }
+
+  return detectEspecieFromCaracteristicas(mascota.caracteristicas);
+}
+
+function passesSpeciesCheck(a: MascotaRow, b: MascotaRow): boolean {
+  const specieA = resolveEspecie(a);
+  const specieB = resolveEspecie(b);
+
+  if (specieA.categoria === null && specieB.categoria === null) {
+    return true;
+  }
+
+  if (specieA.categoria !== null && specieB.categoria !== null) {
+    if (specieA.categoria === specieB.categoria) {
+      return true;
+    }
+
+    if (
+      (specieA.categoria === "perro" && specieB.categoria === "gato") ||
+      (specieA.categoria === "gato" && specieB.categoria === "perro")
+    ) {
+      return false;
+    }
+
+    const perroGato = specieA.categoria === "perro" || specieA.categoria === "gato"
+      ? specieA
+      : specieB.categoria === "perro" || specieB.categoria === "gato"
+        ? specieB
+        : null;
+    const otroSide = specieA.categoria === "otro" ? specieA : specieB;
+
+    if (perroGato && otroSide.categoria === "otro" && otroSide.otroEspecifico) {
+      return false;
+    }
+
+    return true;
+  }
+
+  return true;
+}
+
 function getZoneMatch(a: MascotaRow, b: MascotaRow): { match: boolean; common: string[] } {
-  const wordsA = getFirstTwoSignificantWords(a.ubicacion_zona, ZONE_STOPWORDS);
-  const wordsB = getFirstTwoSignificantWords(b.ubicacion_zona, ZONE_STOPWORDS);
-  const allZoneWordsA = getSignificantWords(a.ubicacion_zona, ZONE_STOPWORDS);
-  const allZoneWordsB = getSignificantWords(b.ubicacion_zona, ZONE_STOPWORDS);
-  const common = getCommonWords(
-    [...new Set([...wordsA, ...allZoneWordsA])],
-    [...new Set([...wordsB, ...allZoneWordsB])],
+  const wordsA = getSignificantWords(a.ubicacion_zona, ZONE_STOPWORDS);
+  const wordsB = getSignificantWords(b.ubicacion_zona, ZONE_STOPWORDS);
+  const common = getCommonWords(wordsA, wordsB);
+
+  return { match: common.length >= 1, common };
+}
+
+function getDescriptionWords(text: string): string[] {
+  const words = getSignificantWords(text, DESCRIPTION_STOPWORDS);
+  const withoutConditional = words.filter(
+    (word) => !CONDITIONAL_DESCRIPTION_STOPWORDS.has(word),
   );
 
-  return { match: common.length > 0, common };
+  return withoutConditional.length > 0 ? withoutConditional : words;
 }
 
 function getDescriptionMatch(
   a: MascotaRow,
   b: MascotaRow,
 ): { match: boolean; common: string[] } {
-  const wordsA = getSignificantWords(a.caracteristicas, DESCRIPTION_STOPWORDS);
-  const wordsB = getSignificantWords(b.caracteristicas, DESCRIPTION_STOPWORDS);
+  const wordsA = getDescriptionWords(a.caracteristicas);
+  const wordsB = getDescriptionWords(b.caracteristicas);
   const common = getCommonWords(wordsA, wordsB);
 
   return { match: common.length >= 2, common };
 }
 
 function compareMascotasByText(a: MascotaRow, b: MascotaRow): TextMatchResult {
-  const zone = getZoneMatch(a, b);
-  const description = getDescriptionMatch(a, b);
+  const noMatch: TextMatchResult = {
+    match: false,
+    confianza: "media",
+    palabrasEnComun: [],
+  };
 
-  if (!zone.match && !description.match) {
-    return {
-      match: false,
-      confianza: "media",
-      palabrasEnComun: [],
-      zoneMatch: false,
-      descriptionMatch: false,
-    };
+  if (!passesSpeciesCheck(a, b)) {
+    return noMatch;
+  }
+
+  const zone = getZoneMatch(a, b);
+  if (!zone.match) {
+    return noMatch;
+  }
+
+  const description = getDescriptionMatch(a, b);
+  if (!description.match) {
+    return noMatch;
   }
 
   const palabrasEnComun = [...new Set([...zone.common, ...description.common])];
-  const confianza = zone.match && description.match ? "alta" : "media";
+  const confianza = description.common.length >= 3 ? "alta" : "media";
 
   return {
     match: true,
     confianza,
     palabrasEnComun,
-    zoneMatch: zone.match,
-    descriptionMatch: description.match,
   };
 }
 
@@ -301,7 +493,7 @@ export async function POST(request: Request) {
     const { data: triggerMascota, error: triggerError } = await supabase
       .from("mascotas_reportadas")
       .select(
-        "id, nombre_mascota, caracteristicas, ubicacion_zona, contacto_telefono, estado, tipo_reporte",
+        "id, nombre_mascota, especie, caracteristicas, ubicacion_zona, contacto_telefono, estado, tipo_reporte",
       )
       .eq("id", mascotaId)
       .maybeSingle();
@@ -317,7 +509,7 @@ export async function POST(request: Request) {
     const { data: allMascotas, error: listError } = await supabase
       .from("mascotas_reportadas")
       .select(
-        "id, nombre_mascota, caracteristicas, ubicacion_zona, contacto_telefono, estado, tipo_reporte",
+        "id, nombre_mascota, especie, caracteristicas, ubicacion_zona, contacto_telefono, estado, tipo_reporte",
       )
       .neq("id", mascotaId);
 
