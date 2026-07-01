@@ -12,7 +12,7 @@ const CTA_LINKS = [
   },
   {
     href: "/registro-voluntario",
-    label: "Ofrecer Ayuda / Hogar",
+    label: "Registrar Hogar Temporal / Rescatista / Transporte",
     icon: HeartHandshake,
     className:
       "bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500/40 text-white",
