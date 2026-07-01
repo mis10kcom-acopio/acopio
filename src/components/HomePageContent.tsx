@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { getMascotaEstado, getMascotaEstadoConfig, isMascotaEstadoActivo } from "@/lib/mascota-estado";
 import { buildMascotaPublicPath } from "@/lib/mascota-url";
+import { restoreMascotaListScroll, consumeMascotaListScrollState, saveMascotaListScrollForMobile } from "@/lib/mascota-list-scroll";
 import { filterMascotasByEspecie, type EspecieFilterId } from "@/lib/mascota-especie";
 import {
   buildZonaFilterOptions,
@@ -238,13 +239,23 @@ function ContactActions({
   );
 }
 
-function MascotaListItemMobile({ mascota }: { mascota: MascotaReportada }) {
+function MascotaListItemMobile({
+  mascota,
+  onOpenDetail,
+}: {
+  mascota: MascotaReportada;
+  onOpenDetail: () => void;
+}) {
   const estadoConfig = getMascotaEstadoConfig(mascota);
   const fotos = getMascotaFotos(mascota);
   const fotoPrincipal = fotos[0] ?? null;
   const detailHref = buildMascotaPublicPath(mascota.id);
   const displayName = mascota.nombre_mascota?.trim() || "Mascota reportada";
   const photoSize = 80;
+
+  function handleOpenDetail() {
+    onOpenDetail();
+  }
 
   const photoContent = fotoPrincipal ? (
     <Image
@@ -266,6 +277,7 @@ function MascotaListItemMobile({ mascota }: { mascota: MascotaReportada }) {
     <article className="flex gap-2 border-b border-zinc-200 bg-white px-2 py-1.5 md:hidden">
       <Link
         href={detailHref}
+        onClick={handleOpenDetail}
         className="relative z-10 shrink-0 self-start"
         aria-label={`Ver reporte de ${displayName}`}
       >
@@ -275,6 +287,7 @@ function MascotaListItemMobile({ mascota }: { mascota: MascotaReportada }) {
       <div className="flex min-w-0 flex-1 items-stretch gap-1.5">
         <Link
           href={detailHref}
+          onClick={handleOpenDetail}
           className="relative z-10 min-w-0 flex-1 space-y-0.5"
         >
           <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5">
@@ -357,10 +370,16 @@ function MascotaCardDesktop({ mascota }: { mascota: MascotaReportada }) {
   );
 }
 
-function MascotaCard({ mascota }: { mascota: MascotaReportada }) {
+function MascotaCard({
+  mascota,
+  onOpenDetail,
+}: {
+  mascota: MascotaReportada;
+  onOpenDetail: () => void;
+}) {
   return (
     <Fragment>
-      <MascotaListItemMobile mascota={mascota} />
+      <MascotaListItemMobile mascota={mascota} onOpenDetail={onOpenDetail} />
       <MascotaCardDesktop mascota={mascota} />
     </Fragment>
   );
@@ -663,6 +682,17 @@ export function HomePageContent({ data }: { data: HomePageData }) {
     useState(MASCOTAS_PER_PAGE);
   const mascotasCardsRef = useRef<HTMLDivElement>(null);
   const sectionContentRef = useRef<HTMLDivElement>(null);
+  const skipNextVisibleCountReset = useRef(false);
+  const pendingScrollRestoreY = useRef<number | null>(null);
+
+  useEffect(() => {
+    const savedState = consumeMascotaListScrollState();
+    if (!savedState) return;
+
+    skipNextVisibleCountReset.current = true;
+    setMascotasVisibleCount(savedState.visibleCount);
+    pendingScrollRestoreY.current = savedState.y;
+  }, []);
 
   const redAyuda = useMemo(
     () =>
@@ -727,6 +757,18 @@ export function HomePageContent({ data }: { data: HomePageData }) {
   );
 
   useEffect(() => {
+    if (pendingScrollRestoreY.current === null) return;
+
+    const y = pendingScrollRestoreY.current;
+    pendingScrollRestoreY.current = null;
+    restoreMascotaListScroll(y);
+  }, [visibleMascotas.length, sortedMascotas.length]);
+
+  useEffect(() => {
+    if (skipNextVisibleCountReset.current) {
+      skipNextVisibleCountReset.current = false;
+      return;
+    }
     setMascotasVisibleCount(MASCOTAS_PER_PAGE);
   }, [
     searchQuery,
@@ -746,6 +788,10 @@ export function HomePageContent({ data }: { data: HomePageData }) {
     setMascotasVisibleCount((current) =>
       Math.min(current + MASCOTAS_PER_PAGE, sortedMascotas.length),
     );
+  }
+
+  function handleOpenMascotaDetail() {
+    saveMascotaListScrollForMobile(mascotasVisibleCount);
   }
 
   function scrollToActiveSection() {
@@ -988,7 +1034,11 @@ export function HomePageContent({ data }: { data: HomePageData }) {
                 >
                   <div className="mt-5 flex flex-col border-y border-zinc-200 bg-white md:grid md:grid-cols-2 md:gap-5 md:border-y-0 md:bg-transparent xl:grid-cols-4">
                     {visibleMascotas.map((mascota) => (
-                      <MascotaCard key={mascota.id} mascota={mascota} />
+                      <MascotaCard
+                        key={mascota.id}
+                        mascota={mascota}
+                        onOpenDetail={handleOpenMascotaDetail}
+                      />
                     ))}
                   </div>
                 </div>

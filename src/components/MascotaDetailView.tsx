@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { RelativePublishedTime } from "@/components/RelativePublishedTime";
+import { MascotaDetailCloseButton } from "@/components/MascotaDetailCloseButton";
 import { MascotaContactActions } from "@/components/MascotaShareButton";
 import { MascotaFotosCarousel } from "@/components/MascotaFotosCarousel";
 import { getMascotaEstadoConfig } from "@/lib/mascota-estado";
@@ -18,9 +19,11 @@ export function MascotaDetailView({
   const fotos = getMascotaFotos(mascota);
 
   return (
-    <article className="overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white shadow-lg">
+    <article className="relative overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white shadow-lg">
+      <MascotaDetailCloseButton />
+
       {showBackLink ? (
-        <div className="border-b border-zinc-100 px-5 py-4">
+        <div className="hidden border-b border-zinc-100 px-5 py-4 md:block">
           <Link
             href="/"
             className="text-sm font-medium text-amber-800 transition hover:text-amber-900"
