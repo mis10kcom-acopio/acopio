@@ -442,10 +442,11 @@ async function drawFramedPhotoSection(
   estado: EstadoMascota,
 ): Promise<number> {
   const inset = 36;
-  const x = inset;
   const y = top + 12;
-  const frameWidth = width - inset * 2;
-  const frameHeight = sectionHeight - 24;
+  const maxSide = Math.min(width - inset * 2, sectionHeight - 24);
+  const frameWidth = maxSide;
+  const frameHeight = maxSide;
+  const x = (width - frameWidth) / 2;
   const radius = 22;
 
   ctx.save();
@@ -559,7 +560,8 @@ function drawZoneHighlightBox(
   ctx.font = `bold ${labelSize}px system-ui, -apple-system, sans-serif`;
   ctx.fillStyle = "#92400E";
   ctx.textAlign = "center";
-  ctx.fillText("ZONA / MUNICIPIO", width / 2, y + innerPad);
+  ctx.textBaseline = "top";
+  ctx.fillText("ZONA", width / 2, y + innerPad);
 
   ctx.font = `bold ${zoneSize}px system-ui, -apple-system, sans-serif`;
   ctx.fillStyle = "#18181B";
@@ -573,6 +575,7 @@ function drawZoneHighlightBox(
     y + boxHeight - innerPad,
   );
   ctx.textAlign = "left";
+  ctx.textBaseline = "top";
 
   return y + boxHeight;
 }
