@@ -6,6 +6,7 @@ import {
   actualizarMascota,
   actualizarStockAcopio,
   actualizarVoluntario,
+  eliminarMascota,
   marcarVoluntarioDisponible,
   marcarVoluntarioNoDisponible,
 } from "@/actions/editar";
@@ -70,6 +71,52 @@ function ActionButton({
     >
       {label}
     </button>
+  );
+}
+
+function EliminarMascotaButton({
+  identificador,
+  nombreMascota,
+}: {
+  identificador: string;
+  nombreMascota: string | null;
+}) {
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  function handleDelete() {
+    const confirmed = window.confirm(
+      "¿Estás seguro de que deseas eliminar este reporte permanentemente? Esta acción no se puede deshacer.",
+    );
+    if (!confirmed) return;
+
+    const displayName = nombreMascota?.trim() || "esta mascota";
+    const confirmedAgain = window.confirm(
+      `¿Confirmas que deseas eliminar el reporte de ${displayName}? Se eliminará toda la información y fotos asociadas.`,
+    );
+    if (!confirmedAgain) return;
+
+    setDeleteError(null);
+    startTransition(async () => {
+      const result = await eliminarMascota(identificador);
+      if (result?.error) {
+        setDeleteError(result.error);
+      }
+    });
+  }
+
+  return (
+    <div className="space-y-2">
+      {deleteError ? <FormError message={deleteError} /> : null}
+      <button
+        type="button"
+        onClick={handleDelete}
+        disabled={pending}
+        className="w-full rounded-xl border border-red-300 bg-white px-4 py-3 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {pending ? "Eliminando reporte…" : "Eliminar este reporte"}
+      </button>
+    </div>
   );
 }
 
@@ -155,6 +202,13 @@ export function EditarMascotaPanel({
 
           <SubmitButton>Guardar cambios</SubmitButton>
         </form>
+
+        <div className="border-t border-zinc-100 pt-5">
+          <EliminarMascotaButton
+            identificador={identificador}
+            nombreMascota={registro.nombre_mascota}
+          />
+        </div>
       </section>
     </div>
   );

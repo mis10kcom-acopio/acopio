@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const MAX_FOTO_SIZE_BYTES = 2 * 1024 * 1024;
-const STORAGE_BUCKET = "mascotas";
+export const STORAGE_BUCKET = "mascotas";
 
 export const ACCEPTED_IMAGE_INPUT = "image/jpeg, image/png, image/webp";
 
@@ -135,5 +135,39 @@ export async function resolveOptionalFotoUrl(
     return await uploadImagenStorage(supabase, file, folder);
   } catch {
     return null;
+  }
+}
+
+export function extractStoragePathFromPublicUrl(publicUrl: string): string | null {
+  try {
+    const url = new URL(publicUrl);
+    const marker = `/storage/v1/object/public/${STORAGE_BUCKET}/`;
+    const markerIndex = url.pathname.indexOf(marker);
+    if (markerIndex === -1) return null;
+    return decodeURIComponent(url.pathname.slice(markerIndex + marker.length));
+  } catch {
+    return null;
+  }
+}
+
+export async function deleteImagenesStorage(
+  supabase: SupabaseClient,
+  publicUrls: Array<string | null | undefined>,
+): Promise<void> {
+  const paths = [
+    ...new Set(
+      publicUrls
+        .filter((url): url is string => Boolean(url?.trim()))
+        .map((url) => extractStoragePathFromPublicUrl(url))
+        .filter((path): path is string => Boolean(path)),
+    ),
+  ];
+
+  if (paths.length === 0) return;
+
+  const { error } = await supabase.storage.from(STORAGE_BUCKET).remove(paths);
+
+  if (error) {
+    console.error("[storage-upload] Error eliminando fotos:", error.message);
   }
 }

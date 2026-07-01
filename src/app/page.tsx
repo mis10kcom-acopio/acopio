@@ -1,5 +1,6 @@
 import { HomeHeader } from "@/components/HomeHeader";
 import { HomePageContent } from "@/components/HomePageContent";
+import { FormSuccess } from "@/components/forms/FormFields";
 import { normalizeMascotaAvistamientoCount } from "@/lib/avistamientos";
 import { getSupabase } from "@/lib/supabase";
 import type { HomePageData } from "@/types/database";
@@ -48,7 +49,14 @@ async function fetchHomeData(): Promise<HomePageData> {
   };
 }
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ok?: string }>;
+}) {
+  const { ok } = await searchParams;
+  const successMessage = ok ? decodeURIComponent(ok) : null;
+
   let data: HomePageData;
   let fetchError: string | null = null;
 
@@ -67,6 +75,11 @@ export default async function HomePage() {
       <HomeHeader />
 
       <div className="mx-auto max-w-6xl px-4 pt-8 pb-0 sm:pt-10">
+        {successMessage ? (
+          <div className="mb-6">
+            <FormSuccess message={successMessage} />
+          </div>
+        ) : null}
         {fetchError && (
           <div
             className="mb-6 rounded-2xl border-2 border-red-300 bg-red-50 px-5 py-4 text-base font-medium text-red-800"

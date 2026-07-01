@@ -24,6 +24,7 @@ import {
   updateMascotaReportada,
 } from "@/lib/mascota-db-write";
 import {
+  deleteImagenesStorage,
   resolveOptionalFotoUrl,
   UPLOAD_IMAGE_ERROR_MESSAGE,
   uploadImagenStorage,
@@ -577,6 +578,55 @@ export async function actualizarAcopio(
     return await revalidateAndRedirect(
       data.token_edicion,
       "Datos del centro actualizados correctamente.",
+    );
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    return handleActionError(error);
+  }
+}
+
+export async function eliminarMascota(identificador: string): Promise<ActionState> {
+  try {
+    const supabase = getSupabaseAdmin();
+    const registro = await buscarMascotaPorIdentificador(identificador);
+
+    if (!registro) {
+      return { error: "Enlace no válido o registro no encontrado.", success: null };
+    }
+
+    await deleteImagenesStorage(supabase, [
+      registro.foto_url,
+      registro.foto_url_2,
+      registro.foto_url_3,
+    ]);
+
+    const { error: avistamientosError } = await supabase
+      .from("avistamientos")
+      .delete()
+      .eq("mascota_id", registro.id);
+
+    if (avistamientosError) {
+      console.error(
+        "[eliminarMascota] Error eliminando avistamientos:",
+        avistamientosError.message,
+      );
+    }
+
+    const { error } = await supabase
+      .from("mascotas_reportadas")
+      .delete()
+      .eq("id", registro.id);
+
+    if (error) {
+      return { error: error.message, success: null };
+    }
+
+    revalidatePath("/");
+    revalidatePath(`/editar/${registro.token_edicion}`);
+    revalidatePath(`/mascota/${registro.id}`);
+
+    redirect(
+      `/?ok=${encodeURIComponent("El reporte fue eliminado correctamente.")}`,
     );
   } catch (error) {
     if (isRedirectError(error)) throw error;
