@@ -37,20 +37,33 @@ function AvistamientoItem({ avistamiento }: { avistamiento: Avistamiento }) {
     avistamiento.nombre_usuario?.trim() || "Anónimo";
 
   return (
-    <article className="rounded-xl border border-zinc-100 bg-zinc-50/80 px-3.5 py-3">
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <p className="text-sm font-semibold text-zinc-900">{displayName}</p>
+    <article className="rounded-lg border border-gray-100 bg-orange-50/50 p-3 shadow-sm">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <p className="text-sm font-bold text-zinc-900">{displayName}</p>
         <RelativePublishedTime date={avistamiento.creado_el} />
       </div>
       {avistamiento.zona_avistamiento ? (
-        <p className="mt-1 text-xs font-medium text-zinc-600">
+        <p className="mt-1 text-xs text-gray-400">
           <span aria-hidden>📍</span> {avistamiento.zona_avistamiento}
         </p>
       ) : null}
-      <p className="mt-2 text-sm leading-relaxed text-zinc-700 whitespace-pre-wrap">
+      <p className="mt-2.5 text-sm leading-relaxed text-zinc-800 whitespace-pre-wrap">
         {avistamiento.comentario}
       </p>
     </article>
+  );
+}
+
+function AvistamientosEmptyState() {
+  return (
+    <div
+      className="rounded-lg border border-dashed border-gray-200 py-6 px-4"
+      role="status"
+    >
+      <p className="text-center text-sm italic text-gray-500">
+        Aún no hay pistas de la comunidad para este reporte.
+      </p>
+    </div>
   );
 }
 
@@ -95,18 +108,8 @@ export function MascotaAvistamientosSection({
 
   return (
     <section className="border-t border-zinc-100 pt-5">
-      <div className="space-y-1">
-        <h2 className="text-sm font-bold text-zinc-900 sm:text-base">
-          ¿Lo has visto? / Pistas de la comunidad
-        </h2>
-        <p className="text-xs leading-relaxed text-zinc-500 sm:text-sm">
-          Comparte una pista breve si viste a esta mascota. Sin enlaces ni
-          publicidad.
-        </p>
-      </div>
-
       {avistamientos.length > 0 ? (
-        <div className="mt-4 space-y-2.5">
+        <div className="space-y-3">
           {visibleAvistamientos.map((avistamiento) => (
             <AvistamientoItem
               key={avistamiento.id}
@@ -125,15 +128,23 @@ export function MascotaAvistamientosSection({
           ) : null}
         </div>
       ) : (
-        <p className="mt-4 rounded-xl border border-dashed border-zinc-200 bg-zinc-50/60 px-4 py-3 text-sm text-zinc-500">
-          Aún no hay pistas de la comunidad para este reporte.
-        </p>
+        <AvistamientosEmptyState />
       )}
+
+      <div className="mt-6 space-y-1 border-t border-zinc-100 pt-5">
+        <h2 className="text-sm font-bold text-zinc-900 sm:text-base">
+          ¿Lo has visto? / Pistas de la comunidad
+        </h2>
+        <p className="text-xs leading-relaxed text-zinc-500 sm:text-sm">
+          Comparte una pista breve si viste a esta mascota. Sin enlaces ni
+          publicidad.
+        </p>
+      </div>
 
       <form
         ref={formRef}
         action={formAction}
-        className="mt-5 space-y-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm"
+        className="mt-4 space-y-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm"
       >
         <input type="hidden" name="mascota_id" value={mascotaId} />
 
