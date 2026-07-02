@@ -320,7 +320,14 @@ function getDescriptionMatch(
   const wordsB = getDescriptionWords(b.caracteristicas);
   const common = getCommonWords(wordsA, wordsB);
 
-  return { match: common.length >= 2, common };
+  return { match: common.length >= 4, common };
+}
+
+function getDescriptionConfidence(
+  commonWordCount: number,
+): "alta" | "media" {
+  if (commonWordCount >= 6) return "alta";
+  return "media";
 }
 
 function compareMascotasByText(a: MascotaRow, b: MascotaRow): TextMatchResult {
@@ -345,7 +352,7 @@ function compareMascotasByText(a: MascotaRow, b: MascotaRow): TextMatchResult {
   }
 
   const palabrasEnComun = [...new Set([...zone.common, ...description.common])];
-  const confianza = description.common.length >= 3 ? "alta" : "media";
+  const confianza = getDescriptionConfidence(description.common.length);
 
   return {
     match: true,
