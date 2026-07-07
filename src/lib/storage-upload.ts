@@ -60,6 +60,14 @@ function buildStorageFileName(originalName: string, contentType: string): string
   return `${Date.now()}-${cleanBase}.${extension}`;
 }
 
+function buildStorageFilePath(folder: string, fileName: string): string {
+  const normalizedFolder = folder.trim().replace(/^\/+|\/+$/g, "");
+  if (!normalizedFolder || normalizedFolder === STORAGE_BUCKET) {
+    return fileName;
+  }
+  return `${normalizedFolder}/${fileName}`;
+}
+
 function getSupabasePublicStorageBaseUrl(): string | null {
   const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim().replace(/\/$/, "");
   return baseUrl || null;
@@ -67,10 +75,11 @@ function getSupabasePublicStorageBaseUrl(): string | null {
 
 function normalizeStorageObjectPath(value: string): string {
   const trimmed = value.trim().replace(/^\/+/, "");
-  if (trimmed.includes("/")) {
-    return trimmed;
+  const bucketPrefix = `${STORAGE_BUCKET}/`;
+  if (trimmed.startsWith(bucketPrefix)) {
+    return trimmed.slice(bucketPrefix.length);
   }
-  return `${STORAGE_BUCKET}/${trimmed}`;
+  return trimmed;
 }
 
 /** Convierte paths relativos o incompletos en URL pública absoluta del bucket. */
@@ -90,7 +99,7 @@ export function resolveStoragePublicUrl(
   }
 
   const objectPath = normalizeStorageObjectPath(trimmed);
-  return `${baseUrl}/storage/v1/object/public/${objectPath}`;
+  return `${baseUrl}/storage/v1/object/public/${STORAGE_BUCKET}/${objectPath}`;
 }
 
 function assertAbsolutePublicUrl(publicUrl: string): string {
@@ -115,7 +124,8 @@ export async function uploadImagenStorage(
       throw new Error(UPLOAD_IMAGE_ERROR_MESSAGE);
     }
 
-    const filePath = `${folder}/${buildStorageFileName(file.name, contentType)}`;
+    const fileName = buildStorageFileName(file.name, contentType);
+    const filePath = buildStorageFilePath(folder, fileName);
 
     const { error } = await supabase.storage
       .from(STORAGE_BUCKET)
