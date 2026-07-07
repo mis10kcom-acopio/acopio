@@ -60,6 +60,46 @@ function buildStorageFileName(originalName: string, contentType: string): string
   return `${Date.now()}-${cleanBase}.${extension}`;
 }
 
+function getSupabasePublicStorageBaseUrl(): string | null {
+  const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim().replace(/\/$/, "");
+  return baseUrl || null;
+}
+
+function normalizeStorageObjectPath(value: string): string {
+  const trimmed = value.trim().replace(/^\/+/, "");
+  if (trimmed.includes("/")) {
+    return trimmed;
+  }
+  return `${STORAGE_BUCKET}/${trimmed}`;
+}
+
+/** Convierte paths relativos o incompletos en URL pública absoluta del bucket. */
+export function resolveStoragePublicUrl(
+  value: string | null | undefined,
+): string | null {
+  if (!value?.trim()) return null;
+
+  const trimmed = value.trim();
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+
+  const baseUrl = getSupabasePublicStorageBaseUrl();
+  if (!baseUrl) return trimmed;
+
+  if (trimmed.startsWith("/storage/v1/object/public/")) {
+    return `${baseUrl}${trimmed}`;
+  }
+
+  const objectPath = normalizeStorageObjectPath(trimmed);
+  return `${baseUrl}/storage/v1/object/public/${objectPath}`;
+}
+
+function assertAbsolutePublicUrl(publicUrl: string): string {
+  if (!/^https?:\/\//i.test(publicUrl)) {
+    throw new Error(UPLOAD_IMAGE_ERROR_MESSAGE);
+  }
+  return publicUrl;
+}
+
 export async function uploadImagenStorage(
   supabase: SupabaseClient,
   file: File,
@@ -75,11 +115,11 @@ export async function uploadImagenStorage(
       throw new Error(UPLOAD_IMAGE_ERROR_MESSAGE);
     }
 
-    const fileName = `${folder}/${buildStorageFileName(file.name, contentType)}`;
+    const filePath = `${folder}/${buildStorageFileName(file.name, contentType)}`;
 
     const { error } = await supabase.storage
       .from(STORAGE_BUCKET)
-      .upload(fileName, file, {
+      .upload(filePath, file, {
         upsert: false,
         contentType,
       });
@@ -89,8 +129,11 @@ export async function uploadImagenStorage(
       throw new Error(UPLOAD_IMAGE_ERROR_MESSAGE);
     }
 
-    const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(fileName);
-    return data.publicUrl;
+    const { data: publicUrlData } = supabase.storage
+      .from(STORAGE_BUCKET)
+      .getPublicUrl(filePath);
+
+    return assertAbsolutePublicUrl(publicUrlData.publicUrl);
   } catch (error) {
     if (error instanceof Error && error.message === UPLOAD_IMAGE_ERROR_MESSAGE) {
       throw error;
@@ -157,7 +200,8 @@ export async function deleteImagenesStorage(
   const paths = [
     ...new Set(
       publicUrls
-        .filter((url): url is string => Boolean(url?.trim()))
+        .map((url) => resolveStoragePublicUrl(url))
+        .filter((url): url is string => Boolean(url))
         .map((url) => extractStoragePathFromPublicUrl(url))
         .filter((path): path is string => Boolean(path)),
     ),

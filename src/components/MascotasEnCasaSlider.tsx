@@ -4,18 +4,20 @@ import Image from "next/image";
 import { ChevronLeft, ChevronRight, Home, PawPrint } from "lucide-react";
 import { useRef } from "react";
 import type { MascotaReportada } from "@/types/database";
+import { getMascotaPrimaryFotoUrl } from "@/lib/mascota-fotos";
 
 const SCROLL_STEP = 242;
 
 function EnCasaSlide({ mascota }: { mascota: MascotaReportada }) {
   const label = mascota.nombre_mascota?.trim() || "Mascota en casa";
+  const fotoUrl = getMascotaPrimaryFotoUrl(mascota);
 
   return (
     <div className="relative shrink-0 snap-start" title={label}>
       <div className="relative h-[5.5rem] w-[5.5rem] overflow-hidden rounded-full border-2 border-emerald-300 bg-white shadow-sm sm:h-[6.0625rem] sm:w-[6.0625rem]">
-        {mascota.foto_url ? (
+        {fotoUrl ? (
           <Image
-            src={mascota.foto_url}
+            src={fotoUrl}
             alt={label}
             width={97}
             height={97}

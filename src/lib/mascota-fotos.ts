@@ -1,3 +1,4 @@
+import { resolveStoragePublicUrl } from "@/lib/storage-upload";
 import type { MascotaReportada } from "@/types/database";
 
 export type MascotaFotosSource = Pick<
@@ -6,13 +7,13 @@ export type MascotaFotosSource = Pick<
 >;
 
 export function getMascotaFotos(mascota: MascotaFotosSource): string[] {
-  return [mascota.foto_url, mascota.foto_url_2, mascota.foto_url_3].filter(
-    (url): url is string => Boolean(url?.trim()),
-  );
+  return [mascota.foto_url, mascota.foto_url_2, mascota.foto_url_3]
+    .map((url) => resolveStoragePublicUrl(url))
+    .filter((url): url is string => Boolean(url));
 }
 
 export function getMascotaPrimaryFotoUrl(
   mascota: MascotaFotosSource,
 ): string | null {
-  return mascota.foto_url ?? mascota.foto_url_2 ?? mascota.foto_url_3 ?? null;
+  return getMascotaFotos(mascota)[0] ?? null;
 }

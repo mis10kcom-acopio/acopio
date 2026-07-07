@@ -7,7 +7,8 @@ import {
   eliminarFotoMascotaEdicion,
   subirFotoMascotaEdicion,
 } from "@/actions/editar";
-import { ACCEPTED_IMAGE_INPUT, MAX_FOTO_SIZE_BYTES, UPLOAD_IMAGE_ERROR_MESSAGE } from "@/lib/storage-upload";
+import { ACCEPTED_IMAGE_INPUT, MAX_FOTO_SIZE_BYTES, resolveStoragePublicUrl, UPLOAD_IMAGE_ERROR_MESSAGE } from "@/lib/storage-upload";
+import { getMascotaPrimaryFotoUrl } from "@/lib/mascota-fotos";
 import type { MascotaReportada } from "@/types/database";
 
 function FotoEditSlot({
@@ -18,7 +19,9 @@ function FotoEditSlot({
   initialUrl: string | null;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [currentUrl, setCurrentUrl] = useState(initialUrl);
+  const [currentUrl, setCurrentUrl] = useState(
+    () => resolveStoragePublicUrl(initialUrl) ?? initialUrl,
+  );
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +47,7 @@ function FotoEditSlot({
     setUploading(false);
 
     if (result.ok) {
-      setCurrentUrl(result.url);
+      setCurrentUrl(resolveStoragePublicUrl(result.url) ?? result.url);
     } else {
       setError(result.error);
     }
@@ -73,7 +76,7 @@ function FotoEditSlot({
         <div className="mt-3 space-y-3">
           <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
             <Image
-              src={currentUrl}
+              src={resolveStoragePublicUrl(currentUrl) ?? currentUrl}
               alt="Foto del reporte"
               width={320}
               height={320}
@@ -176,7 +179,7 @@ export function MascotaFotosEditSection({
 
       <FotoEditSlot
         identificador={identificador}
-        initialUrl={registro.foto_url}
+        initialUrl={getMascotaPrimaryFotoUrl(registro)}
       />
     </section>
   );
